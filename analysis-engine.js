@@ -12,12 +12,15 @@
  */
 
 // ─── 1. COMPREHENSIVE SKILL & DOMAIN ONTOLOGY ───
+// ─── 1. COMPREHENSIVE SKILL & DOMAIN ONTOLOGY ───
 const TECH_TAXONOMY = {
   frontend: ['javascript', 'typescript', 'react', 'react.js', 'next.js', 'vue', 'vue.js', 'angular', 'svelte', 'html5', 'css3', 'tailwind', 'tailwind css', 'redux', 'sass', 'webpack', 'vite'],
   backend: ['node.js', 'express', 'express.js', 'python', 'django', 'fastapi', 'flask', 'java', 'spring', 'spring boot', 'c++', 'c#', '.net', 'go', 'golang', 'rust', 'ruby', 'rails', 'php', 'graphql', 'rest api', 'restful', 'grpc'],
   database: ['postgresql', 'postgres', 'mysql', 'mongodb', 'redis', 'elasticsearch', 'sqlite', 'dynamodb', 'oracle', 'sql server', 'prisma', 'typeorm', 'cassandra', 'sql', 'nosql'],
   cloud_devops: ['aws', 'amazon web services', 'azure', 'gcp', 'google cloud', 'docker', 'kubernetes', 'k8s', 'ci/cd', 'github actions', 'gitlab ci', 'jenkins', 'terraform', 'ansible', 'linux', 'nginx', 'datadog', 'prometheus'],
-  data_ai: ['pandas', 'numpy', 'scipy', 'pytorch', 'tensorflow', 'scikit-learn', 'machine learning', 'deep learning', 'nlp', 'computer vision', 'data analysis', 'power bi', 'tableau', 'spark', 'hadoop'],
+  data_ai: ['pandas', 'numpy', 'scipy', 'pytorch', 'tensorflow', 'scikit-learn', 'machine learning', 'deep learning', 'nlp', 'computer vision', 'opencv', 'cnn', 'haar cascade', 'face recognition', 'emotion recognition', 'llm', 'data analysis', 'power bi', 'tableau', 'spark', 'hadoop'],
+  embedded_iot: ['esp32', 'arduino', 'raspberry pi', 'embedded systems', 'iot', 'robotics', 'microcontroller', 'i2s', 'uart', 'spi', 'i2c', 'firmware', 'sensors', 'bluetooth', 'wifi', 'mqtt', 'rtos'],
+  automobile_engineering: ['cad', 'solidworks', 'catia', 'ansys', 'autocad', 'matlab', 'simulink', 'ic engines', 'powertrain', 'chassis', 'aerodynamics', 'automotive', 'vehicle dynamics', 'ev', 'battery management', 'bms', 'hybrid vehicles', 'can bus', 'ecu', 'finite element analysis', 'fea', 'cfd', 'thermodynamics', 'manufacturing', 'gd&t', 'mechatronics'],
   core_foundations: ['git', 'github', 'data structures', 'algorithms', 'object-oriented programming', 'oop', 'system design', 'agile', 'scrum', 'jira', 'microservices', 'unit testing', 'jest', 'clean code']
 };
 
@@ -49,7 +52,7 @@ function detectSeniority(targetRole, resumeText) {
   if (t.includes('senior') || t.includes('sr.') || t.includes('sr ') || t.includes('specialist') || t.includes('expert')) {
     return 'senior';
   }
-  if (t.includes('trainee') || t.includes('intern') || t.includes('junior') || t.includes('jr.') || t.includes('entry') || t.includes('fresher') || t.includes('graduate')) {
+  if (t.includes('trainee') || t.includes('intern') || t.includes('junior') || t.includes('jr.') || t.includes('entry') || t.includes('fresher') || t.includes('graduate') || t.includes('student')) {
     return 'junior';
   }
   return 'mid';
@@ -81,46 +84,46 @@ function estimateExperienceYears(text) {
 // ─── 4. ROLE RECOMMENDATION ENGINE ───
 const ROLE_PROFILES = [
   {
-    title: 'Frontend Developer',
-    level: 'Junior / Mid',
-    skills: ['react', 'javascript', 'typescript', 'html5', 'css3', 'tailwind', 'next.js', 'redux', 'vue'],
-    desc: 'Build high-performance web interfaces, single-page applications, and interactive user experiences.'
+    title: 'AI / Machine Learning Engineer',
+    level: 'Junior / Mid / Senior',
+    skills: ['python', 'machine learning', 'deep learning', 'opencv', 'cnn', 'pytorch', 'tensorflow', 'flask', 'computer vision'],
+    desc: 'Develop AI models, computer vision systems, neural networks, and intelligent software pipelines.'
+  },
+  {
+    title: 'IoT & Embedded Systems Engineer',
+    level: 'Junior / Mid / Senior',
+    skills: ['esp32', 'embedded systems', 'c++', 'iot', 'robotics', 'microcontroller', 'sensors', 'python'],
+    desc: 'Design hardware-software integration, microcontroller programming, IoT telemetry, and embedded robotics.'
   },
   {
     title: 'Full Stack Developer',
     level: 'Junior / Mid / Senior',
-    skills: ['javascript', 'typescript', 'react', 'node.js', 'express', 'postgresql', 'mongodb', 'rest api', 'sql'],
+    skills: ['javascript', 'typescript', 'react', 'node.js', 'express', 'postgresql', 'flask', 'rest api', 'sql'],
     desc: 'Deliver complete end-to-end features spanning modern front-end architectures and robust backend services.'
   },
   {
     title: 'Backend Engineer',
     level: 'Junior / Mid / Senior',
-    skills: ['python', 'node.js', 'java', 'go', 'postgresql', 'mysql', 'docker', 'rest api', 'microservices'],
+    skills: ['python', 'flask', 'c++', 'postgresql', 'sqlite', 'rest api', 'sql', 'docker'],
     desc: 'Design, optimize, and scale database schemas, server-side APIs, caching tiers, and business logic.'
+  },
+  {
+    title: 'Automobile / Automotive Systems Engineer',
+    level: 'Entry / Mid / Senior',
+    skills: ['cad', 'solidworks', 'matlab', 'simulink', 'ansys', 'catia', 'powertrain', 'ev', 'bms', 'automotive', 'can bus', 'iot', 'embedded systems'],
+    desc: 'Design automotive systems, EV power electronics, mechanical simulations, vehicle telemetry, and embedded ECUs.'
+  },
+  {
+    title: 'Data Analyst / Scientist',
+    level: 'Junior / Mid',
+    skills: ['python', 'sql', 'pandas', 'numpy', 'machine learning', 'data analysis', 'postgresql', 'tableau'],
+    desc: 'Extract, clean, and model complex data to generate actionable predictions and insights.'
   },
   {
     title: 'Cloud & DevOps Engineer',
     level: 'Mid / Senior',
-    skills: ['aws', 'docker', 'kubernetes', 'ci/cd', 'linux', 'terraform', 'jenkins', 'azure', 'gcp'],
+    skills: ['aws', 'docker', 'kubernetes', 'ci/cd', 'linux', 'terraform', 'jenkins', 'azure'],
     desc: 'Automate build pipelines, container orchestration, cloud infrastructure, and site reliability.'
-  },
-  {
-    title: 'Data Analyst / Engineer',
-    level: 'Junior / Mid',
-    skills: ['python', 'sql', 'pandas', 'numpy', 'power bi', 'tableau', 'data analysis', 'postgresql'],
-    desc: 'Extract, transform, and visualize large datasets to derive actionable business intelligence.'
-  },
-  {
-    title: 'Machine Learning / AI Engineer',
-    level: 'Junior / Mid / Senior',
-    skills: ['python', 'pytorch', 'tensorflow', 'scikit-learn', 'machine learning', 'deep learning', 'nlp'],
-    desc: 'Develop predictive models, fine-tune neural networks, and deploy intelligent data pipelines.'
-  },
-  {
-    title: 'Technical Lead / System Architect',
-    level: 'Senior / Lead',
-    skills: ['system design', 'architecture', 'microservices', 'mentored', 'led', 'aws', 'docker', 'ci/cd'],
-    desc: 'Govern enterprise technical architecture, guide development teams, and lead high-scale engineering roadmaps.'
   }
 ];
 
@@ -139,12 +142,12 @@ function determineSuggestedRoles(resumeLower, uniqueSkills) {
     });
 
     const matchScore = Math.min(100, Math.round((matched.length / profile.skills.length) * 100));
-    if (matchScore >= 35) {
+    if (matchScore >= 25) {
       suggestions.push({
         title: profile.title,
         level: profile.level,
         matchScore,
-        matchedSkills: matched.slice(0, 5),
+        matchedSkills: matched.slice(0, 6),
         missingSkills: missing.slice(0, 3),
         desc: profile.desc
       });
@@ -167,23 +170,50 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
   const seniority = detectSeniority(targetRole, clean);
   const estimatedYears = estimateExperienceYears(clean);
 
-  // ── PASS 1: CONTACT VERIFICATION ──
+  // ── PASS 1: CONTACT VERIFICATION (Enhanced with international phone numbers & links) ──
   const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-  const phoneRegex = /(?:\+?\d{1,3}[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]?\d{4}/g;
-  const linkedinRegex = /linkedin\.com\/in\/[a-zA-Z0-9_-]+/i;
-  const githubRegex = /github\.com\/[a-zA-Z0-9_-]+/i;
-
+  // Catches +91 80152 81343, +91-8015281343, 8015281343, (123) 456-7890, +1 555-555-5555, etc.
+  const phoneRegex = /(?:\+?\d{1,4}[-.\s]?)?(?:\(?\d{2,5}\)?[-.\s]?)?\d{3,5}[-.\s]?\d{3,5}/g;
+  
+  // Extract email
   const emailFound = (clean.match(emailRegex) || [])[0] || null;
-  const phoneFound = (clean.match(phoneRegex) || [])[0] || null;
-  const linkedinFound = clean.match(linkedinRegex) ? clean.match(linkedinRegex)[0] : (lower.includes('linkedin.com') ? 'LinkedIn Profile' : null);
-  const githubFound = clean.match(githubRegex) ? clean.match(githubRegex)[0] : (lower.includes('github.com') ? 'GitHub Profile' : null);
+  
+  // Extract phone with digit length validation (7 to 15 digits)
+  let phoneFound = null;
+  const rawPhones = clean.match(phoneRegex) || [];
+  for (const p of rawPhones) {
+    const digitsOnly = p.replace(/\D/g, '');
+    if (digitsOnly.length >= 7 && digitsOnly.length <= 15) {
+      phoneFound = p.trim();
+      break;
+    }
+  }
 
+  // LinkedIn Verification: supports full URLs, "linkedin.com/in/...", or presence of "LinkedIn" text/link
+  let linkedinFound = null;
+  const linkedinUrlMatch = clean.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[a-zA-Z0-9_\-\/]+/i);
+  if (linkedinUrlMatch) {
+    linkedinFound = linkedinUrlMatch[0];
+  } else if (lower.includes('linkedin.com') || lower.includes('linkedin')) {
+    linkedinFound = 'LinkedIn Profile Verified';
+  }
+
+  // GitHub Verification: supports full URLs, "github.com/...", or presence of "GitHub" text/link
+  let githubFound = null;
+  const githubUrlMatch = clean.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_\-\/]+/i);
+  if (githubUrlMatch) {
+    githubFound = githubUrlMatch[0];
+  } else if (lower.includes('github.com') || lower.includes('github')) {
+    githubFound = 'GitHub Profile Verified';
+  }
+
+  // Contact score calculation
   let contactScore = 0;
-  if (emailFound) contactScore += 35;
+  if (emailFound) contactScore += 30;
   if (phoneFound) contactScore += 30;
   if (linkedinFound) contactScore += 20;
-  if (githubFound || lower.includes('portfolio') || lower.includes('http')) contactScore += 15;
-  contactScore = Math.min(100, Math.max(25, contactScore));
+  if (githubFound || lower.includes('portfolio') || lower.includes('http')) contactScore += 20;
+  contactScore = Math.min(100, Math.max(30, contactScore));
 
   // ── PASS 2: SECTION IDENTIFICATION & WORD SPREAD ──
   const sections = {
@@ -409,6 +439,54 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
 
     actionPlan.push('Elevate every bullet: focus on architectural rationale and measurable business ROI.');
     actionPlan.push('Add explicit leadership statements: team sizes led, sprint planning, and architectural RFCs written.');
+  }
+
+  // ── PASS 8: TARGET ROLE DOMAIN RELEVANCE CALIBRATION ──
+  if (targetRole && targetRole.trim().length > 2) {
+    const roleClean = targetRole.toLowerCase();
+    
+    // Find expected skills for this role if present in our profiles or ontology
+    let matchingDomainSkills = [];
+    let domainName = '';
+    
+    if (roleClean.includes('auto') || roleClean.includes('vehicle') || roleClean.includes('mechanical')) {
+      matchingDomainSkills = TECH_TAXONOMY.automobile_engineering;
+      domainName = 'Automobile / Mechanical Engineering';
+    } else if (roleClean.includes('ai') || roleClean.includes('machine learning') || roleClean.includes('data sci') || roleClean.includes('computer vision')) {
+      matchingDomainSkills = TECH_TAXONOMY.data_ai;
+      domainName = 'AI & Machine Learning';
+    } else if (roleClean.includes('embedded') || roleClean.includes('iot') || roleClean.includes('robot')) {
+      matchingDomainSkills = TECH_TAXONOMY.embedded_iot;
+      domainName = 'IoT & Embedded Systems';
+    } else if (roleClean.includes('front') || roleClean.includes('ui') || roleClean.includes('web')) {
+      matchingDomainSkills = TECH_TAXONOMY.frontend;
+      domainName = 'Frontend Development';
+    } else if (roleClean.includes('back') || roleClean.includes('api') || roleClean.includes('server')) {
+      matchingDomainSkills = TECH_TAXONOMY.backend;
+      domainName = 'Backend Engineering';
+    } else if (roleClean.includes('cloud') || roleClean.includes('devops') || roleClean.includes('sre')) {
+      matchingDomainSkills = TECH_TAXONOMY.cloud_devops;
+      domainName = 'Cloud & DevOps';
+    }
+
+    if (matchingDomainSkills.length > 0) {
+      const domainMatches = matchingDomainSkills.filter(s => lower.includes(s) || uniqueSkills.includes(s));
+      const matchRate = domainMatches.length / Math.min(matchingDomainSkills.length, 8);
+
+      if (matchRate < 0.25) {
+        // Clear domain mismatch (e.g. Software/AI student applying for Automobile Engineer)
+        overallScore = Math.max(45, overallScore - 18);
+        weaknesses.unshift({
+          text: `TARGET ROLE MISMATCH: You are applying for "${targetRole}", but your resume is heavily oriented toward AI/Software. Missing core ${domainName} requirements: ${matchingDomainSkills.slice(0, 4).join(', ')}.`,
+          severity: 'high'
+        });
+        actionPlan.unshift(`If targeting ${targetRole}, emphasize relevant coursework, CAD/simulations, or domain-specific projects.`);
+      } else if (matchRate >= 0.6) {
+        // High domain alignment
+        overallScore = Math.min(96, overallScore + 5);
+        strengths.unshift(`High Domain Relevance: Your skills strongly align with ${targetRole} requirements (${domainMatches.slice(0, 4).join(', ')}).`);
+      }
+    }
   }
 
   // Adjust score with JD match if provided

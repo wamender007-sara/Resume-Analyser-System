@@ -27,14 +27,34 @@ export async function extractTextFromPDF(file) {
   const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
   const pageTexts = [];
+  const extractedUrls = [];
+
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
     const pageText = content.items.map((item) => item.str).join(' ');
     pageTexts.push(pageText);
+
+    // Extract embedded link annotations (e.g. clickable LinkedIn, GitHub links)
+    try {
+      const annotations = await page.getAnnotations();
+      if (annotations && annotations.length > 0) {
+        annotations.forEach(ann => {
+          if (ann.url) {
+            extractedUrls.push(ann.url);
+          }
+        });
+      }
+    } catch (e) {
+      // Ignore annotation extraction errors
+    }
   }
 
-  return pageTexts.join('\n\n').replace(/\s{3,}/g, '  ').trim();
+  let fullText = pageTexts.join('\n\n').replace(/\s{3,}/g, '  ').trim();
+  if (extractedUrls.length > 0) {
+    fullText += '\n\n' + extractedUrls.join(' ');
+  }
+  return fullText;
 }
 
 /**
