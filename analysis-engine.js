@@ -1544,7 +1544,7 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
 }
 
 // ─── 7. UNIVERSAL CAREER COACH & RESUME AI CHATBOT ENGINE ───
-export function generateChatResponse(userMessage, resumeContext = '', targetRole = '') {
+export function generateChatResponse(userMessage, resumeContext = '', targetRole = '', currentAnalysis = null) {
   const query = userMessage.trim().toLowerCase();
   const rawMsg = userMessage.trim();
   const seniority = detectSeniority(targetRole, resumeContext);

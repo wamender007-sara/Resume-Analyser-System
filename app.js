@@ -430,17 +430,24 @@ async function sendChatMessage() {
 
   // Natural response simulation
   setTimeout(() => {
-    removeTypingIndicator();
-    if (!currentResumeText) {
-      currentResumeText = getActiveResumeText();
+    try {
+      removeTypingIndicator();
+      if (!currentResumeText) {
+        currentResumeText = getActiveResumeText();
+      }
+      const targetRole = targetRoleInput ? targetRoleInput.value.trim() : '';
+      const reply = generateChatResponse(text, currentResumeText, targetRole, currentAnalysis);
+      appendChatMessage('assistant', reply);
+    } catch (err) {
+      console.error('Chat error:', err);
+      removeTypingIndicator();
+      appendChatMessage('assistant', `⚠️ Sorry, I encountered an issue while generating that response: ${err.message}. Please try asking again!`);
+    } finally {
+      chatStatus.textContent = 'Career Coach & Review Specialist';
+      isChatting = false;
+      chatSend.disabled = false;
+      chatInput.focus();
     }
-    const targetRole = targetRoleInput ? targetRoleInput.value.trim() : '';
-    const reply = generateChatResponse(text, currentResumeText, targetRole, currentAnalysis);
-    appendChatMessage('assistant', reply);
-    chatStatus.textContent = 'Career Coach & Review Specialist';
-    isChatting = false;
-    chatSend.disabled = false;
-    chatInput.focus();
   }, 450);
 }
 
