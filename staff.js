@@ -174,6 +174,7 @@ async function startBatchAudit() {
         const derivedName = resolveCandidateName(analysis.candidateName, file.name, email, text);
 
         batchResults.push({
+          id: 'cand_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now(),
           file,
           filename: file.name,
           text,
@@ -186,6 +187,7 @@ async function startBatchAudit() {
         // Add fallback entry so count matches
         const derivedName = resolveCandidateName(null, file.name, null, '');
         batchResults.push({
+          id: 'cand_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now(),
           file,
           filename: file.name,
           text: '',
@@ -370,6 +372,9 @@ function renderPodium(top3) {
     const card = document.createElement('div');
     card.className = `podium-rank-card ${meta.class}`;
     card.innerHTML = `
+      <button class="btn-card-remove" data-id="${cand.id}" title="Remove this resume / duplicate from batch">
+        <span class="remove-minus">(-)</span> Remove
+      </button>
       <div class="podium-badge">${meta.title}</div>
       <h4 class="podium-student-name">${escHtml(cand.candidateName)}</h4>
       
@@ -391,6 +396,11 @@ function renderPodium(top3) {
       </button>
     `;
 
+    card.querySelector('.btn-card-remove').addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeCandidate(cand.id);
+    });
+
     card.querySelector('.btn-podium-audit').addEventListener('click', () => {
       openStudentModal(cand);
     });
@@ -407,6 +417,10 @@ function setupFiltersAndSort() {
   btnExportCsv.addEventListener('click', exportPlacementCsv);
   if (btnExportPdf) {
     btnExportPdf.addEventListener('click', exportClassAnalysisPdf);
+  }
+  const btnAutoDeduplicate = document.getElementById('btnAutoDeduplicate');
+  if (btnAutoDeduplicate) {
+    btnAutoDeduplicate.addEventListener('click', autoRemoveDuplicates);
   }
 }
 
@@ -514,9 +528,14 @@ function renderCandidateTable() {
         <span class="ats-pct-tag">${a.atsCompatibility.numericScore || 85}%</span>
       </td>
       <td class="col-action">
-        <button class="btn-table-audit" title="View complete audit diagnostics">
-          Audit
-        </button>
+        <div class="table-actions-group">
+          <button class="btn-table-audit" title="View complete audit diagnostics">
+            Audit
+          </button>
+          <button class="btn-table-remove" data-id="${item.id}" title="Remove this duplicate resume from batch">
+            (-)
+          </button>
+        </div>
       </td>
     `;
 
@@ -524,8 +543,94 @@ function renderCandidateTable() {
       openStudentModal(item);
     });
 
+    tr.querySelector('.btn-table-remove').addEventListener('click', () => {
+      removeCandidate(item.id);
+    });
+
     candidateTableBody.appendChild(tr);
   });
+}
+
+// ─── Deduplication & Candidate Removal ────────────────────────
+function removeCandidate(id) {
+  const target = batchResults.find(c => c.id === id);
+  if (!target) return;
+
+  const name = target.candidateName;
+  batchResults = batchResults.filter(c => c.id !== id);
+
+  // Close modal if currently inspecting this student
+  if (activeAuditCandidate && activeAuditCandidate.id === id) {
+    studentAuditModal.classList.add('hidden');
+  }
+
+  // Recalculate ranks based on remaining candidates
+  batchResults.sort((a, b) => b.analysis.overallScore - a.analysis.overallScore);
+  batchResults.forEach((item, idx) => {
+    item.rank = idx + 1;
+  });
+
+  // Re-render entire dashboard
+  renderBatchDashboard();
+  showToast(`Removed "${name}" from batch. Leaderboard updated (${batchResults.length} remaining).`, 'info');
+}
+
+function autoRemoveDuplicates() {
+  if (batchResults.length <= 1) {
+    showToast('No duplicate student resumes detected in batch.', 'info');
+    return;
+  }
+
+  const seenKeys = new Map();
+  const duplicatesToRemove = new Set();
+
+  batchResults.forEach(item => {
+    const email = (item.analysis.diagnostics?.contacts?.email || '').trim().toLowerCase();
+    const phone = (item.analysis.diagnostics?.contacts?.phone || '').replace(/\D/g, '');
+    const name = (item.candidateName || '').trim().toLowerCase();
+
+    // Determine identity key
+    let key = null;
+    if (email && email.length > 5) {
+      key = 'email:' + email;
+    } else if (phone && phone.length >= 7) {
+      key = 'phone:' + phone;
+    } else if (name && name !== 'student candidate' && name.length >= 3) {
+      key = 'name:' + name;
+    }
+
+    if (!key) return;
+
+    if (seenKeys.has(key)) {
+      const existing = seenKeys.get(key);
+      // Retain the higher scoring resume
+      if (item.analysis.overallScore > existing.analysis.overallScore) {
+        duplicatesToRemove.add(existing.id);
+        seenKeys.set(key, item);
+      } else {
+        duplicatesToRemove.add(item.id);
+      }
+    } else {
+      seenKeys.set(key, item);
+    }
+  });
+
+  if (duplicatesToRemove.size === 0) {
+    showToast('No duplicate student resumes detected in the current classroom batch.', 'info');
+    return;
+  }
+
+  const removedCount = duplicatesToRemove.size;
+  batchResults = batchResults.filter(item => !duplicatesToRemove.has(item.id));
+
+  // Recalculate ranks
+  batchResults.sort((a, b) => b.analysis.overallScore - a.analysis.overallScore);
+  batchResults.forEach((item, idx) => {
+    item.rank = idx + 1;
+  });
+
+  renderBatchDashboard();
+  showToast(`Cleaned ${removedCount} duplicate resume(s)! Highest-scoring versions retained.`, 'success');
 }
 
 // ─── 7. Deep Audit Inspection Modal ───────────────────────────

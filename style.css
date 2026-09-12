@@ -2612,8 +2612,71 @@ body.light-theme .rewrite-block.improved {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
-.podium-header {
+.podium-header-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 1.1rem;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.podium-header {
+  margin-bottom: 0;
+}
+
+.btn-deduplicate {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  padding: 0.38rem 0.85rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-deduplicate:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-card-remove {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.2rem 0.55rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 5;
+}
+
+.btn-card-remove:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  transform: scale(1.05);
+}
+
+.remove-minus {
+  font-weight: 900;
 }
 
 .podium-title {
@@ -2986,6 +3049,31 @@ body.light-theme .rewrite-block.improved {
   color: #ffffff;
 }
 
+.table-actions-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn-table-remove {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.3rem 0.55rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-table-remove:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
 .table-empty-message {
   text-align: center;
   padding: 2.5rem 1rem;
@@ -3199,6 +3287,39 @@ body.light-theme .btn-podium-audit {
   background: #ffffff;
   border-color: #cbd5e1;
   color: #0f172a;
+}
+
+body.light-theme .btn-card-remove {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+body.light-theme .btn-card-remove:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+body.light-theme .btn-deduplicate {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+body.light-theme .btn-deduplicate:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+body.light-theme .btn-table-remove {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+body.light-theme .btn-table-remove:hover {
+  background: #dc2626;
+  color: #ffffff;
 }
 
 /* ── PDF RENDER CONTAINER & HIGH-FIDELITY PRINT EXPORT ── */
