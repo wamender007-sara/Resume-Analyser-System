@@ -332,19 +332,25 @@ export function renderAuditGrid(diagnostics, jdMatch, targetRoleFit) {
           <div class="audit-seniority-title">Role Seniority Hierarchy Readiness:</div>
           <div class="seniority-track-items">
             <div class="seniority-tier-item tier-low">
-              <span class="tier-label">${escHtml(sen.low?.tier || 'Low (Entry/Jr)')}</span>
+              <div class="tier-header-line">
+                <span class="tier-label">${escHtml(sen.low?.tier || 'Low (Junior / Entry-Level)')}</span>
+                <span class="tier-stat">${sen.low?.readiness || 90}% · ${escHtml(sen.low?.status || 'Ready')}</span>
+              </div>
               <div class="tier-meter"><div class="tier-meter-bar" style="width:${sen.low?.readiness || 90}%; background:#10b981;"></div></div>
-              <span class="tier-stat">${sen.low?.readiness || 90}% · ${escHtml(sen.low?.status || 'Ready')}</span>
             </div>
             <div class="seniority-tier-item tier-mid">
-              <span class="tier-label">${escHtml(sen.mid?.tier || 'Mid (Developer)')}</span>
+              <div class="tier-header-line">
+                <span class="tier-label">${escHtml(sen.mid?.tier || 'Mid (Mid-Level Developer)')}</span>
+                <span class="tier-stat">${sen.mid?.readiness || 75}% · ${escHtml(sen.mid?.status || 'Developing')}</span>
+              </div>
               <div class="tier-meter"><div class="tier-meter-bar" style="width:${sen.mid?.readiness || 75}%; background:#f59e0b;"></div></div>
-              <span class="tier-stat">${sen.mid?.readiness || 75}% · ${escHtml(sen.mid?.status || 'Developing')}</span>
             </div>
             <div class="seniority-tier-item tier-high">
-              <span class="tier-label">${escHtml(sen.high?.tier || 'High (Lead/Sr)')}</span>
+              <div class="tier-header-line">
+                <span class="tier-label">${escHtml(sen.high?.tier || 'High (Senior / Tech Lead)')}</span>
+                <span class="tier-stat">${sen.high?.readiness || 45}% · ${escHtml(sen.high?.status || 'Aspirational')}</span>
+              </div>
               <div class="tier-meter"><div class="tier-meter-bar" style="width:${sen.high?.readiness || 45}%; background:#ef4444;"></div></div>
-              <span class="tier-stat">${sen.high?.readiness || 45}% · ${escHtml(sen.high?.status || 'Aspirational')}</span>
             </div>
           </div>
         </div>
@@ -490,19 +496,25 @@ export function renderSuggestedRoles(roles) {
           <div class="seniority-track-title">Seniority Level Readiness in this Job:</div>
           <div class="seniority-track-items">
             <div class="seniority-tier-item tier-low">
-              <span class="tier-label">Low (Entry/Jr)</span>
+              <div class="tier-header-line">
+                <span class="tier-label">Low (Junior / Entry-Level)</span>
+                <span class="tier-stat">${sen.low.readiness}% · ${escHtml(sen.low.verdict)}</span>
+              </div>
               <div class="tier-meter"><div class="tier-meter-bar" style="width:${sen.low.readiness}%; background:#10b981;"></div></div>
-              <span class="tier-stat">${sen.low.readiness}% · ${escHtml(sen.low.verdict)}</span>
             </div>
             <div class="seniority-tier-item tier-mid">
-              <span class="tier-label">Mid (Developer)</span>
+              <div class="tier-header-line">
+                <span class="tier-label">Mid (Mid-Level Developer)</span>
+                <span class="tier-stat">${sen.mid.readiness}% · ${escHtml(sen.mid.verdict)}</span>
+              </div>
               <div class="tier-meter"><div class="tier-meter-bar" style="width:${sen.mid.readiness}%; background:#f59e0b;"></div></div>
-              <span class="tier-stat">${sen.mid.readiness}% · ${escHtml(sen.mid.verdict)}</span>
             </div>
             <div class="seniority-tier-item tier-high">
-              <span class="tier-label">High (Senior/Lead)</span>
+              <div class="tier-header-line">
+                <span class="tier-label">High (Senior / Tech Lead)</span>
+                <span class="tier-stat">${sen.high.readiness}% · ${escHtml(sen.high.verdict)}</span>
+              </div>
               <div class="tier-meter"><div class="tier-meter-bar" style="width:${sen.high.readiness}%; background:#ef4444;"></div></div>
-              <span class="tier-stat">${sen.high.readiness}% · ${escHtml(sen.high.verdict)}</span>
             </div>
           </div>
         </div>

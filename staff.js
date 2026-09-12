@@ -58,12 +58,57 @@ const modalAuditBody       = document.getElementById('modalAuditBody');
 const btnCloseModal        = document.getElementById('btnCloseModal');
 
 // ─── Init ─────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+function initStaff() {
+  createParticles();
   setupThemeToggle();
   setupBatchUpload();
   setupFiltersAndSort();
   setupModal();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initStaff);
+} else {
+  initStaff();
+}
+
+// ─── Particle Background ─────────────────────────────────────
+function createParticles() {
+  const container = document.getElementById('particles');
+  if (!container) return;
+  const count = 18;
+  for (let i = 0; i < count; i++) {
+    const dot = document.createElement('div');
+    const size = Math.random() * 3 + 1;
+    const x = Math.random() * 100;
+    const y = Math.random() * 100;
+    const delay = Math.random() * 6;
+    const duration = 8 + Math.random() * 10;
+    const opacity = Math.random() * 0.15 + 0.05;
+
+    dot.style.cssText = `
+      position: absolute;
+      left: ${x}%;
+      top: ${y}%;
+      width: ${size}px;
+      height: ${size}px;
+      border-radius: 50%;
+      background: rgba(${Math.random() > 0.5 ? '16,185,129' : '99,102,241'}, ${opacity});
+      animation: floatStaffParticle ${duration}s ${delay}s ease-in-out infinite alternate;
+      pointer-events: none;
+    `;
+    container.appendChild(dot);
+  }
+
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes floatStaffParticle {
+      0%   { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(${Math.random() > 0.5 ? '' : '-'}${Math.floor(Math.random() * 30 + 15)}px, -${Math.floor(Math.random() * 30 + 15)}px) scale(1.4); }
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 // ─── Theme Switcher ───────────────────────────────────────────
 function setupThemeToggle() {
@@ -82,23 +127,43 @@ function setupThemeToggle() {
 
 // ─── 2. Multi-PDF File Upload & Drag-and-Drop ─────────────────
 function setupBatchUpload() {
-  // Click browse
+  if (!batchDropzone || !batchFileInput) return;
+
+  // Prevent browser from opening files dragged outside dropzone
+  window.addEventListener('dragover', (e) => e.preventDefault(), false);
+  window.addEventListener('drop', (e) => e.preventDefault(), false);
+
+  // Clicking anywhere on dropzone (except the file input itself or labels) opens file dialog
+  batchDropzone.addEventListener('click', (e) => {
+    if (e.target !== batchFileInput && !e.target.closest('.btn-batch-browse')) {
+      batchFileInput.click();
+    }
+  });
+
+  // Click browse / file change
   batchFileInput.addEventListener('change', (e) => {
-    handleBatchFiles(Array.from(e.target.files));
+    if (e.target.files && e.target.files.length > 0) {
+      handleBatchFiles(Array.from(e.target.files));
+      batchFileInput.value = ''; // Reset so selecting same files again will still trigger change event
+    }
   });
 
   // Drag and Drop
   batchDropzone.addEventListener('dragover', (e) => {
     e.preventDefault();
+    e.stopPropagation();
     batchDropzone.classList.add('dragging');
   });
 
-  batchDropzone.addEventListener('dragleave', () => {
+  batchDropzone.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     batchDropzone.classList.remove('dragging');
   });
 
   batchDropzone.addEventListener('drop', (e) => {
     e.preventDefault();
+    e.stopPropagation();
     batchDropzone.classList.remove('dragging');
     const droppedFiles = Array.from(e.dataTransfer.files).filter(f => {
       const ext = '.' + f.name.split('.').pop().toLowerCase();
@@ -112,7 +177,9 @@ function setupBatchUpload() {
   });
 
   // Start Batch Audit Button
-  btnStartBatchAudit.addEventListener('click', startBatchAudit);
+  if (btnStartBatchAudit) {
+    btnStartBatchAudit.addEventListener('click', startBatchAudit);
+  }
 }
 
 function handleBatchFiles(files) {
@@ -321,11 +388,6 @@ function cleanNameFromFilename(filename) {
     .replace(/[_\-\.]+/g, ' ')
     .trim();
   return clean.length >= 2 ? clean : null;
-}
-
-function extractAcademicScore(text) {
-  const m = text.match(/(?:cgpa|gpa|percentage|marks?)\s*[:=\-]?\s*(\d{1,2}(?:\.\d{1,2})?(?:\s*\/\s*10|\s*%)?)/i);
-  return m ? m[0].trim() : 'N/A';
 }
 
 // ─── 4. Batch Dashboard Rendering ─────────────────────────────
@@ -756,19 +818,25 @@ function openStudentModal(item) {
         <div class="seniority-track-title">Seniority Level Readiness in this Job:</div>
         <div class="seniority-track-items">
           <div class="seniority-tier-item tier-low">
-            <span class="tier-label">Low (Entry / Jr)</span>
+            <div class="tier-header-line">
+              <span class="tier-label">Low (Junior / Entry-Level)</span>
+              <span class="tier-stat">${a.targetRoleFit.seniorityBreakdown?.low?.readiness || 95}% · ${escHtml(a.targetRoleFit.seniorityBreakdown?.low?.status || 'Ready')}</span>
+            </div>
             <div class="tier-meter"><div class="tier-meter-bar" style="width:${a.targetRoleFit.seniorityBreakdown?.low?.readiness || 95}%; background:#10b981;"></div></div>
-            <span class="tier-stat">${a.targetRoleFit.seniorityBreakdown?.low?.readiness || 95}% · ${escHtml(a.targetRoleFit.seniorityBreakdown?.low?.status || 'Ready')}</span>
           </div>
           <div class="seniority-tier-item tier-mid">
-            <span class="tier-label">Mid (Developer)</span>
+            <div class="tier-header-line">
+              <span class="tier-label">Mid (Mid-Level Developer)</span>
+              <span class="tier-stat">${a.targetRoleFit.seniorityBreakdown?.mid?.readiness || 78}% · ${escHtml(a.targetRoleFit.seniorityBreakdown?.mid?.status || 'Developing')}</span>
+            </div>
             <div class="tier-meter"><div class="tier-meter-bar" style="width:${a.targetRoleFit.seniorityBreakdown?.mid?.readiness || 78}%; background:#f59e0b;"></div></div>
-            <span class="tier-stat">${a.targetRoleFit.seniorityBreakdown?.mid?.readiness || 78}% · ${escHtml(a.targetRoleFit.seniorityBreakdown?.mid?.status || 'Developing')}</span>
           </div>
           <div class="seniority-tier-item tier-high">
-            <span class="tier-label">High (Senior / Lead)</span>
+            <div class="tier-header-line">
+              <span class="tier-label">High (Senior / Tech Lead)</span>
+              <span class="tier-stat">${a.targetRoleFit.seniorityBreakdown?.high?.readiness || 45}% · ${escHtml(a.targetRoleFit.seniorityBreakdown?.high?.status || 'Aspirational')}</span>
+            </div>
             <div class="tier-meter"><div class="tier-meter-bar" style="width:${a.targetRoleFit.seniorityBreakdown?.high?.readiness || 45}%; background:#ef4444;"></div></div>
-            <span class="tier-stat">${a.targetRoleFit.seniorityBreakdown?.high?.readiness || 45}% · ${escHtml(a.targetRoleFit.seniorityBreakdown?.high?.status || 'Aspirational')}</span>
           </div>
         </div>
       </div>
@@ -1028,19 +1096,25 @@ function renderSuggestedRolesToContainer(roles, containerId) {
           <div class="seniority-track-title">Seniority Level Readiness in this Job:</div>
           <div class="seniority-track-items">
             <div class="seniority-tier-item tier-low">
-              <span class="tier-label">Low (Entry/Jr)</span>
+              <div class="tier-header-line">
+                <span class="tier-label">Low (Junior / Entry-Level)</span>
+                <span class="tier-stat">${sen.low.readiness}% · ${escHtml(sen.low.verdict)}</span>
+              </div>
               <div class="tier-meter"><div class="tier-meter-bar" style="width:${sen.low.readiness}%; background:#10b981;"></div></div>
-              <span class="tier-stat">${sen.low.readiness}% · ${escHtml(sen.low.verdict)}</span>
             </div>
             <div class="seniority-tier-item tier-mid">
-              <span class="tier-label">Mid (Developer)</span>
+              <div class="tier-header-line">
+                <span class="tier-label">Mid (Mid-Level Developer)</span>
+                <span class="tier-stat">${sen.mid.readiness}% · ${escHtml(sen.mid.verdict)}</span>
+              </div>
               <div class="tier-meter"><div class="tier-meter-bar" style="width:${sen.mid.readiness}%; background:#f59e0b;"></div></div>
-              <span class="tier-stat">${sen.mid.readiness}% · ${escHtml(sen.mid.verdict)}</span>
             </div>
             <div class="seniority-tier-item tier-high">
-              <span class="tier-label">High (Senior/Lead)</span>
+              <div class="tier-header-line">
+                <span class="tier-label">High (Senior / Tech Lead)</span>
+                <span class="tier-stat">${sen.high.readiness}% · ${escHtml(sen.high.verdict)}</span>
+              </div>
               <div class="tier-meter"><div class="tier-meter-bar" style="width:${sen.high.readiness}%; background:#ef4444;"></div></div>
-              <span class="tier-stat">${sen.high.readiness}% · ${escHtml(sen.high.verdict)}</span>
             </div>
           </div>
         </div>
