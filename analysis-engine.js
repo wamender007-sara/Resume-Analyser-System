@@ -1609,172 +1609,294 @@ export function generateChatResponse(userMessage, resumeContext = '', targetRole
     return JSON.stringify(jsonOutput, null, 2);
   }
 
-  // 1. Greetings & Pleasantries
-  if (/^(hi|hello|hey|good\s*(morning|afternoon|evening)|howdy|greetings|hola)(\s+.*|\!|\?|$)/i.test(query)) {
-    return `### 👋 Hello! How can I assist your career journey today?\n\n` +
-      `I am your **Executive Career & Resume Coach**. You can ask me **anything**, such as:\n\n` +
-      `• **Resume Editing:** *"Rewrite my work experience bullet using STAR method."*\n` +
-      `• **Interview Prep:** *"What behavioral questions will they ask for a ${targetRole || 'Software Engineer'}?"*\n` +
-      `• **Career Transitions:** *"How do I pivot from QA to Full Stack Development?"*\n` +
-      `• **Salary & Offers:** *"How do I negotiate a higher base salary?"*\n` +
-      `• **Technical & Projects:** *"What are the best full-stack projects to impress recruiters?"*\n\n` +
-      `Feel free to type any specific question or paste any sentence you'd like refined!`;
+  // 1. Resolve or compute rich analysis context on the fly
+  let analysis = currentAnalysis;
+  if (!analysis && resumeContext && resumeContext.trim().length >= 30) {
+    try {
+      analysis = analyseResumeLocally(resumeContext, targetRole || 'Software Engineer');
+    } catch (e) {
+      // fallback
+    }
   }
 
-  // 2. Questions about the bot itself or its capabilities
-  if (query.includes('who are you') || query.includes('what can you do') || query.includes('how do you work') || query.includes('help me with') || query === 'help') {
-    return `### 💡 What I Can Help You With:\n\n` +
-      `I'm equipped to guide you across every stage of the technical and corporate hiring process:\n\n` +
-      `1. **Resume Diagnostician:** Bullet-point rewriting, ATS keyword optimization, metrics/quantification injection, and section architecture.\n` +
-      `2. **Job Match Engine:** Pinpointing exact roles you qualify for and exposing high-impact missing skills.\n` +
-      `3. **Interview Preparation:** Technical questions, system design walkthroughs, and behavioral questions tailored to ${seniority.toUpperCase()} candidates.\n` +
-      `4. **Career Strategy:** Transitioning across disciplines, salary negotiations, portfolio reviews, and LinkedIn optimization.\n\n` +
-      `Go ahead and ask me any question or paste a bullet point!`;
+  const roleTitle = targetRole || analysis?.targetRoleFit?.targetRole || 'Software Engineer';
+  const overallScore = analysis?.overallScore ?? null;
+  const scores = analysis?.scores || {};
+  const sectionScores = analysis?.sectionScores || {};
+  const candidateSkills = analysis?.diagnostics?.skillsFound || [];
+  const missingSkills = analysis?.targetRoleFit?.missingSkills || [];
+  const matchedSkills = analysis?.targetRoleFit?.matchedSkills || [];
+  const metricCount = analysis?.diagnostics?.metricCount ?? 0;
+  const atsIssues = analysis?.atsCompatibility?.issues || [];
+
+  // Helper: extract summary snippet from candidate resume
+  function extractSummarySnippet(text) {
+    if (!text) return null;
+    const m = text.match(/(?:summary|professional summary|career profile|about me|career objective|objective)\s*[:\-\n]+([\s\S]*?)(?=(?:\n\s*(?:technical skills|skills|experience|work experience|employment|projects|education|certifications)\b|$))/i);
+    if (m && m[1]) {
+      const s = m[1].replace(/\n\s*\n/g, ' ').trim();
+      return s.length >= 15 ? s : null;
+    }
+    return null;
   }
 
-  // 3. Interview Preparation & Technical / Behavioral Questions
-  if (query.includes('interview') || query.includes('questions to ask') || query.includes('tell me about yourself') || query.includes('behavioral')) {
-    if (query.includes('tell me about yourself')) {
-      return `### 🎙️ The Perfect "Tell Me About Yourself" Framework (Present, Past, Future):\n\n` +
-        `**1. Present (30 sec):** State your current focus and primary technical superpowers.\n` +
-        `> *"I am a ${targetRole || 'Software Engineer'} specializing in scalable web systems, clean API design, and modern frontend architecture..."*\n\n` +
-        `**2. Past (45 sec):** Highlight 1-2 major achievements with quantifiable impact.\n` +
-        `> *"At my recent role/projects, I delivered high-performance applications that reduced latency by 35% and scaled to thousands of active users..."*\n\n` +
-        `**3. Future (15 sec):** Align why you are thrilled about this exact opportunity.\n` +
-        `> *"I'm excited about this opportunity because I want to bring my strengths in resilient engineering to solve your high-growth challenges."*`;
+  const summarySnippet = extractSummarySnippet(resumeContext);
+
+  // Logical intent flags
+  const isReasonQuestion = /\b(why|how come|reason|what did i do|what caused|what made|explain my|explain why|why did|why is|why are|why my|why was|why were|why should i)\b/i.test(query) ||
+    /\b(low marks|low score|deduct|cut marks|penaliz|lost points|points cut|scored low|score low|bad marks|poor marks|marks cut|less marks)\b/i.test(query);
+
+  const isSummaryTopic = /\b(summary|objective|profile|about me|career profile|intro|overview)\b/i.test(query);
+
+  // -------------------------------------------------------------
+  // TOPIC A: SUMMARY / OBJECTIVE (Specific User Problem in Screenshot)
+  // -------------------------------------------------------------
+  if (isSummaryTopic) {
+    // If asking WHY it's low or what was done wrong
+    if (isReasonQuestion || /\b(low|wrong|bad|marks|deduct|improve|problem|issue|cut)\b/i.test(query)) {
+      let analysisSummaryText = '';
+      if (summarySnippet) {
+        analysisSummaryText = `**Your Detected Summary:**\n> *"“${summarySnippet.slice(0, 180)}${summarySnippet.length > 180 ? '…' : ''}”"*\n\n`;
+      }
+
+      const isObjective = summarySnippet && /(?:seeking|to obtain|looking for|utilize my|utilize the|challenging position|opportunity to|career objective)/i.test(summarySnippet);
+      const topSkills = candidateSkills.slice(0, 3);
+
+      return `### 💡 Why Your Summary Scored Low & Exactly What Happened:\n\n` +
+        `Hi! Let's walk through this step-by-step so it's completely clear. Here is what our diagnostic engine found in your resume's opening section:\n\n` +
+        (analysisSummaryText ? analysisSummaryText : `⚠️ **Missing Section Header:** We could not find a clearly labeled **"Professional Summary"** or **"Career Profile"** header at the top of your resume.\n\n`) +
+        `**The 3 Main Reasons Points Were Deducted:**\n\n` +
+        `1. **${isObjective ? '⚠️ Outdated "Career Objective" Phrasing' : '⚠️ Missing Value Proposition'}:**\n` +
+        `   ${isObjective 
+          ? `Your summary is written as a traditional *Career Objective* (*"Seeking a challenging position where I can utilize my skills..."*). Modern tech recruiters and ATS scanners penalize objectives because they focus on *what you want from the employer*, rather than *the tangible technical value you bring to their team*.` 
+          : `Recruiters look for an active value statement that highlights your core engineering specialties rather than generic interest.`}\n\n` +
+        `2. **🎯 Missing Target Job Title & Core Tech Stack:**\n` +
+        `   Technical screeners scan the top 3 lines in **under 6 seconds**. If your summary doesn't immediately feature your target role (**${roleTitle}**) and top tools (${topSkills.length > 0 ? topSkills.join(', ') : 'e.g. JavaScript, Python, React'}), ATS keyword ranking drops.\n\n` +
+        `3. **📈 Vague Buzzwords Instead of Concrete Proof:**\n` +
+        `   Phrases like *"hardworking"*, *"passionate"*, or *"quick learner"* are generic filler words. Mentioning real evidence (e.g. *"creator of 3+ responsive full-stack applications with REST APIs and SQL databases"*) gives hiring managers verifiable confidence.\n\n` +
+        `---\n\n` +
+        `### ✨ Ready-to-Use 3-Line Summary (Guaranteed 95+ Score):\n\n` +
+        `Copy and paste this tailored professional summary directly onto your resume under a **"Professional Summary"** heading:\n\n` +
+        `> *"Dedicated **${roleTitle}** proficient in **${topSkills.length > 0 ? topSkills.join(', ') : 'JavaScript/TypeScript, modern frameworks, Python'}**, and relational databases. Proven track record developing production-ready web applications with clean RESTful API architecture, responsive UI design, and disciplined problem solving. Eager to contribute rapid adaptability and full-stack capabilities to high-impact product engineering teams."*\n\n` +
+        `👉 *Tip: Replace your current objective with this, and re-upload your resume to watch your summary marks jump to Grade A+!*`;
     }
 
-    return `### 🎯 High-Probability Interview Questions for ${targetRole || 'Engineering'} (${seniority.toUpperCase()} Level):\n\n` +
-      `**1. Core Competency & System Architecture:**\n` +
-      `• *"Can you walk us through the most technically complex feature you've designed and how you handled trade-offs?"*\n` +
-      `• *"How do you diagnose and eliminate database bottlenecks or unexpected API spikes?"*\n\n` +
-      `**2. Behavioral & Conflict Resolution (STAR):**\n` +
-      `• *"Describe a situation where engineering requirements conflicted with product deadlines. How did you negotiate scope?"*\n` +
-      `• *"Tell me about a production incident you caused or resolved. What post-mortem steps did you implement?"*\n\n` +
-      `**3. Strategic Questions for YOU to ask the Interviewer:**\n` +
-      `• *"What does a high-impact contributor accomplish in their first 90 days on this team?"*\n` +
-      `• *"How do you balance rapid feature delivery with tech debt and architectural refactoring?"*\n\n` +
+    // Direct rewrite or improve request
+    const topSkills = candidateSkills.slice(0, 4);
+    return `### 🚀 Tailored Professional Summary for ${roleTitle}:\n\n` +
+      `Here is an ATS-optimized 3-line summary crafted specifically around your profile:\n\n` +
+      `> *"Proactive and detail-oriented **${roleTitle}** with hands-on expertise in **${topSkills.length > 0 ? topSkills.join(', ') : 'JavaScript, Python, React, and SQL'}**. Creator of resilient, scalable applications featuring robust REST APIs, modern component architectures, and clean database schemas. Committed to writing maintainable code and solving real-world challenges in collaborative engineering environments."*\n\n` +
+      `**Why this scores 95+ with ATS:**\n` +
+      `• Leads immediately with your target job title (**${roleTitle}**).\n` +
+      `• Embeds hard technical skills in the opening sentence.\n` +
+      `• Avoids passive fluff like *"seeking an opportunity"* in favor of active engineering capability.`;
+  }
+
+  // -------------------------------------------------------------
+  // TOPIC B: OVERALL SCORE & "WHY LOW MARKS" / "WHAT DID I DO WRONG"
+  // -------------------------------------------------------------
+  if (isReasonQuestion && (/\b(score|marks|rating|grade|total|overall|evaluation|deduct|cut|low|wrong|down|marks cut|points|70|75|80|85|90|91)\b/i.test(query) || query.includes('why') || query.includes('what did i do'))) {
+    if (!analysis) {
+      return `### 💡 Why Your Resume Score Might Be Lower:\n\n` +
+        `I don't have your analyzed resume in my active session yet! Please upload your PDF or paste your resume and click **"Analyse Resume"** on the left.\n\n` +
+        `However, based on standard ATS and recruiter criteria for **${roleTitle}**, resumes typically lose marks for 3 main reasons:\n\n` +
+        `1. **Lack of Numbers / Quantifiable Impact (15% weight):** Bullets explain duties (*"worked on website"*) rather than measurable outcomes (*"increased API speed by 30%"*).\n` +
+        `2. **Missing Target Keywords (30% weight):** Core tools required for ${roleTitle} are omitted from the skills or project descriptions.\n` +
+        `3. **Generic Summary or Weak Action Verbs (20% weight):** Using passive words (*"responsible for"*, *"helped"*) instead of power verbs (*"Engineered"*, *"Architected"*).\n\n` +
+        `Upload your resume now and I will give you an exact point-by-point breakdown of your specific score!`;
+    }
+
+    const dimList = [
+      { name: 'Keyword & Skill Match', score: scores.keyword_match ?? 70, weight: '30%', tip: `Missing critical competencies for ${roleTitle}: ${missingSkills.slice(0, 3).join(', ') || 'specialized libraries'}.` },
+      { name: 'Quantifiable Impact & Metrics', score: scores.quantifiable_impact ?? 50, weight: '15%', tip: `Only ${metricCount} metric(s) found. Bullets describe tasks instead of measurable results (%, numbers, scale).` },
+      { name: 'Experience Relevance', score: scores.experience_relevance ?? 75, weight: '30%', tip: `Make sure project and internship descriptions demonstrate complete responsibility and system architecture.` },
+      { name: 'Education & Certifications', score: scores.education_certifications ?? 60, weight: '10%', tip: `Add recognized technical credentials (AWS, Meta, Google, Coursera) or detailed relevant coursework.` },
+      { name: 'ATS Compatibility', score: scores.ats_compatibility ?? 70, weight: '10%', tip: atsIssues[0] || `Ensure standard single-column headers, clean contact reachability, and standard font sizing.` },
+      { name: 'Language Quality & Action Verbs', score: scores.language_quality ?? 75, weight: '5%', tip: `Replace weak verbs ('worked on', 'helped') with assertive action verbs ('Engineered', 'Architected').` }
+    ];
+
+    dimList.sort((a, b) => a.score - b.score);
+    const lowest = dimList.slice(0, 3);
+
+    return `### 📊 Logical Score Breakdown (Current Score: ${overallScore}/100):\n\n` +
+      `Great question! Let's logically examine where marks were deducted so you know exactly what happened and how to reach **95+**:\n\n` +
+      `**Top 3 Areas Where Points Were Deducted:**\n\n` +
+      lowest.map((d, idx) => {
+        return `${idx + 1}. **${d.name} (${d.score}/100 — ${d.weight} Weight):**\n` +
+          `   • **Why points were lost:** ${d.tip}\n`;
+      }).join('\n') +
+      `\n---\n\n` +
+      `### 🎯 3 Fastest Fixes to Boost Your Score Above 90:\n\n` +
+      `1. **Add 3 Numbers or Percentages:** Add concrete scale (e.g. *"reduced load time by 25%"*, *"served 500+ users"*, *"built 12+ REST endpoints"*). *(+8 to +12 points)*\n` +
+      `2. **Inject Missing Keywords:** Add ${missingSkills.slice(0, 3).join(', ') || 'target role technologies'} to your Skills and Project descriptions. *(+10 to +15 points)*\n` +
+      `3. **Upgrade Your Summary:** Replace outdated objective statements with a modern 3-line Professional Profile highlighting your technical stack. *(+6 to +10 points)*\n\n` +
+      `Ask me: *"How do I rewrite my project bullets with numbers?"* or *"Rewrite my summary"* to fix these instantly!`;
+  }
+
+  // -------------------------------------------------------------
+  // TOPIC C: SKILLS / KEYWORD MATCH / MISSING SKILLS
+  // -------------------------------------------------------------
+  if (/\b(skill|skills|keyword|keywords|tech stack|technologies)\b/i.test(query)) {
+    return `### 🛠️ Skill & Keyword Analysis for ${roleTitle}:\n\n` +
+      `Our calibrated ATS parser compared your resume against top hiring criteria for **${roleTitle}**:\n\n` +
+      `• **Verified Skills Found on Your Resume (${matchedSkills.length}):**\n` +
+      `  ${matchedSkills.length > 0 ? matchedSkills.map(s => `\`${s}\``).join(', ') : 'None detected yet'}\n\n` +
+      `• **Critical Keywords Missing for ${roleTitle} (${missingSkills.length}):**\n` +
+      `  ${missingSkills.length > 0 ? missingSkills.map(s => `\`${s}\``).join(', ') : 'All standard role keywords matched!'}\n\n` +
+      `**Why ATS Docks Marks for This:**\n` +
+      `Applicant Tracking Systems scan for exact matches and common synonyms in the first pass. If the job requires *"Docker, REST APIs, TypeScript"* and those words don't appear in your Skills or Project bullet points, the match percentage automatically drops.\n\n` +
+      `💡 **Fix:** You don't need to learn 10 new technologies! If you have used any of these tools in academic coursework or personal projects, make sure they are explicitly listed in your **Technical Skills** section and mentioned once in a project description.`;
+  }
+
+  // -------------------------------------------------------------
+  // TOPIC D: QUANTIFIABLE IMPACT & METRICS
+  // -------------------------------------------------------------
+  if (/\b(metric|metrics|quantif|number|numbers|percent|percentage|measurable)\b/i.test(query)) {
+    return `### 📈 Why Quantifiable Impact & Metrics Matter (Score: ${scores.quantifiable_impact ?? 55}/100):\n\n` +
+      `Our analysis found **${metricCount} metric(s)** in your resume. Recruiters prefer seeing measurable business results because it proves you don't just write code—you deliver impact!\n\n` +
+      `**Common Reasons Bullets Score Low:**\n` +
+      `• Saying *"worked on login page"* instead of stating how many users or how secure it was.\n` +
+      `• Saying *"improved website speed"* without stating by how much (e.g. *35%* or *1.2 seconds*).\n\n` +
+      `**How to Turn Ordinary Bullets into 100-Point Bullets:**\n\n` +
+      `1. **Speed / Latency:** *"Optimized database queries and API endpoints, decreasing response latency by **35%**."*\n` +
+      `2. **Scale / Volume:** *"Architected responsive web platform supporting **1,000+ active sessions** with zero downtime."*\n` +
+      `3. **Productivity / Codebase:** *"Implemented automated unit tests and CI/CD scripts, reducing bug regressions by **40%**."*\n\n` +
+      `👉 Paste any bullet point from your resume right now and I will rewrite it with realistic numbers!`;
+  }
+
+  // -------------------------------------------------------------
+  // TOPIC E: ATS COMPATIBILITY & FORMATTING
+  // -------------------------------------------------------------
+  if (/\b(ats|scanner|format|formatting|layout|reject|parse|compatibility)\b/i.test(query)) {
+    const issues = atsIssues.length > 0 ? atsIssues : ['Complex column formatting or missing standard headings'];
+    return `### 🤖 ATS Compatibility Analysis (Score: ${scores.ats_compatibility ?? 85}/100):\n\n` +
+      `Applicant Tracking Systems (ATS) are automated software engines (Workday, Taleo, Greenhouse) that parse resumes into plain text before a human recruiter ever sees them.\n\n` +
+      `**Specific Issues Flagged on Your Resume:**\n` +
+      issues.map(iss => `• ⚠️ ${iss}`).join('\n') + `\n\n` +
+      `**4 Rules to Guarantee 100% ATS Pass Rate:**\n` +
+      `1. **Single-Column Only:** Multi-column layouts, tables, and sidebars frequently break text flow in legacy parsers.\n` +
+      `2. **Standard Section Names:** Use *Professional Summary*, *Technical Skills*, *Work Experience*, *Education*, *Projects*.\n` +
+      `3. **Plain Text Contact Info:** Keep your Email, Phone Number, LinkedIn, and GitHub links in clean text.\n` +
+      `4. **Standard PDF/DOCX:** Never upload images or exports with complex non-standard graphics.`;
+  }
+
+  // -------------------------------------------------------------
+  // TOPIC F: BULLET POINT REWRITING & STAR / GOOGLE XYZ
+  // -------------------------------------------------------------
+  if (/\b(bullet|bullets|star|rewrite|action verb|experience|projects|xyz)\b/i.test(query)) {
+    return `### 🌟 The Google XYZ / STAR High-Impact Formula:\n\n` +
+      `The most respected hiring framework across top tech companies (Google, Microsoft, Amazon) is the **XYZ Formula**:\n\n` +
+      `> *"Accomplished **[X]**, as measured by **[Y]**, by doing **[Z]**."*\n\n` +
+      `**Before & After Example:**\n` +
+      `• ❌ **Before (Weak):** *"Worked on developing web applications using React and Node.js."*\n` +
+      `• ✅ **After (High Impact):** *"**Engineered** 4+ full-stack web applications using React, Node.js, and PostgreSQL, improving page load speed by **35%** and serving 500+ active test users."*\n\n` +
+      `**Key Elements Recruiters Look For:**\n` +
+      `1. Strong action verb at the start (*Engineered, Architected, Automated, Optimized*).\n` +
+      `2. Concrete technologies named (*React, Node.js, PostgreSQL*).\n` +
+      `3. Measurable result at the end (*35% speed improvement, 500+ users*).\n\n` +
+      `👉 Paste any bullet point from your resume right now and I will transform it into 3 STAR variations!`;
+  }
+
+  // -------------------------------------------------------------
+  // TOPIC G: TOP PRIORITY FIXES / ACTION PLAN
+  // -------------------------------------------------------------
+  if (/\b(improve|increase|boost|better|action plan|priority|top priority|how to get|next step)\b/i.test(query)) {
+    return `### 🚀 Your Prioritized 3-Step Action Plan to Reach 95+ Score:\n\n` +
+      `Based on our diagnostic evaluation of your resume, here are the highest-impact changes you can make right now:\n\n` +
+      `**1. Upgrade Summary to a Professional Profile (+10 Points):**\n` +
+      `Replace any traditional objective with a 3-line statement highlighting your target role (**${roleTitle}**) and top tools (${matchedSkills.slice(0, 3).join(', ') || 'key languages'}). *(Ask me: "Rewrite my summary")*\n\n` +
+      `**2. Inject 3 Measurable Numbers into Experience / Projects (+12 Points):**\n` +
+      `Quantify your accomplishments with percentages, throughput, or time saved (e.g. *"reduced latency by 30%"*, *"handled 1,000+ API requests"*).\n\n` +
+      `**3. Bridge Critical Role Skills (+10 Points):**\n` +
+      `Incorporate missing high-priority tools (${missingSkills.slice(0, 3).join(', ') || 'specialized libraries'}) into your technical stack and project descriptions.\n\n` +
+      `Which of these 3 would you like to tackle first?`;
+  }
+
+  // -------------------------------------------------------------
+  // TOPIC H: INTERVIEW PREPARATION & QUESTIONS
+  // -------------------------------------------------------------
+  if (query.includes('interview') || query.includes('questions to ask') || query.includes('tell me about yourself') || query.includes('behavioral') || query.includes('technical question')) {
+    if (query.includes('tell me about yourself')) {
+      return `### 🎙️ The 3-Part "Tell Me About Yourself" Pitch for ${roleTitle}:\n\n` +
+        `**1. Present (30 Seconds):**\n` +
+        `> *"I am a ${roleTitle} with hands-on experience building full-stack applications with ${matchedSkills.slice(0, 3).join(', ') || 'modern web technologies'}. Recently, I've been focused on designing responsive user interfaces and scalable REST APIs..."*\n\n` +
+        `**2. Past (45 Seconds):**\n` +
+        `> *"In my recent internship/projects, I engineered applications that resolved real bottlenecks, such as optimizing database queries and deploying clean, tested code that improved performance by 30%..."*\n\n` +
+        `**3. Future (15 Seconds):**\n` +
+        `> *"I'm excited about this opportunity because I want to bring my disciplined problem-solving and rapid learning to your engineering team to build scalable software."*`;
+    }
+    return `### 🎯 High-Yield Interview Questions for ${roleTitle} (${seniority.toUpperCase()} Tier):\n\n` +
+      `**1. System Design & Technical Problem Solving:**\n` +
+      `• *"Can you walk us through how you design and document a scalable REST API endpoint from scratch?"*\n` +
+      `• *"How do you handle asynchronous operations, errors, and database connection pooling in your stack?"*\n\n` +
+      `**2. Behavioral & Collaboration (STAR):**\n` +
+      `• *"Tell me about a difficult technical bug you solved. What was your debugging methodology?"*\n` +
+      `• *"Describe a project where requirements shifted midway. How did you adapt your architecture?"*\n\n` +
+      `**3. Smart Questions for YOU to ask the Interviewer:**\n` +
+      `• *"What does a successful engineer on this team accomplish in their first 90 days?"*\n` +
+      `• *"What is your team's code review, testing, and continuous deployment workflow?"*\n\n` +
       `Would you like to practice a mock answer to any of these?`;
   }
 
-  // 4. Salary Negotiation & Offer Evaluation
+  // -------------------------------------------------------------
+  // TOPIC I: SALARY & OFFER NEGOTIATION
+  // -------------------------------------------------------------
   if (query.includes('salary') || query.includes('negotiat') || query.includes('offer') || query.includes('compensation') || query.includes('raise')) {
-    return `### 💰 Strategic Compensation & Salary Negotiation Tactics:\n\n` +
-      `**1. Anchor High with Data:** Never state a single number first. Benchmark against Levels.fyi and Glassdoor for your location and level.\n` +
-      `> *"Based on market data for ${targetRole || 'this position'} and the quantifiable impact I bring in modern engineering, I am targeting a base range of $X - $Y."*\n\n` +
-      `**2. Evaluate the Total Compensation (TC) Package:**\n` +
-      `• **Base Salary:** Direct cash flow and foundation for annual bonuses.\n` +
-      `• **Equity / Stock Grants (RSUs/Options):** Vesting schedules (e.g., 4-year with 1-year cliff).\n` +
-      `• **Sign-on Bonus:** The easiest line-item for recruiters to adjust when base budget is tight.\n` +
+    return `### 💰 Strategic Compensation & Salary Negotiation Tactics for ${roleTitle}:\n\n` +
+      `**1. Anchor High with Market Data:**\n` +
+      `Never state a single number first. Benchmark against Levels.fyi and Glassdoor for your location and level:\n` +
+      `> *"Based on market data for ${roleTitle} and the quantifiable impact I bring in modern engineering, I am targeting a base range of $X - $Y."*\n\n` +
+      `**2. Evaluate Total Compensation (TC):**\n` +
+      `• **Base Salary:** Direct cash flow and benchmark for annual raises.\n` +
+      `• **Sign-on Bonus:** The easiest line-item for recruiters to adjust when base budget is locked.\n` +
+      `• **Equity / Stock Grants (RSUs/Options):** Check vesting schedule (e.g. 4-year with 1-year cliff).\n` +
       `• **Remote Flexibility & Learning Stipends:** High-value non-cash benefits.\n\n` +
       `**3. Script to Counter an Initial Offer:**\n` +
       `> *"Thank you so much for the offer! I am genuinely thrilled about this role. Given my hands-on background and the immediate value I'll add, if we can reach $Z in base (or add a sign-on bonus), I am prepared to sign immediately."*`;
   }
 
-  // 5. Job Roles & Career Paths
-  if (query.includes('role') || query.includes('job') || query.includes('apply') || query.includes('career') || query.includes('what job') || query.includes('position')) {
-    return `### 🎯 High-Match Job Roles Based on Your Profile:\n\n` +
-      `Our multi-stage skill audit mapped your verified competencies against industry job profiles:\n\n` +
-      `1. **Full Stack Developer / Software Engineer:** Your combination of frontend interfaces and server-side APIs makes you a prime candidate for fast-moving product teams.\n` +
-      `2. **Backend & API Systems Engineer:** If you emphasize database schema optimization, REST/GraphQL endpoints, and containerization.\n` +
-      `3. **Frontend / UI Engineer:** If you highlight modern component architectures (React/Vue/Angular), state management, and performance budgets.\n` +
-      `4. **Cloud & DevOps Associate:** If you incorporate Docker containerization, CI/CD automated deployments, and AWS/GCP services.\n\n` +
-      `💡 Check the **"Recommended Job Roles to Apply For"** card on your dashboard for exact match percentages and missing keywords for each title!`;
-  }
-
-  // 6. Metrics, Numbers & Quantification
-  if (query.includes('metric') || query.includes('quantif') || query.includes('number') || query.includes('percent') || query.includes('measure')) {
-    return `### 📊 How to Add High-Impact Quantifiable Metrics to Your Resume:\n\n` +
-      `Recruiters and automated filters prioritize bullets with explicit business value:\n\n` +
-      `• **Performance & Latency:** *"Optimized database indices and API payload size, slashing 95th-percentile response times by **42%**."*\n` +
-      `• **Scale & Throughput:** *"Supported **60,000+** monthly active users while sustaining a **99.9%** uptime SLA."*\n` +
-      `• **Developer Productivity:** *"Architected automated CI/CD pipelines, saving the team **15+ engineering hours** each sprint."*\n` +
-      `• **Cost Optimization:** *"Migrated legacy compute instances to containerized clusters, reducing cloud operating costs by **28%**."*\n\n` +
-      `👉 Paste one of your existing bullet points here, and I'll rewrite it with realistic numbers!`;
-  }
-
-  // 7. Summary & Objective Statements
-  if (query.includes('summary') || query.includes('objective') || query.includes('write summary') || query.includes('profile')) {
-    if (seniority === 'senior' || seniority === 'lead') {
-      return `### 👔 Senior / Lead Executive Summary Blueprint:\n\n` +
-        `> *"Results-driven **Senior ${targetRole || 'Software Engineer'}** with 6+ years delivering high-throughput distributed architectures, cloud services, and mission-critical SaaS platforms. Proven record of leading cross-functional squads, mentoring 8+ engineers, and optimizing operational costs by up to 32%. Passionate about scalable architecture, high-availability SLA compliance, and driving measurable business ROI."*`;
-    } else {
-      return `### 🚀 Trainee / Junior Professional Summary Blueprint:\n\n` +
-        `> *"Agile and dedicated **${targetRole || 'Software Developer'}** proficient in JavaScript/TypeScript, modern frameworks, Python, and relational database systems. Creator of production-ready full-stack applications with clean REST API architecture, comprehensive testing, and responsive UI design. Eager to contribute disciplined problem-solving, rapid adaptability, and continuous learning to high-impact product teams."*`;
-    }
-  }
-
-  // 8. Bullet Point Rewriting & STAR Framework
-  if (query.includes('bullet') || query.includes('rewrite') || query.includes('star') || query.includes('action verb') || query.includes('experience')) {
-    return `### 🌟 Master STAR Method Bullet Point Formula:\n\n` +
-      `**Formula:** ` +
-      `**[Strong Action Verb]** + **[Task/Feature Built]** using **[Technologies/Tools]** + **[Quantifiable Business Result/Metric]**.\n\n` +
-      `**Example 1 (Backend / Full Stack):**\n` +
-      `• ❌ *Weak:* "Created login system and updated user endpoints."\n` +
-      `• ✅ *Strong:* "**Engineered** secure OAuth2 / JWT authentication service with rate-limiting in Node.js & Redis, preventing brute-force incursions and reducing login latency by **30%**."\n\n` +
-      `**Example 2 (Frontend / UI):**\n` +
-      `• ❌ *Weak:* "Worked on the design of the main dashboard."\n` +
-      `• ✅ *Strong:* "**Constructed** responsive interactive dashboard using React and Tailwind CSS, reducing Largest Contentful Paint (LCP) from 3.8s to **1.4s** across 10,000+ weekly sessions."\n\n` +
-      `👉 Paste any line from your resume right now and watch me transform it!`;
-  }
-
-  // 9. ATS & Format Optimization
-  if (query.includes('ats') || query.includes('format') || query.includes('font') || query.includes('scanner') || query.includes('layout') || query.includes('pdf')) {
-    return `### 🤖 The 6 Golden Rules of ATS (Applicant Tracking System) Formatting:\n\n` +
-      `1. **Single-Column Structure:** Multi-column tables, text boxes, and sidebars frequently break text flow in legacy enterprise ATS parsers (Taleo, Workday).\n` +
-      `2. **Universal Section Headers:** Use recognized headings: *Professional Experience, Technical Skills, Education, Projects, Certifications*.\n` +
-      `3. **Standard File Formats:** Upload clean .PDF or .DOCX files. Never upload screenshot images or canvas-rendered documents.\n` +
-      `4. **Parseable Contact Details:** Include City/State/Country, professional Email, Phone Number, LinkedIn URL, and GitHub/Portfolio link.\n` +
-      `5. **No Graphics for Skills:** Never use progress bars, stars, or percentages to represent skill levels (e.g. "React 80%"). Always list skills as plain text.\n` +
-      `6. **Standard Typography:** Use clean sans-serif fonts (Inter, Roboto, Arial, Calibri) sized between 10pt - 11.5pt with 0.5 - 0.75 inch margins.`;
-  }
-
-  // 10. Tech Stack & Skills Questions (Coding, Languages, Frameworks)
-  if (query.includes('react') || query.includes('python') || query.includes('javascript') || query.includes('node') || query.includes('sql') || query.includes('docker') || query.includes('aws') || query.includes('tech stack') || query.includes('skill')) {
-    return `### 🛠️ Strategic Tech Stack Guidance for ${targetRole || 'Modern Software Engineering'}:\n\n` +
-      `To stand out in competitive applicant pools, group your technical stack logically:\n\n` +
-      `• **Languages:** TypeScript, JavaScript, Python, Java, SQL, Go\n` +
-      `• **Frontend:** React, Next.js, Vue, HTML5/CSS3, Tailwind CSS, State Management (Redux/Zustand)\n` +
-      `• **Backend & APIs:** Node.js, Express, FastAPI, Django, RESTful Architecture, GraphQL, Microservices\n` +
-      `• **Databases & Caching:** PostgreSQL, MySQL, MongoDB, Redis, Prisma ORM\n` +
-      `• **Cloud & DevOps:** Docker, AWS (S3, EC2, Lambda), CI/CD (GitHub Actions), Kubernetes, Linux\n` +
-      `• **Testing & Tooling:** Jest, Cypress, Git, Postman, Webpack/Vite\n\n` +
-      `💡 *Tip:* Always list tools adjacent to where you used them in your **Projects** or **Work Experience** so ATS parsers correlate your skills with actual tenure!`;
-  }
-
-  // 11. Career Pivot / Transition
-  if (query.includes('pivot') || query.includes('switch') || query.includes('transition') || query.includes('change career') || query.includes('fresher') || query.includes('student')) {
-    return `### 🔄 How to Successfully Pivot Your Career into ${targetRole || 'Tech'}:\n\n` +
-      `1. **Focus on Transferable Skills:** Highlight problem-solving, analytical thinking, agile workflow, and cross-team communication from your past background.\n` +
-      `2. **Lead with a Dedicated 'Technical Projects' Section:** Put 2-3 full-scale, deployed applications above your work history. Include live demo links and GitHub repositories.\n` +
-      `3. **Write a Forward-Looking Summary:** Acknowledge your pivot directly: *"Software Engineer with background in [Domain], combining analytical rigor with modern full-stack web technologies."*\n` +
-      `4. **Highlight Open-Source & Continuous Learning:** Mention active open-source contributions, hackathons, or recognized certifications (AWS, Meta, Google).`;
-  }
-
-  // 12. Direct Text/Bullet Point Submitted for Immediate Rewriting
-  if (rawMsg.split(' ').length > 6 && (rawMsg.toLowerCase().startsWith('worked on') || rawMsg.toLowerCase().startsWith('responsible for') || rawMsg.toLowerCase().startsWith('helped') || rawMsg.toLowerCase().startsWith('managed') || rawMsg.toLowerCase().startsWith('built') || rawMsg.toLowerCase().startsWith('created') || rawMsg.toLowerCase().startsWith('developed'))) {
+  // -------------------------------------------------------------
+  // TOPIC J: DIRECT BULLET POINT SUBMITTED FOR REWRITING
+  // -------------------------------------------------------------
+  if (rawMsg.split(' ').length >= 5 && (rawMsg.toLowerCase().startsWith('worked on') || rawMsg.toLowerCase().startsWith('responsible for') || rawMsg.toLowerCase().startsWith('helped') || rawMsg.toLowerCase().startsWith('managed') || rawMsg.toLowerCase().startsWith('built') || rawMsg.toLowerCase().startsWith('created') || rawMsg.toLowerCase().startsWith('developed'))) {
+    const cleanedTask = rawMsg.replace(/^(worked on|responsible for|helped to|helped with|built|created|developed)\s+/i, '');
     return `### ✍️ Instant STAR Bullet Point Transformation:\n\n` +
       `**Your Original Line:**\n` +
       `> *"${rawMsg}"*\n\n` +
-      `**Option 1 — High-Impact & Metrics Driven:**\n` +
-      `> *"**Spearheaded** the end-to-end development of ${rawMsg.replace(/^(worked on|responsible for|helped to|helped with|built|created)\s+/i, '')}, enhancing processing efficiency by **35%** and decreasing turnaround latency across the production environment."*\n\n` +
+      `**Option 1 — High-Impact & Metrics Driven (Best for ATS & Recruiters):**\n` +
+      `> *"**Spearheaded** the end-to-end development of ${cleanedTask}, enhancing processing efficiency by **35%** and decreasing turnaround latency across the production environment."*\n\n` +
       `**Option 2 — Architectural & Scalability Focused (Senior Grade):**\n` +
-      `> *"**Architected and implemented** a robust solution for ${rawMsg.replace(/^(worked on|responsible for|helped to|helped with|built|created)\s+/i, '')}, ensuring 99.9% fault tolerance and seamless integration with core distributed services."*\n\n` +
+      `> *"**Architected and implemented** a robust solution for ${cleanedTask}, ensuring 99.9% fault tolerance and seamless integration with core distributed services."*\n\n` +
       `**Option 3 — Concise & Action-Oriented:**\n` +
-      `> *"**Delivered** production-ready features for ${rawMsg.replace(/^(worked on|responsible for|helped to|helped with|built|created)\s+/i, '')}, collaborating closely with cross-functional teams to accelerate release cycles by 2 weeks."*\n\n` +
+      `> *"**Delivered** production-ready features for ${cleanedTask}, collaborating closely with cross-functional teams to accelerate release cycles by 2 weeks."*\n\n` +
       `Which variation best fits your actual experience?`;
   }
 
-  // 13. Universal Fallback: Context-Aware Comprehensive Coaching for ANY Input
-  return `### 💡 Professional Career Coaching & Guidance:\n\n` +
+  // -------------------------------------------------------------
+  // TOPIC K: GREETINGS & PLEASANTRIES
+  // -------------------------------------------------------------
+  if (/^(hi|hello|hey|good\s*(morning|afternoon|evening)|howdy|greetings|hola)(\s+.*|\!|\?|$)/i.test(query)) {
+    return `### 👋 Hello! How can I assist your career journey today?\n\n` +
+      `I am your **Executive Career & Resume Coach**. You can ask me **anything**, such as:\n\n` +
+      `• **Resume Diagnostician:** *"Why my summary is too low marks?"* or *"Why is my score 75?"*\n` +
+      `• **Bullet-Point Rewriting:** *"Rewrite my work experience bullet using STAR method."*\n` +
+      `• **Missing Skills:** *"What skills am I missing for ${roleTitle}?"*\n` +
+      `• **Interview Prep:** *"What behavioral questions will they ask for a ${roleTitle}?"*\n` +
+      `• **Salary Negotiation:** *"How do I negotiate a higher base salary?"*\n\n` +
+      `Feel free to ask any question or paste a sentence you want rewritten!`;
+  }
+
+  // -------------------------------------------------------------
+  // TOPIC L: UNIVERSAL CONTEXT-AWARE COACHING FOR ANY INPUT
+  // -------------------------------------------------------------
+  return `### 💡 Career Coach Guidance for ${roleTitle}:\n\n` +
     `Regarding your question: **"${rawMsg}"**\n\n` +
-    `Here is strategic advice tailored for **${targetRole || 'your chosen career track'}** (${seniority.toUpperCase()} Tier):\n\n` +
-    `1. **Industry Alignment:** In today's hiring landscape, technical recruiters and hiring managers spend an average of **6 to 8 seconds** scanning an initial resume. Every section must immediately answer: *What problem did you solve? How did you solve it? What was the quantifiable outcome?*\n\n` +
-    `2. **Strategic Action to Take:**\n` +
-    `   • Align your resume terminology directly with target job postings.\n` +
-    `   • Replace passive phrases (*"worked with"*, *"helped"*, *"was responsible for"*) with assertive power verbs (*"Engineered"*, *"Architected"*, *"Optimized"*, *"Streamlined"*).\n` +
-    `   • Quantify outcomes using percentages, volume, or time saved.\n\n` +
-    `3. **Immediate Next Step:**\n` +
-    `   • Paste a bullet point or paragraph from your resume, and I'll rewrite it for you.\n` +
-    `   • Or ask: *"What are the top interview questions for this role?"*, *"How should I structure my project section?"*, or *"Give me a cover letter template."*`;
+    `Here is strategic advice tailored to your **${roleTitle}** profile:\n\n` +
+    `1. **Focus on Outcomes Over Duties:** Technical recruiters spend **6 to 8 seconds** reviewing a resume. Every bullet point and summary line should demonstrate: *What problem did you solve? What technologies did you use? What was the measurable result?*\n\n` +
+    `2. **Recommended Actions You Can Take Right Now:**\n` +
+    `   • Ask me: *"Why my summary is too low marks?"* to see exact deductions and get a 95+ rewrite.\n` +
+    `   • Ask me: *"Why is my score low?"* to get a breakdown of your weakest dimensions.\n` +
+    `   • Ask me: *"What skills am I missing?"* to match top employer job postings.\n` +
+    `   • Or paste any bullet point from your resume here, and I'll rewrite it with the STAR formula.\n\n` +
+    `What would you like to improve next?`;
 }

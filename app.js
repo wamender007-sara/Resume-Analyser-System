@@ -21,6 +21,7 @@ import {
 
 // ─── State ────────────────────────────────────────────────────
 let currentResumeText = '';
+let currentAnalysis = null;
 let isChatting = false;
 
 // ─── DOM Refs ─────────────────────────────────────────────────
@@ -284,6 +285,7 @@ async function runAnalysis() {
     await new Promise(r => setTimeout(r, 600));
 
     const analysis = analyseResumeLocally(resumeText, targetRole, jobDescription);
+    currentAnalysis = analysis;
     renderAnalysis(analysis);
     showToast(`Comprehensive evaluation against ${analysis.seniority.toUpperCase()} expectations complete!`, 'success');
 
@@ -429,8 +431,11 @@ async function sendChatMessage() {
   // Natural response simulation
   setTimeout(() => {
     removeTypingIndicator();
-    const targetRole = targetRoleInput.value.trim();
-    const reply = generateChatResponse(text, currentResumeText, targetRole);
+    if (!currentResumeText) {
+      currentResumeText = getActiveResumeText();
+    }
+    const targetRole = targetRoleInput ? targetRoleInput.value.trim() : '';
+    const reply = generateChatResponse(text, currentResumeText, targetRole, currentAnalysis);
     appendChatMessage('assistant', reply);
     chatStatus.textContent = 'Career Coach & Review Specialist';
     isChatting = false;
