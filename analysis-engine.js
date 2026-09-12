@@ -104,56 +104,116 @@ function estimateExperienceYears(text) {
 }
 
 // ─── 4. ROLE RECOMMENDATION ENGINE ───
-const ROLE_PROFILES = [
+export const ROLE_PROFILES = [
   {
     title: 'Full Stack Developer',
+    aliases: ['full stack', 'fullstack', 'web developer', 'software engineer', 'software developer', 'web dev'],
     level: 'Junior / Mid / Senior',
     skills: ['javascript', 'typescript', 'react', 'node.js', 'express', 'postgresql', 'mongodb', 'rest api', 'sql'],
     desc: 'Deliver complete end-to-end features spanning modern front-end architectures and robust backend services.'
   },
   {
     title: 'Backend Systems Engineer',
+    aliases: ['backend', 'server', 'api developer', 'java developer', 'golang', 'python developer'],
     level: 'Junior / Mid / Senior',
     skills: ['python', 'node.js', 'express', 'c++', 'postgresql', 'mongodb', 'rest api', 'sql', 'docker'],
     desc: 'Design, optimize, and scale database schemas, server-side APIs, caching tiers, and business logic.'
   },
   {
     title: 'AI / Machine Learning Engineer',
+    aliases: ['ai', 'artificial intelligence', 'machine learning', 'ml', 'deep learning', 'computer vision', 'data science', 'nlp', 'llm'],
     level: 'Junior / Mid / Senior',
-    skills: ['python', 'machine learning', 'deep learning', 'opencv', 'pytorch', 'tensorflow', 'flask', 'computer vision'],
+    skills: ['python', 'machine learning', 'deep learning', 'opencv', 'pytorch', 'tensorflow', 'flask', 'computer vision', 'cnn'],
     desc: 'Develop AI models, computer vision systems, neural networks, and intelligent software pipelines.'
   },
   {
     title: 'IoT & Embedded Systems Engineer',
+    aliases: ['iot', 'embedded', 'hardware', 'esp32', 'arduino', 'robotics', 'firmware', 'microcontroller'],
     level: 'Junior / Mid / Senior',
     skills: ['esp32', 'esp8266', 'embedded systems', 'c++', 'c', 'iot', 'robotics', 'microcontroller', 'sensors', 'python'],
     desc: 'Design hardware-software integration, microcontroller programming, IoT telemetry, and embedded robotics.'
   },
   {
     title: 'Frontend / UI Engineer',
+    aliases: ['frontend', 'front end', 'ui', 'ux', 'web designer', 'react developer', 'angular', 'vue'],
     level: 'Junior / Mid / Senior',
     skills: ['javascript', 'typescript', 'react', 'next.js', 'html5', 'css3', 'tailwind', 'redux', 'git'],
     desc: 'Build high-performance, accessible, and responsive user interfaces with modern component frameworks.'
   },
   {
     title: 'Cloud & DevOps Engineer',
+    aliases: ['devops', 'cloud', 'aws', 'azure', 'gcp', 'sre', 'site reliability', 'infrastructure', 'sysadmin'],
     level: 'Mid / Senior',
     skills: ['aws', 'docker', 'kubernetes', 'ci/cd', 'github actions', 'linux', 'terraform', 'nginx'],
     desc: 'Automate build pipelines, container orchestration, cloud infrastructure, and site reliability.'
   },
   {
     title: 'Data Analyst / Scientist',
+    aliases: ['data analyst', 'data scientist', 'bi analyst', 'business analyst', 'data analytics'],
     level: 'Junior / Mid',
     skills: ['python', 'sql', 'pandas', 'numpy', 'machine learning', 'postgresql'],
     desc: 'Extract, clean, and model complex data to generate actionable predictions and insights.'
   },
   {
     title: 'Automobile / Automotive Systems Engineer',
+    aliases: ['automobile', 'automotive', 'vehicle', 'ev', 'car', 'powertrain', 'mechanical', 'bms'],
     level: 'Entry / Mid / Senior',
-    skills: ['cad', 'solidworks', 'matlab', 'ansys', 'powertrain', 'ev', 'bms', 'can bus', 'iot', 'embedded systems'],
+    skills: ['cad', 'solidworks', 'matlab', 'ansys', 'powertrain', 'ev', 'bms', 'can bus', 'iot', 'embedded systems', 'sensors'],
     desc: 'Design automotive systems, EV power electronics, mechanical simulations, vehicle telemetry, and embedded ECUs.'
+  },
+  {
+    title: 'Cyber Security & Network Engineer',
+    aliases: ['security', 'cyber', 'soc', 'penetration', 'infosec', 'network', 'ethical hacker'],
+    level: 'Junior / Mid / Senior',
+    skills: ['linux', 'bash', 'networking', 'python', 'wireshark', 'c', 'docker', 'cryptography'],
+    desc: 'Protect network perimeters, audit vulnerabilities, secure APIs, and implement defense protocols.'
   }
 ];
+
+export function findMatchingRoleProfile(targetRole) {
+  if (!targetRole || typeof targetRole !== 'string') return null;
+  const tr = targetRole.toLowerCase().trim();
+
+  // 1. Alias matching
+  for (const profile of ROLE_PROFILES) {
+    if (profile.aliases) {
+      for (const alias of profile.aliases) {
+        if (tr.includes(alias) || alias.includes(tr)) {
+          return profile;
+        }
+      }
+    }
+  }
+
+  // 2. Exact or substring match on Title
+  for (const profile of ROLE_PROFILES) {
+    const pTitle = profile.title.toLowerCase();
+    if (tr.includes(pTitle) || pTitle.includes(tr)) {
+      return profile;
+    }
+  }
+
+  // 3. Token-based word overlap
+  const stopWords = new Set(['engineer', 'developer', 'specialist', 'lead', 'trainee', 'junior', 'senior', 'intern', 'and', 'the', 'of', '/']);
+  const tokens = tr.replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+  for (const profile of ROLE_PROFILES) {
+    const pTitle = profile.title.toLowerCase();
+    for (const token of tokens) {
+      if (pTitle.includes(token)) {
+        return profile;
+      }
+    }
+  }
+
+  // Fallback to first profile with custom label
+  return {
+    title: targetRole,
+    aliases: [tr],
+    level: 'General Entry / Mid',
+    skills: ['python', 'javascript', 'sql', 'git', 'problem solving', 'communication'],
+    desc: `Custom benchmark for ${targetRole}.`
+  };
+}
 
 function determineSuggestedRoles(resumeLower, uniqueSkills) {
   const suggestions = [];
@@ -266,6 +326,26 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
   const lower = clean.toLowerCase();
   const words = clean.split(/\s+/).filter(Boolean);
   const wordCount = words.length;
+
+  // Extract Candidate Name from initial lines
+  let candidateName = 'Candidate';
+  const headerLines = clean.split('\n').map(l => l.trim()).filter(Boolean);
+  for (let i = 0; i < Math.min(headerLines.length, 6); i++) {
+    const line = headerLines[i];
+    if (/@|http|\.com|\d{4}|phone|contact|curriculum|resume|page|email|github/i.test(line)) continue;
+    const wordsInLine = line.split(/\s+/).filter(Boolean);
+    if (wordsInLine.length >= 1 && wordsInLine.length <= 5 && /^[a-zA-Z\s\.\,\-]+$/.test(line) && line.length >= 3 && line.length <= 45) {
+      candidateName = line.toUpperCase();
+      break;
+    }
+  }
+
+  // Extract Academic Score / CGPA if present
+  let academicScore = null;
+  const cgpaMatch = clean.match(/(?:cgpa|gpa|percentage|marks?)\s*[:=\-]?\s*(\d{1,2}(?:\.\d{1,2})?(?:\s*\/\s*10|\s*%)?)/i);
+  if (cgpaMatch) {
+    academicScore = cgpaMatch[0].trim();
+  }
 
   const seniority = detectSeniority(targetRole, clean);
   const estimatedYears = estimateExperienceYears(clean);
@@ -710,6 +790,8 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
   const suggestedRoles = determineSuggestedRoles(lower, uniqueSkills);
 
   return {
+    candidateName,
+    academicScore,
     overallScore,
     grade,
     summary,

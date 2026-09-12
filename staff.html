@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Placement Staff Portal — Class Batch Resume Analyser & Leaderboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- PDF.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body class="light-theme">
+
+  <!-- PARTICLES BACKGROUND -->
+  <div id="particles"></div>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="logo-icon staff-logo">
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="36" height="36" rx="10" fill="url(#staffGrad)"/>
+          <path d="M18 9l8 4.5v6c0 5-3.5 9-8 10.5C13.5 28.5 10 24.5 10 19.5v-6L18 9z" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M15 18l2.5 2.5 5.5-5.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs>
+            <linearGradient id="staffGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#059669"/>
+              <stop offset="1" stop-color="#10b981"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-name">PlacementCell<span class="portal-tag">Staff Portal</span></h1>
+        <span class="brand-tag">Batch Resume Evaluation & Student Ranking Hub</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <!-- Return to Student Portal Link -->
+      <a href="index.html" class="btn-portal-switch" title="Go to Student Personal Resume Reviewer">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Student Portal
+      </a>
+
+      <!-- Staff Profile Indicator (Hidden until logged in) -->
+      <div class="staff-user-badge hidden" id="staffUserBadge">
+        <span class="user-status-dot"></span>
+        <span id="staffOfficerName">Prof. Placement Officer</span>
+        <button class="btn-logout" id="btnLogout" title="Log out of Staff Portal">Logout</button>
+      </div>
+
+      <!-- Theme Switcher Toggle -->
+      <button class="theme-toggle-btn" id="themeToggle" title="Toggle Light / Dark aesthetic mode">
+        <span class="theme-icon light-icon" id="themeIcon">🌙</span>
+        <span class="theme-label" id="themeLabel">Dark Mode</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER -->
+  <main class="staff-main-container">
+
+    <!-- 1. STAFF LOGIN SECTION -->
+    <section class="staff-login-section" id="staffLoginSection">
+      <div class="staff-login-card">
+        <div class="login-badge">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Institutional Access
+        </div>
+        <h2 class="login-title">Placement Staff & Faculty Login</h2>
+        <p class="login-sub">Access the batch evaluation portal to analyze up to 60+ student resumes simultaneously, discover top performers, and export placement shortlists.</p>
+
+        <form id="staffLoginForm" class="staff-login-form">
+          <div class="form-group">
+            <label for="staffEmail">Officer Email / Institutional ID</label>
+            <input type="email" id="staffEmail" class="input" placeholder="e.g. placement.cell@college.edu" value="placement@college.edu" required />
+          </div>
+
+          <div class="form-group">
+            <label for="staffDept">Academic Department</label>
+            <select id="staffDept" class="input select-input">
+              <option value="CSE">Department of Computer Science & Engineering (CSE)</option>
+              <option value="IT">Department of Information Technology (IT)</option>
+              <option value="ECE">Department of Electronics & Communication (ECE)</option>
+              <option value="MECH">Department of Mechanical & Automobile (MECH/AUTO)</option>
+              <option value="ALL">All Departments (Institutional Drive)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="staffPassword">Password</label>
+            <input type="password" id="staffPassword" class="input" placeholder="Enter password" value="placement2026" required />
+          </div>
+
+          <button type="submit" class="btn-primary btn-staff-login">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            Sign In to Staff Portal
+          </button>
+
+          <div class="demo-login-box">
+            <span>Or test immediately with demo credentials:</span>
+            <button type="button" class="btn-demo-quick" id="btnQuickDemo">
+              ⚡ One-Click Placement Staff Demo Sign In
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- 2. STAFF BATCH DASHBOARD (Visible After Login) -->
+    <section class="staff-dashboard-section hidden" id="staffDashboardSection">
+
+      <!-- TOP CONTROL & BATCH UPLOAD BAR -->
+      <div class="staff-batch-uploader-card">
+        <div class="batch-card-header">
+          <div>
+            <h2 class="section-heading">Class Batch Resume Ingestion</h2>
+            <p class="section-subheading">Upload a full classroom batch (1 to 60+ PDF/DOCX resumes). Our engine concurrently extracts, verifies, and ranks all candidates using standardized ATS metrics.</p>
+          </div>
+          <div class="batch-drive-settings">
+            <div class="setting-item">
+              <label for="targetDriveRole">Target Recruitment Profile:</label>
+              <select id="targetDriveRole" class="input select-input-sm">
+                <option value="Full Stack Developer">Full Stack Developer</option>
+                <option value="Software Engineer" selected>Software Engineer (General)</option>
+                <option value="Backend Engineer">Backend & API Engineer</option>
+                <option value="AI / Machine Learning Engineer">AI / ML Engineer</option>
+                <option value="Cloud & DevOps Engineer">Cloud & DevOps Engineer</option>
+                <option value="Automobile / Automotive Systems Engineer">Automobile / EV Systems</option>
+              </select>
+            </div>
+            <div class="setting-item">
+              <label for="classBatchLabel">Batch Identifier:</label>
+              <input type="text" id="classBatchLabel" class="input input-sm" placeholder="e.g. 2026 Batch - Section A" value="Class Batch 2026 (Section A)" />
+            </div>
+          </div>
+        </div>
+
+        <!-- BATCH DROPZONE -->
+        <div class="batch-dropzone" id="batchDropzone">
+          <div class="dropzone-icon">
+            <svg viewBox="0 0 48 48" fill="none">
+              <circle cx="24" cy="24" r="23" stroke="rgba(16,185,129,0.4)" stroke-width="1.5" stroke-dasharray="4 4"/>
+              <path d="M24 32V20m0 0l-5 5m5-5l5 5" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 36h16" stroke="rgba(16,185,129,0.6)" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p class="dropzone-title">Drag & drop up to 60+ student resume PDFs here</p>
+          <p class="dropzone-sub">Supports multiple selection of PDF, DOC, DOCX files · Unlimited batch capacity</p>
+          
+          <label class="btn-primary btn-batch-browse">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Select Batch Resumes (Multi-PDF)
+            <input type="file" id="batchFileInput" accept=".pdf,.doc,.docx,.txt" multiple hidden />
+          </label>
+        </div>
+
+        <!-- SELECTED FILES SUMMARY & ACTION -->
+        <div class="batch-selected-summary hidden" id="batchSelectedSummary">
+          <div class="summary-left">
+            <div class="files-count-badge" id="filesCountBadge">0 Resumes Staged</div>
+            <span class="files-size-info" id="filesSizeInfo">0 MB ready for class batch audit</span>
+          </div>
+          <button class="btn-start-batch-audit" id="btnStartBatchAudit">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Analyze Batch & Rank Students
+          </button>
+        </div>
+
+        <!-- REAL-TIME PROGRESS BAR -->
+        <div class="batch-progress-wrap hidden" id="batchProgressWrap">
+          <div class="progress-meta">
+            <span class="progress-label" id="batchProgressLabel">Analyzing student resumes…</span>
+            <span class="progress-pct" id="batchProgressPct">0%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="batchProgressFill" style="width: 0%;"></div>
+          </div>
+          <div class="progress-status-log" id="batchStatusLog">Initializing batch processing worker…</div>
+        </div>
+      </div>
+
+      <!-- RESULTS SECTION (Hidden until analyzed) -->
+      <div class="batch-results-wrap hidden" id="batchResultsWrap">
+
+        <!-- CLASS LEVEL KPI BANNER -->
+        <div class="batch-kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Class Batch Size</div>
+            <div class="kpi-value" id="kpiTotalCount">0</div>
+            <div class="kpi-sub">Students Analyzed</div>
+          </div>
+          <div class="kpi-card highlight-emerald">
+            <div class="kpi-label">Class Average Score</div>
+            <div class="kpi-value" id="kpiAvgScore">0</div>
+            <div class="kpi-sub">Calibrated ATS Benchmark</div>
+          </div>
+          <div class="kpi-card highlight-blue">
+            <div class="kpi-label">Placement Ready (Tier 1)</div>
+            <div class="kpi-value" id="kpiTier1Count">0</div>
+            <div class="kpi-sub" id="kpiTier1Pct">Grade A / A+ (80+)</div>
+          </div>
+          <div class="kpi-card highlight-gold">
+            <div class="kpi-label">Batch Highest Score</div>
+            <div class="kpi-value" id="kpiHighestScore">0</div>
+            <div class="kpi-sub" id="kpiTopPerformerName">Top Performer</div>
+          </div>
+        </div>
+
+        <!-- TOP PERFORMING STUDENTS PODIUM (RANK 1, 2, 3) -->
+        <div class="podium-card" id="podiumSection">
+          <div class="podium-header">
+            <h3 class="podium-title">
+              🏆 Top Performing Students (Classroom Podium)
+            </h3>
+            <span class="podium-subtitle">Students with highest quantified impact, verified technical depth, and ATS readiness</span>
+          </div>
+          <div class="podium-grid" id="podiumGrid"></div>
+        </div>
+
+        <!-- CANDIDATE DIRECTORY & SHORTLISTING TABLE -->
+        <div class="candidate-directory-card">
+          <div class="directory-toolbar">
+            <div class="toolbar-left">
+              <h3 class="directory-title">Classroom Leaderboard & Candidate Directory</h3>
+              <span class="directory-count" id="tableFilterCount">Showing 0 students</span>
+            </div>
+
+            <div class="toolbar-controls">
+              <!-- Search filter -->
+              <div class="search-wrap">
+                <input type="text" id="candidateSearchInput" class="input input-search" placeholder="Search by student name, skill, or email…" />
+              </div>
+
+              <!-- Grade filter -->
+              <select id="gradeFilterSelect" class="input select-filter">
+                <option value="ALL">All Grades</option>
+                <option value="TIER1">Tier 1: Grade A & A+ (80+)</option>
+                <option value="TIER2">Tier 2: Grade B & B+ (60-79)</option>
+                <option value="TIER3">Tier 3: Grade C & D (&lt;60)</option>
+              </select>
+
+              <!-- Sort Order -->
+              <select id="sortOrderSelect" class="input select-filter">
+                <option value="score_desc">Score: High to Low</option>
+                <option value="score_asc">Score: Low to High</option>
+                <option value="skills_desc">Most Technical Skills</option>
+                <option value="name_asc">Name: A to Z</option>
+              </select>
+
+              <!-- Export CSV Button -->
+              <button class="btn-export-csv" id="btnExportCsv" title="Export full ranked candidate list to CSV spreadsheet">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export Shortlist (CSV)
+              </button>
+            </div>
+          </div>
+
+          <!-- TABLE CONTAINER -->
+          <div class="table-responsive">
+            <table class="candidate-table" id="candidateTable">
+              <thead>
+                <tr>
+                  <th class="col-rank">Rank</th>
+                  <th class="col-name">Student Name & Contact</th>
+                  <th class="col-score">Score / Grade</th>
+                  <th class="col-cgpa">Academic CGPA</th>
+                  <th class="col-skills">Technical Stack & Skills</th>
+                  <th class="col-exp">Experience / Intern</th>
+                  <th class="col-proj">Projects</th>
+                  <th class="col-ats">ATS Ready</th>
+                  <th class="col-action">Detailed Audit</th>
+                </tr>
+              </thead>
+              <tbody id="candidateTableBody">
+                <!-- Rows injected dynamically by staff.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div><!-- /batch-results-wrap -->
+
+    </section>
+
+  </main>
+
+  <!-- 3. STUDENT DEEP AUDIT MODAL -->
+  <div class="modal-backdrop hidden" id="studentAuditModal">
+    <div class="audit-modal-window">
+      <div class="audit-modal-header">
+        <div class="modal-student-info">
+          <h2 class="modal-student-name" id="modalStudentName">Student Name</h2>
+          <div class="modal-student-meta" id="modalStudentMeta">Rank #1 · Computer Science · Score: 93/100</div>
+        </div>
+        <button class="btn-close-modal" id="btnCloseModal" title="Close audit window">✕</button>
+      </div>
+
+      <div class="audit-modal-body" id="modalAuditBody">
+        <!-- Exact same rich diagnostic components from personalize page injected dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- SCRIPTS -->
+  <script type="module" src="staff.js"></script>
+</body>
+</html>

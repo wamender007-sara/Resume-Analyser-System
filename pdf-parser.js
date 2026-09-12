@@ -40,8 +40,9 @@ export async function extractTextFromPDF(file) {
       const annotations = await page.getAnnotations();
       if (annotations && annotations.length > 0) {
         annotations.forEach(ann => {
-          if (ann.url) {
-            extractedUrls.push(ann.url);
+          const link = ann.url || ann.unsafeUrl;
+          if (link && typeof link === 'string') {
+            extractedUrls.push(link);
           }
         });
       }
