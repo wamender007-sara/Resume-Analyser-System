@@ -186,9 +186,28 @@
             </div>
           </div>
           <div class="score-meta">
-            <div class="score-grade" id="scoreGrade"></div>
+            <div class="score-grade-row">
+              <div class="score-grade" id="scoreGrade"></div>
+              <div class="verdict-pill" id="scoreVerdict"></div>
+              <button class="btn-copy-json" id="btnCopyJson" title="Copy raw analysis JSON conforming to prompt specifications">
+                📋 Copy Analysis JSON
+              </button>
+            </div>
             <p class="score-summary" id="scoreSummary"></p>
           </div>
+        </div>
+
+        <!-- 6 Core Evaluative Dimensions (Weighted Composite Criteria) -->
+        <div class="card card-eval-dimensions" id="evalDimensionsCard">
+          <div class="eval-dimensions-header">
+            <h3 class="card-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              6 Core Evaluative Dimensions & Weights
+            </h3>
+            <span class="dimensions-weight-badge">Composite: 100%</span>
+          </div>
+          <p class="dimensions-desc">Evaluated across keyword match, experience relevance, quantifiable impact, education, ATS compatibility, and language quality:</p>
+          <div class="evaluation-dimensions-grid" id="evalDimensionsGrid"></div>
         </div>
 
         <!-- Section Scores -->
@@ -269,6 +288,25 @@
           </h3>
           <p class="rewrite-intro">Automated transformation of weak/task-oriented bullet points into recruiter-ready achievement statements:</p>
           <div class="rewrite-list" id="bulletRewriteList"></div>
+        </div>
+
+        <!-- Language Quality Audit & Employment Gaps Row -->
+        <div class="cards-row language-gap-row">
+          <div class="card card-language-audit" id="languageAuditCard">
+            <h3 class="card-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              Language & Action Verb Quality (5% Weight)
+            </h3>
+            <div id="languageIssuesContainer"></div>
+          </div>
+
+          <div class="card card-employment-gaps" id="employmentGapsCard">
+            <h3 class="card-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Career Continuity & Gaps Check
+            </h3>
+            <div id="employmentGapsContainer"></div>
+          </div>
         </div>
 
         <!-- Suggested Job Roles Based on Resume Profile -->

@@ -2,6 +2,8 @@
  * ui.js — DOM helpers: score ring, cards, skeleton, toasts
  */
 
+import { formatAnalysisAsJson } from './analysis-engine.js';
+
 // ─── Score Ring ─────────────────────────────────────────────
 export function renderScoreRing(score) {
   const circumference = 314; // 2π × r=50
@@ -64,6 +66,137 @@ export function renderGrade(gradeEl, grade, summaryEl, summary) {
   gradeEl.style.background = style.bg;
   gradeEl.style.color = style.color;
   summaryEl.textContent = summary;
+}
+
+// ─── Verdict Badge ───────────────────────────────────────────
+export function renderVerdictBadge(verdict, score) {
+  const el = document.getElementById('scoreVerdict');
+  if (!el) return;
+  const v = verdict || (score >= 75 ? 'Strong Match' : (score >= 50 ? 'Moderate Match — needs tailoring' : 'Weak Match'));
+  let cls = 'verdict-moderate';
+  if (v.toLowerCase().includes('strong')) cls = 'verdict-strong';
+  else if (v.toLowerCase().includes('weak')) cls = 'verdict-weak';
+  
+  el.className = `verdict-pill ${cls}`;
+  el.textContent = v;
+}
+
+// ─── 6 Core Evaluative Dimensions ───────────────────────────
+const EVAL_DIMENSIONS = [
+  { key: 'keyword_match', label: 'Keyword & Skill Match', weight: '30% Weight', icon: '🎯' },
+  { key: 'experience_relevance', label: 'Experience Relevance', weight: '30% Weight', icon: '💼' },
+  { key: 'quantifiable_impact', label: 'Quantifiable Impact', weight: '15% Weight', icon: '📈' },
+  { key: 'education_certifications', label: 'Education & Certifications', weight: '10% Weight', icon: '🎓' },
+  { key: 'ats_compatibility', label: 'ATS Compatibility', weight: '10% Weight', icon: '🤖' },
+  { key: 'language_quality', label: 'Language Quality', weight: '5% Weight', icon: '✍️' },
+];
+
+export function renderEvaluationDimensions(scores) {
+  const container = document.getElementById('evalDimensionsGrid');
+  if (!container || !scores) return;
+  container.innerHTML = '';
+
+  EVAL_DIMENSIONS.forEach(dim => {
+    const val = scores[dim.key] ?? 70;
+    const color = scoreColor(val);
+    const item = document.createElement('div');
+    item.className = 'eval-dimension-item';
+    item.innerHTML = `
+      <div class="dim-header">
+        <span class="dim-title"><span class="dim-icon">${dim.icon}</span> ${dim.label}</span>
+        <span class="dim-weight-tag">${dim.weight}</span>
+      </div>
+      <div class="dim-meter-track">
+        <div class="dim-meter-fill" data-target="${val}" style="background:${color}; width:0%"></div>
+      </div>
+      <div class="dim-footer">
+        <span class="dim-score-text">Score: <strong>${val}</strong> / 100</span>
+        <span class="dim-status-text">${val >= 80 ? '✓ Exceptional' : (val >= 60 ? '⚡ Competent' : '⚠️ Needs Polish')}</span>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.dim-meter-fill').forEach((el) => {
+      const target = el.dataset.target;
+      el.style.width = target + '%';
+    });
+  });
+}
+
+// ─── Employment Gaps (Neutral Observations) ──────────────────
+export function renderEmploymentGaps(gaps) {
+  const container = document.getElementById('employmentGapsContainer');
+  if (!container) return;
+
+  if (!gaps || gaps.length === 0) {
+    container.innerHTML = `
+      <div class="gap-positive-box">
+        <div class="gap-icon">✓</div>
+        <div class="gap-text">
+          <strong>Continuous Career Progression:</strong> No unaddressed employment gaps exceeding 6 months detected.
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = gaps.map(g => `
+    <div class="gap-notice-card">
+      <div class="gap-notice-badge">Gap: ${escHtml(g.period)}</div>
+      <div class="gap-notice-desc">${escHtml(g.note)}</div>
+    </div>
+  `).join('');
+}
+
+// ─── Language & Phrasing Issues ──────────────────────────────
+export function renderLanguageIssues(issues) {
+  const container = document.getElementById('languageIssuesContainer');
+  if (!container) return;
+
+  if (!issues || issues.length === 0) {
+    container.innerHTML = `
+      <div class="lang-positive-box">
+        <div class="lang-icon">✓</div>
+        <div class="lang-text">
+          <strong>Strong Phrasing:</strong> Action verbs utilized consistently with concise, impact-oriented statements.
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="lang-issues-list">
+      ${issues.map((item, idx) => `
+        <div class="lang-issue-card">
+          <div class="lang-issue-header">
+            <span class="lang-issue-badge">Issue #${idx + 1}: ${escHtml(item.issue)}</span>
+          </div>
+          <div class="lang-snippet-text">"${escHtml(item.location)}"</div>
+          <div class="lang-suggestion-text">💡 <strong>Suggested Fix:</strong> ${escHtml(item.suggestion)}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// ─── Copy Analysis JSON Button ───────────────────────────────
+export function setupCopyJsonButton(analysisData) {
+  const btn = document.getElementById('btnCopyJson');
+  if (!btn) return;
+
+  btn.onclick = async () => {
+    try {
+      const jsonObj = formatAnalysisAsJson(analysisData);
+      const str = JSON.stringify(jsonObj, null, 2);
+      await navigator.clipboard.writeText(str);
+      showToast('Copied 6-Dimension Analysis JSON to clipboard!', 'success');
+    } catch (e) {
+      showToast('Failed to copy JSON. Please check clipboard permissions.', 'error');
+    }
+  };
 }
 
 // ─── Section Bars ────────────────────────────────────────────

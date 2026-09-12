@@ -5,7 +5,7 @@
  */
 
 import { extractTextFromFile } from './pdf-parser.js';
-import { analyseResumeLocally, extractAcademicScore, determineSuggestedRoles } from './analysis-engine.js';
+import { analyseResumeLocally, extractAcademicScore, determineSuggestedRoles, formatAnalysisAsJson } from './analysis-engine.js';
 import {
   renderScoreRing, renderGrade, renderSectionBars,
   renderCategorizedSkills, renderBulletRewrites,
@@ -674,14 +674,24 @@ function openStudentModal(item) {
   modalStudentMeta.textContent = `Batch Rank #${item.rank} · Score: ${a.overallScore}/100 (Grade ${a.grade}) · ${item.filename}`;
 
   // Populate Modal with the exact same rich diagnostic cards
+  const verdictClass = (a.verdict || '').toLowerCase().includes('strong') ? 'verdict-strong' : ((a.verdict || '').toLowerCase().includes('weak') ? 'verdict-weak' : 'verdict-moderate');
+
   modalAuditBody.innerHTML = `
     <!-- Top Summary Row -->
     <div class="modal-score-card">
       <div class="score-circle-badge">
-        <div class="big-score">${a.overallScore}</div>
+        <div class="big-score">${a.overall_score || a.overallScore}</div>
         <div class="big-grade">Grade: ${a.grade}</div>
       </div>
       <div class="modal-summary-text">
+        <div class="modal-header-action-row">
+          <span class="verdict-pill ${verdictClass}">
+            ${escHtml(a.verdict || 'Evaluation Complete')}
+          </span>
+          <button class="btn-copy-json" id="btnModalCopyJson" title="Copy raw analysis JSON conforming to prompt specifications">
+            📋 Copy Candidate JSON
+          </button>
+        </div>
         <p class="summary-p">${escHtml(a.summary)}</p>
         <div class="candidate-quick-contacts">
           ${a.diagnostics.contacts.email ? `<span>✉️ ${escHtml(a.diagnostics.contacts.email)}</span>` : ''}
@@ -691,6 +701,17 @@ function openStudentModal(item) {
         </div>
       </div>
     </div>
+
+    <!-- 6 Core Evaluative Dimensions & Weights -->
+    ${a.scores ? `
+    <div class="card card-eval-dimensions">
+      <div class="eval-dimensions-header">
+        <h3 class="card-title">6 Core Evaluative Dimensions & Weights</h3>
+        <span class="dimensions-weight-badge">Composite: 100%</span>
+      </div>
+      <div class="evaluation-dimensions-grid" id="modalEvalDimensionsGrid"></div>
+    </div>
+    ` : ''}
 
     <!-- Section Breakdown Bars -->
     <div class="card">
@@ -798,7 +819,58 @@ function openStudentModal(item) {
   renderBulletList('modalMissingList', a.missingSections || []);
   renderBulletList('modalAtsList', a.atsCompatibility.issues || ['All standard ATS checks passed.']);
 
+  if (a.scores) {
+    renderEvaluationDimensionsToContainer(a.scores, 'modalEvalDimensionsGrid');
+  }
+
+  const btnCopy = document.getElementById('btnModalCopyJson');
+  if (btnCopy) {
+    btnCopy.onclick = async () => {
+      try {
+        const json = formatAnalysisAsJson(a);
+        await navigator.clipboard.writeText(JSON.stringify(json, null, 2));
+        showToast(`Copied ${item.candidateName}'s 6-Dimension Analysis JSON!`, 'success');
+      } catch (e) {
+        showToast('Clipboard copy failed. Please check permissions.', 'error');
+      }
+    };
+  }
+
   studentAuditModal.classList.remove('hidden');
+}
+
+function renderEvaluationDimensionsToContainer(scores, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container || !scores) return;
+
+  const dims = [
+    { key: 'keyword_match', label: 'Keyword & Skill Match', weight: '30% Weight', icon: '🎯' },
+    { key: 'experience_relevance', label: 'Experience Relevance', weight: '30% Weight', icon: '💼' },
+    { key: 'quantifiable_impact', label: 'Quantifiable Impact', weight: '15% Weight', icon: '📈' },
+    { key: 'education_certifications', label: 'Education & Certifications', weight: '10% Weight', icon: '🎓' },
+    { key: 'ats_compatibility', label: 'ATS Compatibility', weight: '10% Weight', icon: '🤖' },
+    { key: 'language_quality', label: 'Language Quality', weight: '5% Weight', icon: '✍️' },
+  ];
+
+  container.innerHTML = dims.map(dim => {
+    const val = scores[dim.key] ?? 70;
+    const color = val >= 80 ? '#10b981' : (val >= 60 ? '#6366f1' : '#f59e0b');
+    return `
+      <div class="eval-dimension-item">
+        <div class="dim-header">
+          <span class="dim-title"><span class="dim-icon">${dim.icon}</span> ${dim.label}</span>
+          <span class="dim-weight-tag">${dim.weight}</span>
+        </div>
+        <div class="dim-meter-track">
+          <div class="dim-meter-fill" style="background:${color}; width:${val}%"></div>
+        </div>
+        <div class="dim-footer">
+          <span class="dim-score-text">Score: <strong>${val}</strong> / 100</span>
+          <span class="dim-status-text">${val >= 80 ? '✓ Exceptional' : (val >= 60 ? '⚡ Competent' : '⚠️ Needs Polish')}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 function renderModalSectionBars(sectionScores) {

@@ -11,6 +11,8 @@ import {
   renderBulletList, renderWeaknessList, renderAts,
   renderKeywords, renderActionPlan, renderAuditGrid,
   renderSuggestedRoles, renderCategorizedSkills, renderBulletRewrites,
+  renderVerdictBadge, renderEvaluationDimensions, renderEmploymentGaps,
+  renderLanguageIssues, setupCopyJsonButton,
   showSkeleton, hideSkeleton, showResults,
   showToast,
   appendChatMessage, appendTypingIndicator, removeTypingIndicator,
@@ -311,9 +313,16 @@ function renderAnalysis(data) {
   hideSkeleton();
   showResults();
 
-  // Score ring
-  const { gradeEl, summaryEl } = renderScoreRing(data.overallScore || 0);
+  // Score ring & Verdict
+  const { gradeEl, summaryEl } = renderScoreRing(data.overall_score || data.overallScore || 0);
   renderGrade(gradeEl, data.grade || 'B', summaryEl, data.summary || '');
+  renderVerdictBadge(data.verdict, data.overall_score || data.overallScore || 0);
+  setupCopyJsonButton(data);
+
+  // 6 Core Evaluative Dimensions & Weights
+  if (data.scores) {
+    renderEvaluationDimensions(data.scores);
+  }
 
   // Section bars
   if (data.sectionScores) {
@@ -334,6 +343,10 @@ function renderAnalysis(data) {
   if (data.bulletRewrites) {
     renderBulletRewrites(data.bulletRewrites);
   }
+
+  // Language Quality & Employment Gaps Check
+  renderLanguageIssues(data.language_issues || []);
+  renderEmploymentGaps(data.employment_gaps || []);
 
   // Strengths
   renderBulletList('strengthsList', data.strengths || []);
