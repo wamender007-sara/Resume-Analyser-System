@@ -918,62 +918,69 @@ async function exportClassAnalysisPdf() {
     `;
   }
 
+  const resultsWrap = document.getElementById('batchResultsWrap');
+  if (!resultsWrap) {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
+    return;
+  }
+
+  const roleText = targetDriveRole ? targetDriveRole.options[targetDriveRole.selectedIndex].text : 'General Campus Placement Drive';
+  const batchNameInput = document.getElementById('classBatchLabel') || document.getElementById('batchIdentifier');
+  const batchName = batchNameInput ? (batchNameInput.value.trim() || 'Classroom Batch 2026') : 'Classroom Batch 2026';
+  const avgScore = Math.round(batchResults.reduce((acc, c) => acc + c.analysis.overallScore, 0) / batchResults.length);
+
+  // Prepend temporary official institutional banner
+  const banner = document.createElement('div');
+  banner.id = 'pdfTempReportBanner';
+  banner.className = 'pdf-export-banner';
+  banner.innerHTML = `
+    <div class="pdf-banner-header">
+      <div class="pdf-banner-left">
+        <div class="pdf-banner-tag">Institutional Placement & Training Cell</div>
+        <h1 class="pdf-banner-title">Classroom Batch Resume Analysis & Placement Report</h1>
+        <div class="pdf-banner-sub">
+          <strong>${escHtml(batchName)}</strong> · Target Recruitment Profile: <strong>${escHtml(roleText)}</strong>
+        </div>
+      </div>
+      <div class="pdf-banner-right">
+        <div class="pdf-banner-chip">✓ Verified Placement Report</div>
+        <div class="pdf-banner-meta">Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
+        <div class="pdf-banner-meta">Evaluated: <strong>${batchResults.length} Candidates</strong> (Batch Avg: ${avgScore}/100)</div>
+      </div>
+    </div>
+  `;
+
+  // Apply export styling class and prepend banner
+  resultsWrap.classList.add('exporting-pdf');
+  resultsWrap.insertBefore(banner, resultsWrap.firstChild);
+
+  // Preserve scroll position and scroll to top for canvas capture
+  const prevScrollY = window.scrollY;
+  window.scrollTo(0, 0);
+
   try {
     if (typeof window.html2pdf !== 'undefined') {
-      // Clone batch results wrap
-      const source = document.getElementById('batchResultsWrap');
-      const clone = source.cloneNode(true);
-      clone.classList.remove('hidden');
-
-      // Strip out interactive filters & table action buttons in PDF output
-      const toolbarControls = clone.querySelector('.toolbar-controls');
-      if (toolbarControls) toolbarControls.remove();
-
-      clone.querySelectorAll('.col-action').forEach(el => el.remove());
-
-      // Add official institutional report banner
-      const roleText = targetDriveRole ? targetDriveRole.options[targetDriveRole.selectedIndex].text : 'General Campus Placement Drive';
-      const batchName = document.getElementById('batchIdentifier') ? (document.getElementById('batchIdentifier').value.trim() || 'Classroom Batch 2026') : 'Classroom Batch 2026';
-
-      const banner = document.createElement('div');
-      banner.className = 'pdf-report-banner';
-      banner.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 3px solid #10b981;">
-          <div>
-            <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #10b981; margin-bottom: 4px;">Institutional Placement & Training Cell</div>
-            <h1 style="font-size: 22px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">Classroom Batch Resume Analysis & Evaluation Report</h1>
-            <div style="font-size: 13px; color: #475569;">
-              <strong>${escHtml(batchName)}</strong> · Target Profile: <strong>${escHtml(roleText)}</strong>
-            </div>
-          </div>
-          <div style="text-align: right;">
-            <div style="display: inline-block; font-size: 11px; background: #ecfdf5; color: #059669; font-weight: 700; padding: 4px 12px; border-radius: 20px; border: 1px solid #a7f3d0; margin-bottom: 6px;">
-              ✓ Automated Verification Report
-            </div>
-            <div style="font-size: 11px; color: #64748b;">Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
-            <div style="font-size: 11px; color: #64748b;">Total Evaluated: <strong>${batchResults.length} Students</strong></div>
-          </div>
-        </div>
-      `;
-      clone.insertBefore(banner, clone.firstChild);
-
-      // Wrapper container styled for pristine rendering
-      const wrapper = document.createElement('div');
-      wrapper.className = 'pdf-render-root';
-      wrapper.appendChild(clone);
-      document.body.appendChild(wrapper);
-
+      const isLight = document.body.classList.contains('light-theme');
       const opt = {
-        margin:       [8, 8, 8, 8],
-        filename:     `Class_Placement_Analysis_${batchName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.pdf`,
+        margin:       [8, 6, 8, 6],
+        filename:     `Class_Placement_Analysis_${batchName.replace(/[^a-zA-Z0-9_-]/g, '_')}_${new Date().toISOString().slice(0,10)}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 1.8, useCORS: true, logging: false, scrollY: 0 },
+        html2canvas:  {
+          scale: 1.6,
+          useCORS: true,
+          logging: false,
+          scrollY: 0,
+          scrollX: 0,
+          backgroundColor: isLight ? '#ffffff' : '#0b0f19'
+        },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
-      await window.html2pdf().set(opt).from(wrapper).save();
-      wrapper.remove();
+      await window.html2pdf().set(opt).from(resultsWrap).save();
       showToast('Classroom Analysis PDF report downloaded successfully!', 'success');
     } else {
       window.print();
@@ -982,6 +989,11 @@ async function exportClassAnalysisPdf() {
     console.error('PDF Generation failed, falling back to browser print:', err);
     window.print();
   } finally {
+    if (banner.parentNode) {
+      banner.remove();
+    }
+    resultsWrap.classList.remove('exporting-pdf');
+    window.scrollTo(0, prevScrollY);
     if (btn) {
       btn.disabled = false;
       btn.innerHTML = originalHtml;

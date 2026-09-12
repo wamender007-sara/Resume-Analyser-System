@@ -3322,51 +3322,111 @@ body.light-theme .btn-table-remove:hover {
   color: #ffffff;
 }
 
-/* ── PDF RENDER CONTAINER & HIGH-FIDELITY PRINT EXPORT ── */
-.pdf-render-root {
-  position: absolute;
-  left: -9999px;
-  top: 0;
-  width: 1040px;
-  background: #ffffff !important;
-  color: #0f172a !important;
-  padding: 24px;
-  box-sizing: border-box;
-}
-
-.pdf-render-root .kpi-card,
-.pdf-render-root .podium-rank-card,
-.pdf-render-root .candidate-directory-card,
-.pdf-render-root .podium-card {
-  background: #ffffff !important;
-  border: 1px solid #cbd5e1 !important;
-  color: #0f172a !important;
+/* ── PDF EXPORT STYLES (MATCHES EXACT GRAPHICS & DASHBOARD DESIGN) ── */
+#batchResultsWrap.exporting-pdf {
+  width: 100% !important;
+  max-width: 1100px !important;
+  margin: 0 auto !important;
   box-shadow: none !important;
+  padding: 12px 16px !important;
 }
 
-.pdf-render-root .student-name-text,
-.pdf-render-root .podium-student-name,
-.pdf-render-root .podium-title,
-.pdf-render-root .directory-title,
-.pdf-render-root .cgpa-val {
+#batchResultsWrap.exporting-pdf .toolbar-controls,
+#batchResultsWrap.exporting-pdf .col-action,
+#batchResultsWrap.exporting-pdf .btn-card-remove,
+#batchResultsWrap.exporting-pdf .btn-table-remove,
+#batchResultsWrap.exporting-pdf .table-actions,
+#batchResultsWrap.exporting-pdf .btn-deduplicate,
+#batchResultsWrap.exporting-pdf .btn-podium-audit,
+#batchResultsWrap.exporting-pdf .filter-row {
+  display: none !important;
+}
+
+#batchResultsWrap.exporting-pdf .table-responsive {
+  overflow: visible !important;
+  max-width: 100% !important;
+}
+
+#batchResultsWrap.exporting-pdf .candidate-table {
+  width: 100% !important;
+  table-layout: auto !important;
+}
+
+#batchResultsWrap.exporting-pdf .kpi-card,
+#batchResultsWrap.exporting-pdf .podium-card,
+#batchResultsWrap.exporting-pdf .candidate-table tr {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+.pdf-export-banner {
+  padding: 18px 24px;
+  margin-bottom: 24px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1.5px solid rgba(16, 185, 129, 0.35);
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.pdf-banner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.pdf-banner-tag {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #10b981;
+  margin-bottom: 4px;
+}
+
+.pdf-banner-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary, #f8fafc);
+  margin: 0 0 6px 0;
+  letter-spacing: -0.5px;
+}
+
+body.light-theme .pdf-banner-title {
   color: #0f172a !important;
 }
 
-.pdf-render-root .candidate-table th {
-  background: #f1f5f9 !important;
-  color: #334155 !important;
-  border-bottom: 2px solid #cbd5e1 !important;
+.pdf-banner-sub {
+  font-size: 13px;
+  color: var(--text-secondary, #94a3b8);
 }
 
-.pdf-render-root .candidate-table td {
-  border-bottom: 1px solid #e2e8f0 !important;
-  color: #1e293b !important;
+body.light-theme .pdf-banner-sub {
+  color: #475569 !important;
 }
 
-.pdf-render-root .table-skill-pill {
-  background: #f1f5f9 !important;
-  border: 1px solid #cbd5e1 !important;
-  color: #334155 !important;
+.pdf-banner-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.pdf-banner-chip {
+  display: inline-block;
+  font-size: 11px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  margin-bottom: 6px;
+}
+
+.pdf-banner-meta {
+  font-size: 11px;
+  color: var(--text-muted, #64748b);
+  margin-bottom: 2px;
 }
 
 /* Native Browser Print Styles */

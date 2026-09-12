@@ -67,15 +67,15 @@ const SENIOR_PILLARS = {
 // ─── 2. SENIORITY DETECTION ───
 export function detectSeniority(targetRole, resumeText) {
   const role = (targetRole || '').toLowerCase();
-  const text = (resumeText.slice(0, 1500)).toLowerCase();
+  const text = (resumeText.slice(0, 2500)).toLowerCase();
   
-  if (/\b(lead|principal|staff|architect|director|vp|head)\b/i.test(role)) return 'lead';
+  if (/\b(lead|principal|staff\b(?!.*\b(batch|portal|access|staff))\b|architect|director|vp|head)\b/i.test(role)) return 'lead';
   if (/\b(senior|sr\.?|specialist|expert)\b/i.test(role)) return 'senior';
-  if (/\b(trainee|intern|junior|jr\.?|entry|fresher|graduate|student|associate)\b/i.test(role)) return 'junior';
+  if (/\b(trainee|intern|junior|jr\.?|entry|fresher|graduate|student|associate|campus|placement)\b/i.test(role)) return 'junior';
 
   if (/\b(principal engineer|staff engineer|tech lead|team lead|director of engineering|vp of engineering)\b/i.test(text)) return 'lead';
   if (/\b(senior engineer|senior developer|sr\.?\s*developer|sr\.?\s*engineer)\b/i.test(text)) return 'senior';
-  if (/\b(intern|internship|student|undergraduate|fresher|entry[- ]level|b\.tech|bachelor)\b/i.test(text)) return 'junior';
+  if (/\b(intern|internship|student|undergraduate|fresher|entry[- ]level|b\.tech|b\.?e\b|bca|mca|b\.sc|m\.tech|bachelor|degree|diploma|college|university|campus|cgpa|semester|final year)\b/i.test(text)) return 'junior';
 
   return 'mid';
 }
@@ -460,8 +460,8 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
   const hasSummary = /^(summary|professional summary|about me|profile|overview|objective)\b/im.test(clean) || /\n\s*(summary|about me|profile|overview|objective)\s*[\n:]/i.test(clean);
   const hasExperience = /^(experience|work experience|employment|work history|internship)\b/im.test(clean) || /\n\s*(experience|work experience|employment|internship)\s*[\n:]/i.test(clean);
   const hasSkills = /^(skills|technical skills|technologies|competencies|tech stack|tools)\b/im.test(clean) || /\n\s*(skills|technical skills|technologies)\s*[\n:]/i.test(clean);
-  const hasEducation = /^(education|academic background|qualifications)\b/im.test(clean) || /\n\s*(education|b\.tech|degree|university|college)\s*[\n:]/i.test(clean);
-  const hasProjects = /^(projects|key projects|academic projects|personal projects)\b/im.test(clean) || /\n\s*(projects|key projects)\s*[\n:]/i.test(clean);
+  const hasEducation = /^(education|academic background|qualifications|academic credentials)\b/im.test(clean) || /\n\s*(education|b\.tech|b\.?e\b|bca|mca|b\.sc|m\.tech|degree|university|college|cgpa)\s*[\n:]/i.test(clean);
+  const hasProjects = /^(projects|key projects|academic projects|personal projects)\b/im.test(clean) || /\n\s*(projects|key projects|academic projects)\s*[\n:]/i.test(clean);
   const hasCertifications = /^(certifications|licenses|courses)\b/im.test(clean) || /\n\s*(certifications|courses)\s*[\n:]/i.test(clean);
 
   const sections = {
@@ -469,39 +469,55 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
     summary: hasSummary || /summary|about me|profile|overview|objective/i.test(lower),
     experience: hasExperience,
     skills: hasSkills || /skills|technologies|competencies/i.test(lower),
-    education: hasEducation || /b\.tech|bachelor|university|college|school/i.test(lower),
+    education: hasEducation || /b\.tech|b\.?e\b|bca|mca|b\.sc|m\.tech|bachelor|degree|diploma|university|college|school|cgpa/i.test(lower),
     projects: hasProjects || /project/i.test(lower),
     certifications: hasCertifications || /certificat|certified/i.test(lower)
   };
 
   // Calibrated Section Depth Scores
-  let summaryScore = sections.summary ? (clean.length > 200 ? 80 : 50) : 30;
-  let educationScore = sections.education ? 85 : 35;
-  let certScore = sections.certifications ? (clean.toLowerCase().includes('udemy') || clean.toLowerCase().includes('coursera') || clean.toLowerCase().includes('certif') || clean.toLowerCase().includes('aws') ? 80 : 50) : 30;
-
-  // Projects Depth Score
-  let projectScore = 30;
-  if (sections.projects) {
-    const projectCountMatch = clean.match(/(?:key projects|projects)[\s\S]*?(?:education|certifications|achievements|skills|$)/i);
-    const projectBlock = projectCountMatch ? projectCountMatch[0] : clean;
-    const bulletCount = (projectBlock.match(/●|•|—|\||\-/g) || []).length;
-    if (bulletCount >= 4 || clean.includes('Suraksha Yatra') || clean.includes('ESP32') || (clean.match(/\b(github|live demo|hosted)\b/gi) || []).length >= 2) {
-      projectScore = 90;
-    } else if (bulletCount >= 2) {
-      projectScore = 65;
-    } else {
-      projectScore = 48;
+  let summaryScore = sections.summary ? (clean.length > 150 ? 85 : 65) : 45;
+  
+  // Education Score: recognize high CGPA and university degrees
+  let educationScore = sections.education ? 88 : 45;
+  if (cgpaMatch) {
+    const cgpaVal = parseFloat(cgpaMatch[1]);
+    if (!isNaN(cgpaVal)) {
+      if (cgpaVal >= 8.0 || cgpaVal >= 80) educationScore = 96;
+      else if (cgpaVal >= 7.0 || cgpaVal >= 70) educationScore = 90;
+      else if (cgpaVal >= 6.0 || cgpaVal >= 60) educationScore = 85;
     }
   }
 
-  // Work Experience Score
-  let expScore = 20;
-  if (sections.experience) {
-    if (lower.includes('intern') || lower.includes('developer') || lower.includes('engineer') || lower.includes('nxtsync')) {
-      expScore = 85;
+  let certScore = sections.certifications ? (clean.toLowerCase().includes('udemy') || clean.toLowerCase().includes('coursera') || clean.toLowerCase().includes('certif') || clean.toLowerCase().includes('aws') ? 85 : 60) : 40;
+
+  // Projects Depth Score
+  let projectScore = 40;
+  if (sections.projects) {
+    const projectCountMatch = clean.match(/(?:key projects|projects|academic projects)[\s\S]*?(?:education|certifications|achievements|skills|$)/i);
+    const projectBlock = projectCountMatch ? projectCountMatch[0] : clean;
+    const bulletCount = (projectBlock.match(/●|•|—|\||\-/g) || []).length;
+    if (bulletCount >= 3 || clean.includes('Suraksha Yatra') || clean.includes('ESP32') || (clean.match(/\b(github|live demo|hosted|deployed|api|database|system)\b/gi) || []).length >= 2) {
+      projectScore = 92;
+    } else if (bulletCount >= 2) {
+      projectScore = 80;
     } else {
-      expScore = 55;
+      projectScore = 65;
     }
+  }
+
+  // Work Experience / Applied Practical Experience Score
+  let expScore = 30;
+  if (sections.experience) {
+    if (lower.includes('intern') || lower.includes('developer') || lower.includes('engineer') || lower.includes('nxtsync') || lower.includes('trainee')) {
+      expScore = 90;
+    } else {
+      expScore = 75;
+    }
+  }
+
+  // For students and freshers, credit high-impact practical engineering projects as hands-on applied experience
+  if (expScore < 75 && projectScore >= 65) {
+    expScore = Math.max(expScore, Math.round(projectScore * 0.92));
   }
 
   // ── PASS 3: QUANTIFIABLE METRICS AUDIT ──
@@ -611,12 +627,12 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
   }
 
   // ── PASS 8: RIGOROUS SENIORITY & EVIDENCE CALIBRATION ──
-  let skillsScore = 30;
-  if (uniqueSkills.length >= 12) skillsScore = 92;
-  else if (uniqueSkills.length >= 8) skillsScore = 80;
-  else if (uniqueSkills.length >= 4) skillsScore = 65;
-  else if (uniqueSkills.length >= 2) skillsScore = 45;
-  else skillsScore = 30;
+  let skillsScore = 40;
+  if (uniqueSkills.length >= 12) skillsScore = 96;
+  else if (uniqueSkills.length >= 8) skillsScore = 92;
+  else if (uniqueSkills.length >= 5) skillsScore = 84;
+  else if (uniqueSkills.length >= 3) skillsScore = 72;
+  else if (uniqueSkills.length >= 1) skillsScore = 55;
 
   let overallScore = 60;
   const weaknesses = [];
@@ -626,7 +642,11 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
 
   if (seniority === 'junior') {
     if (sections.experience && metricCount >= 2) {
-      expScore = Math.min(100, expScore + 15);
+      expScore = Math.min(100, expScore + 10);
+    }
+
+    if (!sections.experience && projectScore >= 65) {
+      expScore = Math.max(expScore, Math.round(projectScore * 0.92));
     }
 
     overallScore = Math.round(
@@ -638,22 +658,30 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
       educationScore * 0.10
     );
 
-    // Strict penalty for thin/empty resumes (< 250 words)
-    if (wordCount < 250) {
-      overallScore = Math.min(60, overallScore - 12);
+    // Graceful content density check (protects against PDF extraction fragmentation)
+    if (wordCount < 50) {
+      overallScore = Math.min(55, overallScore - 15);
       weaknesses.push({
-        text: `CRITICALLY LOW CONTENT DENSITY (${wordCount} words): Recruiters expect 400–600 words covering multiple detailed projects, technical challenges, and achievements.`,
+        text: `CRITICALLY LOW CONTENT DENSITY (${wordCount} words): Minimal text detected. Ensure PDF is text-selectable.`,
         severity: 'high'
       });
-      actionPlan.unshift('Expand your resume to at least 3-4 distinct projects with bullet points explaining technologies, architecture, and features.');
+      actionPlan.unshift('Ensure your resume contains at least 250–400 words detailing technical projects, architecture, and coursework.');
+    } else if (wordCount < 120) {
+      overallScore = Math.max(65, overallScore - 4);
+      weaknesses.push({
+        text: `CONCISE CONTENT DENSITY (${wordCount} words): Adding more technical bullet points to project descriptions will strengthen ATS matching.`,
+        severity: 'low'
+      });
     }
 
     if (!sections.experience) {
       missingSections.push('Work Experience / Internships');
-      overallScore = Math.min(70, overallScore);
+      if (projectScore < 60) {
+        overallScore = Math.min(78, overallScore);
+      }
       weaknesses.push({
-        text: 'NO INTERNSHIP OR WORK EXPERIENCE: Add hands-on internship, open-source contributions, or freelance project roles.',
-        severity: 'medium'
+        text: 'NO FORMAL WORK EXPERIENCE: Showcase open-source contributions, hackathons, or freelance projects alongside academic coursework.',
+        severity: 'low'
       });
     }
 
@@ -664,7 +692,7 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
     }
 
     if (projectScore >= 80) {
-      strengths.push(`High-impact project portfolio demonstrating end-to-end production systems.`);
+      strengths.push(`High-impact project portfolio demonstrating applied software engineering capabilities.`);
     }
 
     if (foundStrongVerbs.length >= 2) {
@@ -675,47 +703,50 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
       missingSections.push('GitHub / Code Repository URL');
       weaknesses.push({
         text: 'MISSING GITHUB LINK: Software employers expect public repository links to verify code quality.',
-        severity: 'high'
+        severity: 'medium'
       });
     }
 
     if (!linkedinFound) {
       missingSections.push('LinkedIn Profile');
       weaknesses.push({
-        text: 'MISSING LINKEDIN PROFILE: Recruiters and automated outreach rely heavily on professional social presence.',
-        severity: 'medium'
+        text: 'MISSING LINKEDIN PROFILE: Professional network presence supports background checks and talent outreach.',
+        severity: 'low'
       });
     }
 
     if (metricCount === 0) {
       weaknesses.push({
-        text: 'ZERO QUANTIFIABLE METRICS: State exact numbers (accuracy %, test coverage %, active users, latency speedup).',
-        severity: 'high'
+        text: 'ZERO QUANTIFIABLE METRICS: Include exact numbers (e.g. 95% accuracy, 500+ users, 30% latency reduction).',
+        severity: 'medium'
       });
     }
 
-    overallScore = Math.min(95, Math.max(38, overallScore));
+    overallScore = Math.min(96, Math.max(45, overallScore));
 
   } else if (seniority === 'mid') {
-    expScore = 55;
+    expScore = 65;
     if (metricCount >= 3) expScore += 20;
-    else if (metricCount >= 1) expScore += 10;
-    if (foundStrongVerbs.length >= 3) expScore += 15;
+    else if (metricCount >= 1) expScore += 12;
+    if (foundStrongVerbs.length >= 3) expScore += 12;
     if (sections.experience) expScore += 10;
+    if (!sections.experience && projectScore >= 65) {
+      expScore = Math.max(expScore, Math.round(projectScore * 0.90));
+    }
 
-    skillsScore = 55;
+    skillsScore = 60;
     if (uniqueSkills.length >= 8) skillsScore += 25;
-    if (lower.includes('docker') || lower.includes('ci/cd') || lower.includes('aws')) skillsScore += 15;
+    if (lower.includes('docker') || lower.includes('ci/cd') || lower.includes('aws') || lower.includes('cloud')) skillsScore += 15;
 
     overallScore = Math.round(
       contactScore * 0.10 +
       summaryScore * 0.10 +
-      expScore * 0.35 +
+      expScore * 0.30 +
       skillsScore * 0.25 +
-      projectScore * 0.10 +
+      projectScore * 0.15 +
       educationScore * 0.10
     );
-    overallScore = Math.min(93, Math.max(48, overallScore));
+    overallScore = Math.min(95, Math.max(48, overallScore));
 
     strengths.push(`Identified ${uniqueSkills.length} frameworks and tools matching mid-level developer standards.`);
     if (metricCount >= 2) strengths.push(`Includes ${metricCount} verified metrics (${extractedMetrics.slice(0, 3).join(', ')}).`);
