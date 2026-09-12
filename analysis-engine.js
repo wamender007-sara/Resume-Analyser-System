@@ -106,24 +106,31 @@ function estimateExperienceYears(text) {
 // ─── 4. ROLE RECOMMENDATION ENGINE ───
 export const ROLE_PROFILES = [
   {
+    title: 'Software Engineer',
+    aliases: ['software engineer', 'software developer', 'sde', 'swe', 'programmer', 'core engineer'],
+    level: 'Entry / Mid / Senior',
+    skills: ['python', 'java', 'c++', 'javascript', 'sql', 'git', 'github', 'rest api', 'system design', 'oop', 'docker', 'problem solving'],
+    desc: 'Engineer core software systems, object-oriented services, algorithmic solutions, and production APIs.'
+  },
+  {
     title: 'Full Stack Developer',
-    aliases: ['full stack', 'fullstack', 'web developer', 'software engineer', 'software developer', 'web dev'],
-    level: 'Junior / Mid / Senior',
-    skills: ['javascript', 'typescript', 'react', 'node.js', 'express', 'postgresql', 'mongodb', 'rest api', 'sql'],
+    aliases: ['full stack', 'fullstack', 'web developer', 'web dev', 'mern', 'mean'],
+    level: 'Entry / Mid / Senior',
+    skills: ['javascript', 'typescript', 'react', 'node.js', 'express', 'postgresql', 'mongodb', 'rest api', 'sql', 'tailwind', 'html', 'css'],
     desc: 'Deliver complete end-to-end features spanning modern front-end architectures and robust backend services.'
   },
   {
     title: 'Backend Systems Engineer',
     aliases: ['backend', 'server', 'api developer', 'java developer', 'golang', 'python developer'],
-    level: 'Junior / Mid / Senior',
-    skills: ['python', 'node.js', 'express', 'c++', 'postgresql', 'mongodb', 'rest api', 'sql', 'docker'],
+    level: 'Entry / Mid / Senior',
+    skills: ['python', 'node.js', 'express', 'c++', 'postgresql', 'mongodb', 'rest api', 'sql', 'docker', 'redis'],
     desc: 'Design, optimize, and scale database schemas, server-side APIs, caching tiers, and business logic.'
   },
   {
     title: 'AI / Machine Learning Engineer',
-    aliases: ['ai', 'artificial intelligence', 'machine learning', 'ml', 'deep learning', 'computer vision', 'data science', 'nlp', 'llm'],
-    level: 'Junior / Mid / Senior',
-    skills: ['python', 'machine learning', 'deep learning', 'opencv', 'pytorch', 'tensorflow', 'flask', 'computer vision', 'cnn'],
+    aliases: ['ai', 'artificial intelligence', 'machine learning', 'ml', 'deep learning', 'computer vision', 'data science', 'nlp', 'llm', 'generative ai', 'ai engineer'],
+    level: 'Entry / Mid / Senior',
+    skills: ['python', 'machine learning', 'deep learning', 'opencv', 'pytorch', 'tensorflow', 'flask', 'computer vision', 'cnn', 'pandas', 'numpy', 'scikit-learn', 'llm', 'nlp'],
     desc: 'Develop AI models, computer vision systems, neural networks, and intelligent software pipelines.'
   },
   {
@@ -215,7 +222,7 @@ export function findMatchingRoleProfile(targetRole) {
   };
 }
 
-function determineSuggestedRoles(resumeLower, uniqueSkills) {
+export function determineSuggestedRoles(resumeLower, uniqueSkills) {
   const suggestions = [];
 
   ROLE_PROFILES.forEach(profile => {
@@ -230,20 +237,57 @@ function determineSuggestedRoles(resumeLower, uniqueSkills) {
     });
 
     const matchScore = Math.min(100, Math.round((matched.length / profile.skills.length) * 100));
-    if (matchScore >= 25) {
+    
+    // Fit Priority Level
+    let priority = 'mid';
+    let priorityLabel = 'Mid Priority (Moderate Fit)';
+    if (matchScore >= 70) {
+      priority = 'high';
+      priorityLabel = 'High Priority (Direct Fit)';
+    } else if (matchScore < 45) {
+      priority = 'low';
+      priorityLabel = 'Low Priority (Skill Gap)';
+    }
+
+    // Role Seniority Hierarchy (Low, Mid, High Career Levels)
+    const seniorityFit = {
+      low: {
+        level: 'Low (Junior / Entry)',
+        readiness: Math.min(98, Math.round(matchScore * 1.15)),
+        verdict: matchScore >= 60 ? 'Directly Qualified' : 'Basic Foundation',
+        requirement: matchScore >= 60 ? 'Core coding & foundational projects verified.' : `Add ${missing.slice(0, 2).join(', ') || 'foundational tools'}.`
+      },
+      mid: {
+        level: 'Mid (Mid-Level Developer)',
+        readiness: Math.min(90, Math.round(matchScore * 0.88)),
+        verdict: matchScore >= 75 ? 'Qualified' : 'Requires 1-2 Production Cycles',
+        requirement: `Strengthen independent delivery with ${missing.slice(0, 2).join(', ') || 'advanced tools'}.`
+      },
+      high: {
+        level: 'High (Senior / Lead)',
+        readiness: Math.min(60, Math.round(matchScore * 0.50)),
+        verdict: 'Aspirational Track',
+        requirement: 'Enterprise scalability, architecture design, and team mentorship.'
+      }
+    };
+
+    if (matchScore >= 20) {
       suggestions.push({
         title: profile.title,
         level: profile.level,
         matchScore,
-        matchedSkills: matched.slice(0, 6),
-        missingSkills: missing.slice(0, 3),
+        priority,
+        priorityLabel,
+        seniorityFit,
+        matchedSkills: matched.slice(0, 8),
+        missingSkills: missing.slice(0, 4),
         desc: profile.desc
       });
     }
   });
 
   suggestions.sort((a, b) => b.matchScore - a.matchScore);
-  return suggestions.slice(0, 4);
+  return suggestions.slice(0, 6);
 }
 
 // ─── 5. BULLET POINT EXTRACTION & GOOGLE XYZ / STAR REWRITER ───
@@ -397,19 +441,39 @@ function extractCandidateName(text, email = null) {
   return null;
 }
 
-// ─── 6. CORE EVIDENCE-BASED ANALYSER ───
+// ─── 6. ROBUST ACADEMIC & CGPA EXTRACTOR ───
+export function extractAcademicScore(text) {
+  if (!text) return null;
+  
+  // 1. Standard "CGPA: 8.85" or "CGPA - 8.85 / 10" or "GPA: 3.8"
+  const p1 = text.match(/\b(?:cgpa|gpa|aggregate|percentage|score|marks?)\s*[:=\-]?\s*(\d{1,2}(?:\.\d{1,2})?(?:\s*\/\s*10|\s*%)?)/i);
+  if (p1 && p1[1]) return p1[0].trim();
+
+  // 2. Reverse format "8.85 CGPA" or "8.85 / 10 CGPA" or "8.85 GPA"
+  const p2 = text.match(/\b(\d{1,2}\.\d{1,2})\s*(?:\/\s*10)?\s*(?:cgpa|gpa)\b/i);
+  if (p2 && p2[1]) return `CGPA: ${p2[1]} / 10`;
+
+  // 3. Proximity to degree "B.E. Computer Science ... 8.85"
+  const p3 = text.match(/(?:b\.?e\b|b\.tech|bachelor|university|college|school)[\s\S]{1,100}?\b([6-9]\.\d{1,2})\s*(?:\/\s*10)?\b/i);
+  if (p3 && p3[1]) return `CGPA: ${p3[1]} / 10`;
+
+  // 4. Percentage format "85.5%" or "88%"
+  const p4 = text.match(/(?:aggregate|percentage|marks?|distinction)[\s\S]{0,35}?\b(\d{2}(?:\.\d{1,2})?)\s*%/i);
+  if (p4 && p4[1]) return `${p4[1]}%`;
+
+  return null;
+}
+
+// ─── 7. CORE EVIDENCE-BASED ANALYSER ───
 export function analyseResumeLocally(text, targetRole = '', jobDescription = '') {
   const clean = text.trim();
   const lower = clean.toLowerCase();
   const words = clean.split(/\s+/).filter(Boolean);
   const wordCount = words.length;
 
-  // Extract Academic Score / CGPA if present
-  let academicScore = null;
+  // Extract Academic Score / CGPA if present with robust multi-pattern tolerance
+  let academicScore = extractAcademicScore(clean);
   const cgpaMatch = clean.match(/(?:cgpa|gpa|percentage|marks?)\s*[:=\-]?\s*(\d{1,2}(?:\.\d{1,2})?(?:\s*\/\s*10|\s*%)?)/i);
-  if (cgpaMatch) {
-    academicScore = cgpaMatch[0].trim();
-  }
 
   const seniority = detectSeniority(targetRole, clean);
   const estimatedYears = estimateExperienceYears(clean);
@@ -602,8 +666,7 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
   // ── PASS 7: TARGET ROLE FIT ANALYSIS ──
   let targetRoleFit = null;
   if (targetRole && targetRole.trim().length >= 2) {
-    const trLower = targetRole.toLowerCase();
-    const matchingProfile = ROLE_PROFILES.find(p => trLower.includes(p.title.toLowerCase()) || p.title.toLowerCase().includes(trLower)) || ROLE_PROFILES[0];
+    const matchingProfile = findMatchingRoleProfile(targetRole) || ROLE_PROFILES[0];
     
     const roleMatched = [];
     const roleMissing = [];
@@ -613,16 +676,49 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
     });
 
     const fitPercentage = Math.min(100, Math.round((roleMatched.length / matchingProfile.skills.length) * 100));
+    let priority = 'mid';
+    let priorityLabel = 'Mid Priority (Moderate Fit)';
     let verdict = 'Moderate Alignment';
-    if (fitPercentage >= 75) verdict = 'High Competency Match';
-    else if (fitPercentage < 40) verdict = 'Key Domain Gaps Detected';
+    if (fitPercentage >= 72) {
+      priority = 'high';
+      priorityLabel = 'High Priority (Direct Fit)';
+      verdict = 'High Competency Match';
+    } else if (fitPercentage < 48) {
+      priority = 'low';
+      priorityLabel = 'Low Priority (Key Domain Gaps)';
+      verdict = 'Key Domain Gaps Detected';
+    }
+
+    const seniorityBreakdown = {
+      low: {
+        tier: 'Low (Junior / Entry-Level)',
+        readiness: Math.min(98, Math.round(fitPercentage * 1.15)),
+        status: fitPercentage >= 65 ? 'Ready to Deploy' : 'Foundational Gap',
+        recommendation: fitPercentage >= 65 ? 'Directly qualified for campus entry / junior recruitment track.' : `Strengthen core ${roleMissing.slice(0, 2).join(', ') || 'fundamentals'}.`
+      },
+      mid: {
+        tier: 'Mid (Mid-Level Engineer)',
+        readiness: Math.min(90, Math.round(fitPercentage * 0.88)),
+        status: fitPercentage >= 78 ? 'Qualified' : 'Needs Production Depth',
+        recommendation: `Add independent production deployments with ${roleMissing.slice(0, 2).join(', ') || 'advanced tools'}.`
+      },
+      high: {
+        tier: 'High (Senior / Tech Lead)',
+        readiness: Math.min(60, Math.round(fitPercentage * 0.50)),
+        status: 'Aspirational Track',
+        recommendation: 'Requires multi-tier systems design, technical roadmaps, and mentoring.'
+      }
+    };
 
     targetRoleFit = {
       targetRole: matchingProfile.title,
       fitPercentage,
+      priority,
+      priorityLabel,
       verdict,
       matchedSkills: roleMatched,
-      missingSkills: roleMissing
+      missingSkills: roleMissing,
+      seniorityBreakdown
     };
   }
 
@@ -860,6 +956,46 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
   if (atsNumericScore < 60) atsRating = 'Poor';
   else if (atsNumericScore < 80) atsRating = 'Fair';
 
+  const suggestedRoles = determineSuggestedRoles(lower, uniqueSkills);
+
+  // ── ROLE-SPECIFIC CALIBRATION & PRIORITY BLEND ──
+  // When a target role is provided, dynamically tune the overall score to reflect
+  // the candidate's exact alignment with the role they applied for
+  if (targetRoleFit && targetRole && targetRole.trim().length >= 2) {
+    const roleFit = targetRoleFit.fitPercentage;
+    const baseCandidateScore = overallScore;
+
+    // Weighted blend: 50% Baseline Engineering Foundation + 40% Target Role Alignment + 10% Relevance Bonus
+    let roleCalibratedScore = Math.round((baseCandidateScore * 0.50) + (roleFit * 0.40));
+    
+    // Domain match bonus if candidate has matched 3+ core technologies
+    if (roleFit >= 70 && targetRoleFit.matchedSkills.length >= 3) {
+      roleCalibratedScore += 5;
+    }
+    if (roleFit >= 85 && baseCandidateScore >= 85) {
+      roleCalibratedScore = Math.max(roleCalibratedScore, Math.min(96, Math.round((baseCandidateScore + roleFit) / 2) + 3));
+    }
+
+    // Role-specific strengths & actionable gap feedback
+    if (targetRoleFit.priority === 'high') {
+      strengths.unshift(`High Priority Alignment for ${targetRoleFit.targetRole}: Verified ${targetRoleFit.matchedSkills.length} core technical requirements (${targetRoleFit.matchedSkills.slice(0, 4).join(', ')}).`);
+    } else if (targetRoleFit.priority === 'mid') {
+      weaknesses.unshift({
+        text: `TARGET ROLE GAP (${targetRoleFit.targetRole}): Missing ${targetRoleFit.missingSkills.slice(0, 3).join(', ')}. Bridge these competencies to reach High Priority tier.`,
+        severity: 'medium'
+      });
+      actionPlan.unshift(`Upskill in ${targetRoleFit.missingSkills.slice(0, 3).join(', ')} to elevate match for ${targetRoleFit.targetRole}.`);
+    } else {
+      weaknesses.unshift({
+        text: `CRITICAL DOMAIN GAP FOR ${targetRoleFit.targetRole.toUpperCase()}: Profile matches closer to alternative engineering tracks than ${targetRoleFit.targetRole}. Missing: ${targetRoleFit.missingSkills.slice(0, 4).join(', ')}.`,
+        severity: 'high'
+      });
+      actionPlan.unshift(`Complete focused capstone projects or industry certifications in ${targetRoleFit.missingSkills.slice(0, 2).join(', ')}.`);
+    }
+
+    overallScore = Math.min(97, Math.max(45, roleCalibratedScore));
+  }
+
   // Letter Grade
   let grade = 'B';
   if (overallScore >= 90) grade = 'A+';
@@ -884,8 +1020,8 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
     keywordsContext = `Essential engineering keywords expected for autonomous mid-level contributors.`;
   }
 
-  const summary = `${seniority.toUpperCase()} Evaluation (${overallScore}/100 - Grade ${grade}): Deep diagnostic completed across ${wordCount} words, ${uniqueSkills.length} verified technical competencies, and ${metricCount} quantifiable impact metrics.`;
-  const suggestedRoles = determineSuggestedRoles(lower, uniqueSkills);
+  const roleContextText = targetRoleFit ? ` · ${targetRoleFit.targetRole} (${targetRoleFit.fitPercentage}% Match - ${targetRoleFit.priorityLabel})` : '';
+  const summary = `${seniority.toUpperCase()} Evaluation (${overallScore}/100 - Grade ${grade}${roleContextText}): Deep diagnostic completed across ${wordCount} words, ${uniqueSkills.length} verified technical competencies, and ${metricCount} quantifiable impact metrics.`;
 
   return {
     candidateName,

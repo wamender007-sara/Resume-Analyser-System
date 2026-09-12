@@ -188,12 +188,46 @@ export function renderAuditGrid(diagnostics, jdMatch, targetRoleFit) {
 
   let roleFitHtml = '';
   if (targetRoleFit) {
-    const roleFitColor = targetRoleFit.fitPercentage >= 70 ? '#10b981' : (targetRoleFit.fitPercentage >= 45 ? '#818cf8' : '#f59e0b');
+    const roleFitColor = targetRoleFit.priority === 'high' ? '#10b981' : (targetRoleFit.priority === 'mid' ? '#f59e0b' : '#ef4444');
+    const priorityLabel = targetRoleFit.priorityLabel || (targetRoleFit.fitPercentage >= 70 ? 'High Priority Fit' : (targetRoleFit.fitPercentage >= 45 ? 'Mid Priority' : 'Low Priority Gap'));
+    const sen = targetRoleFit.seniorityBreakdown;
+
+    let senHtml = '';
+    if (sen) {
+      senHtml = `
+        <div class="audit-seniority-tracks">
+          <div class="audit-seniority-title">Role Seniority Hierarchy Readiness:</div>
+          <div class="seniority-track-items">
+            <div class="seniority-tier-item tier-low">
+              <span class="tier-label">${escHtml(sen.low?.tier || 'Low (Entry/Jr)')}</span>
+              <div class="tier-meter"><div class="tier-meter-bar" style="width:${sen.low?.readiness || 90}%; background:#10b981;"></div></div>
+              <span class="tier-stat">${sen.low?.readiness || 90}% · ${escHtml(sen.low?.status || 'Ready')}</span>
+            </div>
+            <div class="seniority-tier-item tier-mid">
+              <span class="tier-label">${escHtml(sen.mid?.tier || 'Mid (Developer)')}</span>
+              <div class="tier-meter"><div class="tier-meter-bar" style="width:${sen.mid?.readiness || 75}%; background:#f59e0b;"></div></div>
+              <span class="tier-stat">${sen.mid?.readiness || 75}% · ${escHtml(sen.mid?.status || 'Developing')}</span>
+            </div>
+            <div class="seniority-tier-item tier-high">
+              <span class="tier-label">${escHtml(sen.high?.tier || 'High (Lead/Sr)')}</span>
+              <div class="tier-meter"><div class="tier-meter-bar" style="width:${sen.high?.readiness || 45}%; background:#ef4444;"></div></div>
+              <span class="tier-stat">${sen.high?.readiness || 45}% · ${escHtml(sen.high?.status || 'Aspirational')}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     roleFitHtml = `
-      <div class="audit-item audit-highlight">
-        <div class="audit-label">Target Role Fit Index — ${escHtml(targetRoleFit.targetRole)}</div>
-        <div class="audit-value" style="color:${roleFitColor}">${targetRoleFit.fitPercentage}% Fit · ${escHtml(targetRoleFit.verdict)}</div>
-        <div class="audit-sub"><strong>Matched:</strong> ${targetRoleFit.matchedSkills.join(', ') || 'None'} | <strong>Key Gaps:</strong> ${targetRoleFit.missingSkills.join(', ') || 'None! Strong alignment.'}</div>
+      <div class="audit-item audit-highlight audit-role-fit">
+        <div class="audit-header-row">
+          <div class="audit-label">Target Role Alignment — ${escHtml(targetRoleFit.targetRole)}</div>
+          <span class="role-priority-pill priority-${targetRoleFit.priority || 'high'}">${priorityLabel}</span>
+        </div>
+        <div class="audit-value" style="color:${roleFitColor}">${targetRoleFit.fitPercentage}% Match · ${escHtml(targetRoleFit.verdict)}</div>
+        ${senHtml}
+        <div class="audit-sub"><strong>Matched Skills:</strong> ${targetRoleFit.matchedSkills.join(', ') || 'None identified'}</div>
+        <div class="audit-sub"><strong>Key Gap Competencies:</strong> ${targetRoleFit.missingSkills.join(', ') || 'All core benchmarks satisfied!'}</div>
       </div>
     `;
   }
@@ -288,30 +322,64 @@ export function renderSuggestedRoles(roles) {
   }
 
   container.innerHTML = roles.map(role => {
-    const badgeColor = role.matchScore >= 70 ? '#10b981' : (role.matchScore >= 50 ? '#818cf8' : '#f59e0b');
-    const matchedBadges = role.matchedSkills.map(s => `<span class="role-skill-badge match">${escHtml(s)}</span>`).join('');
-    const missingBadges = role.missingSkills.length > 0
+    const badgeColor = role.priority === 'high' ? '#10b981' : (role.priority === 'mid' ? '#f59e0b' : '#ef4444');
+    const priorityTag = role.priorityLabel || (role.matchScore >= 70 ? 'High Priority (Direct Fit)' : (role.matchScore >= 45 ? 'Mid Priority (Moderate Fit)' : 'Low Priority (Skill Gap)'));
+    
+    const matchedBadges = (role.matchedSkills || []).map(s => `<span class="role-skill-badge match">✓ ${escHtml(s)}</span>`).join('');
+    const missingBadges = (role.missingSkills || []).length > 0
       ? role.missingSkills.map(s => `<span class="role-skill-badge missing">+ ${escHtml(s)}</span>`).join('')
-      : '<span class="role-skill-badge match">All core skills met!</span>';
+      : '<span class="role-skill-badge match">All core criteria met!</span>';
+
+    const sen = role.seniorityFit || {
+      low: { level: 'Low (Entry / Jr)', readiness: Math.min(98, Math.round(role.matchScore * 1.15)), verdict: 'Directly Qualified' },
+      mid: { level: 'Mid (Mid-Level)', readiness: Math.min(90, Math.round(role.matchScore * 0.88)), verdict: 'Developing' },
+      high: { level: 'High (Senior / Lead)', readiness: Math.min(60, Math.round(role.matchScore * 0.50)), verdict: 'Aspirational' }
+    };
 
     return `
-      <div class="suggested-role-card">
+      <div class="suggested-role-card priority-${role.priority || 'mid'}">
         <div class="role-card-header">
           <div>
             <div class="role-title">${escHtml(role.title)}</div>
             <div class="role-level">${escHtml(role.level)}</div>
           </div>
-          <div class="role-match-badge" style="background:${badgeColor}22; color:${badgeColor}; border:1px solid ${badgeColor}55;">
-            ${role.matchScore}% Match
+          <div class="role-match-badge-wrap">
+            <span class="role-priority-badge priority-${role.priority || 'mid'}">${priorityTag}</span>
+            <span class="role-match-badge" style="background:${badgeColor}22; color:${badgeColor}; border:1px solid ${badgeColor}55;">
+              ${role.matchScore}% Match
+            </span>
           </div>
         </div>
         <p class="role-desc">${escHtml(role.desc)}</p>
+
+        <!-- Seniority Priority Matrix: Low, Mid, High Levels in this Job -->
+        <div class="role-seniority-matrix">
+          <div class="seniority-track-title">Seniority Level Readiness in this Job:</div>
+          <div class="seniority-track-items">
+            <div class="seniority-tier-item tier-low">
+              <span class="tier-label">Low (Entry/Jr)</span>
+              <div class="tier-meter"><div class="tier-meter-bar" style="width:${sen.low.readiness}%; background:#10b981;"></div></div>
+              <span class="tier-stat">${sen.low.readiness}% · ${escHtml(sen.low.verdict)}</span>
+            </div>
+            <div class="seniority-tier-item tier-mid">
+              <span class="tier-label">Mid (Developer)</span>
+              <div class="tier-meter"><div class="tier-meter-bar" style="width:${sen.mid.readiness}%; background:#f59e0b;"></div></div>
+              <span class="tier-stat">${sen.mid.readiness}% · ${escHtml(sen.mid.verdict)}</span>
+            </div>
+            <div class="seniority-tier-item tier-high">
+              <span class="tier-label">High (Senior/Lead)</span>
+              <div class="tier-meter"><div class="tier-meter-bar" style="width:${sen.high.readiness}%; background:#ef4444;"></div></div>
+              <span class="tier-stat">${sen.high.readiness}% · ${escHtml(sen.high.verdict)}</span>
+            </div>
+          </div>
+        </div>
+
         <div class="role-skills-section">
           <div class="role-skills-label">Your Matched Skills:</div>
           <div class="role-skills-wrap">${matchedBadges}</div>
         </div>
         <div class="role-skills-section">
-          <div class="role-skills-label">Recommended to Add:</div>
+          <div class="role-skills-label">Recommended to Bridge Next Level:</div>
           <div class="role-skills-wrap">${missingBadges}</div>
         </div>
       </div>
