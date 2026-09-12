@@ -1865,3 +1865,214 @@ body.light-theme .keyword-chip.missing {
   border-color: #fecaca;
   color: #991b1b;
 }
+
+/* ── SKILLS INVENTORY STYLING ── */
+.card-skills-inventory {
+  border-color: rgba(99, 102, 241, 0.25);
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.skills-category-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.skills-category-group {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.85rem;
+}
+
+.category-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+
+.category-group-icon {
+  font-size: 0.9rem;
+}
+
+.category-group-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.2px;
+}
+
+.category-group-count {
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: rgba(99, 102, 241, 0.18);
+  color: #818cf8;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: auto;
+}
+
+.category-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.category-skill-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  transition: all 0.2s ease;
+}
+
+.category-skill-chip:hover {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.35);
+  color: #c7d2fe;
+}
+
+body.light-theme .skills-category-group {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+body.light-theme .category-skill-chip {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #334155;
+}
+
+body.light-theme .category-skill-chip:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+/* ── BULLET REWRITER STYLING ── */
+.card-rewrite {
+  border-color: rgba(16, 185, 129, 0.28);
+  background: rgba(16, 185, 129, 0.03);
+}
+
+.rewrite-intro {
+  font-size: 0.76rem;
+  color: var(--text-2);
+  margin-bottom: 0.85rem;
+  line-height: 1.5;
+}
+
+.rewrite-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.rewrite-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rewrite-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.rewrite-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.rewrite-issue {
+  font-size: 0.73rem;
+  color: var(--text-2);
+  font-style: italic;
+}
+
+.rewrite-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .rewrite-comparison {
+    grid-template-columns: 1fr;
+  }
+}
+
+.rewrite-block {
+  border-radius: 6px;
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.rewrite-block.original {
+  background: rgba(239, 68, 68, 0.04);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.rewrite-block.improved {
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+}
+
+.rewrite-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.rewrite-block.original .rewrite-label { color: #f87171; }
+.rewrite-block.improved .rewrite-label { color: #34d399; }
+
+.rewrite-text {
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+body.light-theme .rewrite-card {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+body.light-theme .rewrite-block.original {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+body.light-theme .rewrite-block.improved {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+/* ATS Numeric Score */
+.ats-score-num {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+

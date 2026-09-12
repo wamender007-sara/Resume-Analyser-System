@@ -10,7 +10,7 @@ import {
   renderScoreRing, renderGrade, renderSectionBars,
   renderBulletList, renderWeaknessList, renderAts,
   renderKeywords, renderActionPlan, renderAuditGrid,
-  renderSuggestedRoles,
+  renderSuggestedRoles, renderCategorizedSkills, renderBulletRewrites,
   showSkeleton, hideSkeleton, showResults,
   showToast,
   appendChatMessage, appendTypingIndicator, removeTypingIndicator,
@@ -322,7 +322,17 @@ function renderAnalysis(data) {
 
   // Evidence & Document Audit Grid
   if (data.diagnostics) {
-    renderAuditGrid(data.diagnostics, data.jdMatch);
+    renderAuditGrid(data.diagnostics, data.jdMatch, data.targetRoleFit);
+  }
+
+  // Categorized Technical Skills Inventory
+  if (data.diagnostics && data.diagnostics.categorizedSkills) {
+    renderCategorizedSkills(data.diagnostics.categorizedSkills);
+  }
+
+  // High-Impact Bullet Rewriter (STAR / Google XYZ)
+  if (data.bulletRewrites) {
+    renderBulletRewrites(data.bulletRewrites);
   }
 
   // Strengths

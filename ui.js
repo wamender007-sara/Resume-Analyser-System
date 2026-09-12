@@ -135,8 +135,49 @@ export function renderWeaknessList(weaknesses) {
     .join('');
 }
 
+// ─── Categorized Skills Inventory ────────────────────────────
+export function renderCategorizedSkills(categorized) {
+  const container = document.getElementById('skillsCategoryContainer');
+  if (!container || !categorized) return;
+
+  const categories = [
+    { key: 'languages', label: 'Languages', icon: '💻' },
+    { key: 'frameworks', label: 'Frameworks & Web Stack', icon: '⚛️' },
+    { key: 'databases', label: 'Databases & Storage', icon: '🗄️' },
+    { key: 'cloud_devops', label: 'Cloud, DevOps & Tools', icon: '☁️' },
+    { key: 'domain_specialized', label: 'Domain & Core Engineering', icon: '🔬' }
+  ];
+
+  let hasAny = false;
+  let html = '';
+
+  categories.forEach(cat => {
+    const list = categorized[cat.key] || [];
+    if (list.length > 0) {
+      hasAny = true;
+      const chips = list.map(s => `<span class="category-skill-chip">${escHtml(s)}</span>`).join('');
+      html += `
+        <div class="skills-category-group">
+          <div class="category-group-header">
+            <span class="category-group-icon">${cat.icon}</span>
+            <span class="category-group-label">${cat.label}</span>
+            <span class="category-group-count">${list.length}</span>
+          </div>
+          <div class="category-chips-wrap">${chips}</div>
+        </div>
+      `;
+    }
+  });
+
+  if (!hasAny) {
+    container.innerHTML = '<p class="audit-sub">No technical skills detected yet. Add a dedicated Skills section to your resume.</p>';
+  } else {
+    container.innerHTML = html;
+  }
+}
+
 // ─── Document & Evidence Audit Grid ──────────────────────────
-export function renderAuditGrid(diagnostics, jdMatch) {
+export function renderAuditGrid(diagnostics, jdMatch, targetRoleFit) {
   const container = document.getElementById('auditGrid');
   if (!container || !diagnostics) return;
 
@@ -144,6 +185,18 @@ export function renderAuditGrid(diagnostics, jdMatch) {
   const metricsList = (diagnostics.extractedMetrics || []).join(', ') || 'None found';
   const skillsPreview = (diagnostics.skillsFound || []).slice(0, 8).join(', ') || 'None identified';
   const strongVerbs = (diagnostics.strongVerbsFound || []).slice(0, 6).join(', ') || 'None';
+
+  let roleFitHtml = '';
+  if (targetRoleFit) {
+    const roleFitColor = targetRoleFit.fitPercentage >= 70 ? '#10b981' : (targetRoleFit.fitPercentage >= 45 ? '#818cf8' : '#f59e0b');
+    roleFitHtml = `
+      <div class="audit-item audit-highlight">
+        <div class="audit-label">Target Role Fit Index — ${escHtml(targetRoleFit.targetRole)}</div>
+        <div class="audit-value" style="color:${roleFitColor}">${targetRoleFit.fitPercentage}% Fit · ${escHtml(targetRoleFit.verdict)}</div>
+        <div class="audit-sub"><strong>Matched:</strong> ${targetRoleFit.matchedSkills.join(', ') || 'None'} | <strong>Key Gaps:</strong> ${targetRoleFit.missingSkills.join(', ') || 'None! Strong alignment.'}</div>
+      </div>
+    `;
+  }
 
   let jdHtml = '';
   if (jdMatch) {
@@ -158,11 +211,12 @@ export function renderAuditGrid(diagnostics, jdMatch) {
   }
 
   container.innerHTML = `
+    ${roleFitHtml}
     ${jdHtml}
     <div class="audit-item">
       <div class="audit-label">Word Count & Density</div>
       <div class="audit-value">${diagnostics.wordCount} words</div>
-      <div class="audit-sub">${diagnostics.wordCount < 300 ? '⚠️ Brief (aim for 400-800 words)' : (diagnostics.wordCount > 900 ? '⚠️ Heavy (keep under 2 pages)' : '✓ Optimal length')}</div>
+      <div class="audit-sub">${diagnostics.wordCount < 300 ? '⚠️ Brief (aim for 400-800 words)' : (diagnostics.wordCount > 900 ? '⚠️ Heavy (keep under 2 pages)' : '✓ Optimal recruiter length')}</div>
     </div>
     <div class="audit-item">
       <div class="audit-label">Quantified Impact Metrics</div>
@@ -185,6 +239,42 @@ export function renderAuditGrid(diagnostics, jdMatch) {
       <div class="audit-sub">${contacts.linkedin ? '✓ LinkedIn verified' : '⚠️ No LinkedIn'} | ${contacts.github ? '✓ GitHub verified' : '⚠️ No GitHub'}</div>
     </div>
   `;
+}
+
+// ─── Bullet Point Rewrites ───────────────────────────────────
+export function renderBulletRewrites(rewrites) {
+  const container = document.getElementById('bulletRewriteList');
+  if (!container) return;
+
+  if (!rewrites || rewrites.length === 0) {
+    container.innerHTML = `
+      <div class="empty-rewrite-box">
+        <p class="audit-sub">✓ No passive or weak bullet points detected! Your bullet points demonstrate strong action and metric focus.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = rewrites.map((item, idx) => `
+    <div class="rewrite-card">
+      <div class="rewrite-card-header">
+        <span class="rewrite-badge">Improvement #${idx + 1}</span>
+        <span class="rewrite-issue">${escHtml(item.issue)}</span>
+      </div>
+      
+      <div class="rewrite-comparison">
+        <div class="rewrite-block original">
+          <div class="rewrite-label">❌ Current Resume Phrasing:</div>
+          <div class="rewrite-text">${escHtml(item.original)}</div>
+        </div>
+        
+        <div class="rewrite-block improved">
+          <div class="rewrite-label">✅ High-Impact Google XYZ / STAR Rewrite:</div>
+          <div class="rewrite-text">${escHtml(item.improved)}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
 }
 
 // ─── Suggested Job Roles ──────────────────────────────────────
@@ -232,6 +322,7 @@ export function renderSuggestedRoles(roles) {
 // ─── ATS ─────────────────────────────────────────────────────
 export function renderAts(ats) {
   const badge = document.getElementById('atsBadge');
+  const numEl = document.getElementById('atsScoreNum');
   const list = document.getElementById('atsList');
 
   const configs = {
@@ -243,6 +334,11 @@ export function renderAts(ats) {
   badge.style.background = cfg.bg;
   badge.style.color = cfg.color;
   badge.textContent = `${cfg.icon} ATS ${ats.score}`;
+
+  if (numEl) {
+    numEl.textContent = `${ats.numericScore || 85}% Compatible`;
+    numEl.style.color = cfg.color;
+  }
 
   list.innerHTML = (ats.issues || [])
     .map((issue) => `<li>${escHtml(issue)}</li>`)
