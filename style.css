@@ -2099,6 +2099,55 @@ body.light-theme .rewrite-block.improved {
   vertical-align: middle;
 }
 
+/* ── Platform Switcher Navigation (Single click between Student & Placement Staff) ── */
+.portal-nav-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.portal-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  color: var(--text-2);
+  text-decoration: none;
+  cursor: default;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.portal-nav-btn.link-btn {
+  cursor: pointer;
+  color: var(--text-2);
+}
+
+.portal-nav-btn.link-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.portal-nav-btn.active {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+}
+
+.portal-nav-btn.active.staff-active {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+}
+
 .btn-portal-switch {
   display: inline-flex;
   align-items: center;
@@ -3084,6 +3133,21 @@ body.light-theme .table-skill-pill {
   background: #f1f5f9;
   border-color: #cbd5e1;
   color: #334155;
+}
+
+body.light-theme .portal-nav-switcher {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+body.light-theme .portal-nav-btn.link-btn {
+  color: #64748b;
+}
+
+body.light-theme .portal-nav-btn.link-btn:hover {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 body.light-theme .btn-portal-switch {

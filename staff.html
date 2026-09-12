@@ -40,17 +40,16 @@
     </div>
 
     <div class="header-actions">
-      <!-- Return to Student Portal Link -->
-      <a href="index.html" class="btn-portal-switch" title="Go to Student Personal Resume Reviewer">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        Student Portal
-      </a>
-
-      <!-- Staff Profile Indicator (Hidden until logged in) -->
-      <div class="staff-user-badge hidden" id="staffUserBadge">
-        <span class="user-status-dot"></span>
-        <span id="staffOfficerName">Prof. Placement Officer</span>
-        <button class="btn-logout" id="btnLogout" title="Log out of Staff Portal">Logout</button>
+      <!-- Platform Switcher Navigation -->
+      <div class="portal-nav-switcher">
+        <a href="index.html" class="portal-nav-btn link-btn" title="Switch to Student Individual Resume Reviewer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Student Reviewer
+        </a>
+        <span class="portal-nav-btn active staff-active">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Placement Staff (Batch 60)
+        </span>
       </div>
 
       <!-- Theme Switcher Toggle -->
@@ -64,55 +63,8 @@
   <!-- MAIN WRAPPER -->
   <main class="staff-main-container">
 
-    <!-- 1. STAFF LOGIN SECTION -->
-    <section class="staff-login-section" id="staffLoginSection">
-      <div class="staff-login-card">
-        <div class="login-badge">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Institutional Access
-        </div>
-        <h2 class="login-title">Placement Staff & Faculty Login</h2>
-        <p class="login-sub">Access the batch evaluation portal to analyze up to 60+ student resumes simultaneously, discover top performers, and export placement shortlists.</p>
-
-        <form id="staffLoginForm" class="staff-login-form">
-          <div class="form-group">
-            <label for="staffEmail">Officer Email / Institutional ID</label>
-            <input type="email" id="staffEmail" class="input" placeholder="e.g. placement.cell@college.edu" value="placement@college.edu" required />
-          </div>
-
-          <div class="form-group">
-            <label for="staffDept">Academic Department</label>
-            <select id="staffDept" class="input select-input">
-              <option value="CSE">Department of Computer Science & Engineering (CSE)</option>
-              <option value="IT">Department of Information Technology (IT)</option>
-              <option value="ECE">Department of Electronics & Communication (ECE)</option>
-              <option value="MECH">Department of Mechanical & Automobile (MECH/AUTO)</option>
-              <option value="ALL">All Departments (Institutional Drive)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="staffPassword">Password</label>
-            <input type="password" id="staffPassword" class="input" placeholder="Enter password" value="placement2026" required />
-          </div>
-
-          <button type="submit" class="btn-primary btn-staff-login">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-            Sign In to Staff Portal
-          </button>
-
-          <div class="demo-login-box">
-            <span>Or test immediately with demo credentials:</span>
-            <button type="button" class="btn-demo-quick" id="btnQuickDemo">
-              ⚡ One-Click Placement Staff Demo Sign In
-            </button>
-          </div>
-        </form>
-      </div>
-    </section>
-
-    <!-- 2. STAFF BATCH DASHBOARD (Visible After Login) -->
-    <section class="staff-dashboard-section hidden" id="staffDashboardSection">
+    <!-- STAFF BATCH DASHBOARD (Immediately Accessible - Zero Login Hurdles) -->
+    <section class="staff-dashboard-section" id="staffDashboardSection">
 
       <!-- TOP CONTROL & BATCH UPLOAD BAR -->
       <div class="staff-batch-uploader-card">

@@ -21,14 +21,6 @@ let filteredResults = [];
 let activeAuditCandidate = null;
 
 // ─── DOM References ───────────────────────────────────────────
-const staffLoginSection    = document.getElementById('staffLoginSection');
-const staffDashboardSection= document.getElementById('staffDashboardSection');
-const staffLoginForm       = document.getElementById('staffLoginForm');
-const btnQuickDemo         = document.getElementById('btnQuickDemo');
-const staffUserBadge       = document.getElementById('staffUserBadge');
-const staffOfficerName     = document.getElementById('staffOfficerName');
-const btnLogout            = document.getElementById('btnLogout');
-
 const batchDropzone        = document.getElementById('batchDropzone');
 const batchFileInput       = document.getElementById('batchFileInput');
 const batchSelectedSummary = document.getElementById('batchSelectedSummary');
@@ -67,7 +59,6 @@ const btnCloseModal        = document.getElementById('btnCloseModal');
 // ─── Init ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   setupThemeToggle();
-  setupAuth();
   setupBatchUpload();
   setupFiltersAndSort();
   setupModal();
@@ -86,67 +77,6 @@ function setupThemeToggle() {
       if (themeLabel) themeLabel.textContent = isLight ? 'Dark Mode' : 'Light Mode';
     });
   }
-}
-
-// ─── 1. Authentication & Session Management ───────────────────
-function setupAuth() {
-  const isAuth = sessionStorage.getItem('placement_staff_auth') === 'true';
-  const savedOfficer = sessionStorage.getItem('placement_staff_officer') || 'Prof. Placement Officer';
-
-  if (isAuth) {
-    showDashboard(savedOfficer);
-  } else {
-    showLogin();
-  }
-
-  // Handle standard login form submit
-  if (staffLoginForm) {
-    staffLoginForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const email = document.getElementById('staffEmail').value.trim();
-      const dept = document.getElementById('staffDept').value;
-      const officerLabel = `Staff Officer (${dept})`;
-
-      sessionStorage.setItem('placement_staff_auth', 'true');
-      sessionStorage.setItem('placement_staff_officer', officerLabel);
-      showDashboard(officerLabel);
-      showToast(`Welcome to Placement Cell Portal (${dept})`, 'success');
-    });
-  }
-
-  // Quick Demo Login
-  if (btnQuickDemo) {
-    btnQuickDemo.addEventListener('click', () => {
-      const officerLabel = 'Dr. S. Ramanathan (Head of Placements)';
-      sessionStorage.setItem('placement_staff_auth', 'true');
-      sessionStorage.setItem('placement_staff_officer', officerLabel);
-      showDashboard(officerLabel);
-      showToast('Authenticated via Placement Officer Demo account.', 'success');
-    });
-  }
-
-  // Logout
-  if (btnLogout) {
-    btnLogout.addEventListener('click', () => {
-      sessionStorage.removeItem('placement_staff_auth');
-      sessionStorage.removeItem('placement_staff_officer');
-      showLogin();
-      showToast('Logged out of Staff Portal.', 'info');
-    });
-  }
-}
-
-function showLogin() {
-  staffLoginSection.classList.remove('hidden');
-  staffDashboardSection.classList.add('hidden');
-  staffUserBadge.classList.add('hidden');
-}
-
-function showDashboard(officerName) {
-  staffLoginSection.classList.add('hidden');
-  staffDashboardSection.classList.remove('hidden');
-  staffUserBadge.classList.remove('hidden');
-  if (staffOfficerName) staffOfficerName.textContent = officerName;
 }
 
 // ─── 2. Multi-PDF File Upload & Drag-and-Drop ─────────────────
