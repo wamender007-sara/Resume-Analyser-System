@@ -32,7 +32,34 @@ export async function extractTextFromPDF(file) {
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    const pageText = content.items.map((item) => item.str).join(' ');
+    
+    // Group text items by vertical line position to preserve structural line breaks
+    const lineItems = [];
+    let currentLine = '';
+    let lastY = null;
+
+    for (const item of content.items) {
+      const str = item.str;
+      if (!str && !item.hasEOL) continue;
+
+      const currentY = item.transform ? Math.round(item.transform[5]) : null;
+      const isNewLine = (lastY !== null && currentY !== null && Math.abs(currentY - lastY) > 3) || item.hasEOL;
+
+      if (isNewLine && currentLine.trim()) {
+        lineItems.push(currentLine.trim());
+        currentLine = str || '';
+      } else {
+        const needsSpace = currentLine.length > 0 && !currentLine.endsWith(' ') && str && !str.startsWith(' ');
+        currentLine += (needsSpace ? ' ' : '') + (str || '');
+      }
+
+      if (currentY !== null) lastY = currentY;
+    }
+    if (currentLine.trim()) {
+      lineItems.push(currentLine.trim());
+    }
+
+    const pageText = lineItems.length > 0 ? lineItems.join('\n') : content.items.map(item => item.str).join(' ');
     pageTexts.push(pageText);
 
     // Extract embedded link annotations (e.g. clickable LinkedIn, GitHub links)

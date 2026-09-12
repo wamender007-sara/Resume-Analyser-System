@@ -49,6 +49,7 @@ const candidateSearchInput = document.getElementById('candidateSearchInput');
 const gradeFilterSelect    = document.getElementById('gradeFilterSelect');
 const sortOrderSelect      = document.getElementById('sortOrderSelect');
 const btnExportCsv         = document.getElementById('btnExportCsv');
+const btnExportPdf         = document.getElementById('btnExportPdf');
 
 const studentAuditModal    = document.getElementById('studentAuditModal');
 const modalStudentName     = document.getElementById('modalStudentName');
@@ -168,11 +169,9 @@ async function startBatchAudit() {
         // Analyze using identical calibrated constraints
         const analysis = analyseResumeLocally(text, role);
 
-        // Derive candidate name fallback from filename if text extraction was generic
-        let derivedName = analysis.candidateName;
-        if (!derivedName || derivedName === 'CANDIDATE' || derivedName.length < 3) {
-          derivedName = cleanNameFromFilename(file.name);
-        }
+        // Derive candidate name using multi-tier resolution (text -> filename -> email)
+        const email = analysis.diagnostics?.contacts?.email;
+        const derivedName = resolveCandidateName(analysis.candidateName, file.name, email, text);
 
         batchResults.push({
           file,
@@ -185,11 +184,12 @@ async function startBatchAudit() {
       } catch (err) {
         console.warn(`Failed parsing file ${file.name}:`, err);
         // Add fallback entry so count matches
+        const derivedName = resolveCandidateName(null, file.name, null, '');
         batchResults.push({
           file,
           filename: file.name,
           text: '',
-          candidateName: cleanNameFromFilename(file.name),
+          candidateName: derivedName,
           academicScore: 'N/A',
           analysis: analyseResumeLocally(file.name, role)
         });
@@ -226,13 +226,99 @@ async function startBatchAudit() {
   renderBatchDashboard();
 }
 
+// ─── Robust Candidate Name Extraction & Resolution ────────────
+function resolveCandidateName(analysisName, filename, email, text) {
+  // 1. If engine returned a valid, non-generic person name
+  if (isValidCandidateName(analysisName)) {
+    return formatToTitleCase(analysisName);
+  }
+
+  // 2. Try extracting from resume text top lines
+  if (text) {
+    const textName = extractNameFromText(text);
+    if (isValidCandidateName(textName)) {
+      return formatToTitleCase(textName);
+    }
+  }
+
+  // 3. Try extracting from filename
+  if (filename) {
+    const fnName = cleanNameFromFilename(filename);
+    if (isValidCandidateName(fnName)) {
+      return formatToTitleCase(fnName);
+    }
+  }
+
+  // 4. Try extracting from email username (e.g. saravanprasanna.10@gmail.com)
+  if (email) {
+    const emailName = extractNameFromEmail(email);
+    if (isValidCandidateName(emailName)) {
+      return formatToTitleCase(emailName);
+    }
+  }
+
+  return 'Student Candidate';
+}
+
+function isValidCandidateName(name) {
+  if (!name || typeof name !== 'string') return false;
+  const clean = name.trim();
+  if (clean.length < 2 || clean.length > 45) return false;
+  const lower = clean.toLowerCase();
+  const blacklist = [
+    'candidate', 'student', 'applicant', 'student applicant', 'resume', 'cv',
+    'curriculum', 'vitae', 'biodata', 'profile', 'unknown', 'none', 'n/a', 'name',
+    'portfolio', 'summary', 'overview', 'details'
+  ];
+  if (blacklist.includes(lower)) return false;
+  return /[a-zA-Z]/.test(clean);
+}
+
+function formatToTitleCase(str) {
+  if (!str) return '';
+  return str
+    .trim()
+    .split(/\s+/)
+    .map(w => {
+      if (w.length === 1) return w.toUpperCase();
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    })
+    .join(' ');
+}
+
+function extractNameFromEmail(email) {
+  if (!email || !email.includes('@')) return null;
+  const user = email.split('@')[0];
+  const cleaned = user.replace(/\d+/g, ' ').replace(/[._\-]+/g, ' ').trim();
+  if (cleaned.length >= 3) {
+    return cleaned;
+  }
+  return null;
+}
+
+function extractNameFromText(text) {
+  if (!text) return null;
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  for (let i = 0; i < Math.min(lines.length, 10); i++) {
+    const line = lines[i].replace(/[|•·,].*$/, '').trim();
+    if (/@|http|\.com|phone|contact|curriculum|resume|page|email|github|linkedin/i.test(line)) continue;
+    if (/(?:engineer|developer|architect|designer|manager|specialist|analyst|intern|student|b\.?tech|b\.?e)/i.test(line)) continue;
+    const words = line.split(/\s+/).filter(Boolean);
+    if (words.length >= 1 && words.length <= 5 && /^[a-zA-Z\s\.\-]+$/.test(line) && line.length >= 3 && line.length <= 40) {
+      return line;
+    }
+  }
+  return null;
+}
+
 function cleanNameFromFilename(filename) {
+  if (!filename) return null;
   const base = filename.replace(/\.[^/.]+$/, '');
   const clean = base
-    .replace(/(?:resume|cv|biodata|profile|final|updated|202\d)/gi, '')
+    .replace(/(?:resume|cv|biodata|profile|final|updated|202\d|candidate|student|applicant)/gi, '')
     .replace(/[_\-\.]+/g, ' ')
     .trim();
-  return clean.length >= 2 ? clean.toUpperCase() : 'STUDENT APPLICANT';
+  return clean.length >= 2 ? clean : null;
 }
 
 function extractAcademicScore(text) {
@@ -319,6 +405,9 @@ function setupFiltersAndSort() {
   gradeFilterSelect.addEventListener('change', applyFilterAndSort);
   sortOrderSelect.addEventListener('change', applyFilterAndSort);
   btnExportCsv.addEventListener('click', exportPlacementCsv);
+  if (btnExportPdf) {
+    btnExportPdf.addEventListener('click', exportClassAnalysisPdf);
+  }
 }
 
 function applyFilterAndSort() {
@@ -703,6 +792,96 @@ function exportPlacementCsv() {
   document.body.removeChild(link);
 
   showToast('Placement Shortlist CSV exported successfully!', 'success');
+}
+
+// ─── 9. High-Fidelity PDF Class Analysis Report ───────────────
+async function exportClassAnalysisPdf() {
+  if (batchResults.length === 0) {
+    showToast('No candidates available to export. Please analyze resumes first.', 'error');
+    return;
+  }
+
+  showToast('Generating high-fidelity classroom analysis PDF report…', 'info');
+
+  const btn = document.getElementById('btnExportPdf');
+  const originalHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-icon"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg>
+      Building PDF…
+    `;
+  }
+
+  try {
+    if (typeof window.html2pdf !== 'undefined') {
+      // Clone batch results wrap
+      const source = document.getElementById('batchResultsWrap');
+      const clone = source.cloneNode(true);
+      clone.classList.remove('hidden');
+
+      // Strip out interactive filters & table action buttons in PDF output
+      const toolbarControls = clone.querySelector('.toolbar-controls');
+      if (toolbarControls) toolbarControls.remove();
+
+      clone.querySelectorAll('.col-action').forEach(el => el.remove());
+
+      // Add official institutional report banner
+      const roleText = targetDriveRole ? targetDriveRole.options[targetDriveRole.selectedIndex].text : 'General Campus Placement Drive';
+      const batchName = document.getElementById('batchIdentifier') ? (document.getElementById('batchIdentifier').value.trim() || 'Classroom Batch 2026') : 'Classroom Batch 2026';
+
+      const banner = document.createElement('div');
+      banner.className = 'pdf-report-banner';
+      banner.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 3px solid #10b981;">
+          <div>
+            <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #10b981; margin-bottom: 4px;">Institutional Placement & Training Cell</div>
+            <h1 style="font-size: 22px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">Classroom Batch Resume Analysis & Evaluation Report</h1>
+            <div style="font-size: 13px; color: #475569;">
+              <strong>${escHtml(batchName)}</strong> · Target Profile: <strong>${escHtml(roleText)}</strong>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="display: inline-block; font-size: 11px; background: #ecfdf5; color: #059669; font-weight: 700; padding: 4px 12px; border-radius: 20px; border: 1px solid #a7f3d0; margin-bottom: 6px;">
+              ✓ Automated Verification Report
+            </div>
+            <div style="font-size: 11px; color: #64748b;">Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
+            <div style="font-size: 11px; color: #64748b;">Total Evaluated: <strong>${batchResults.length} Students</strong></div>
+          </div>
+        </div>
+      `;
+      clone.insertBefore(banner, clone.firstChild);
+
+      // Wrapper container styled for pristine rendering
+      const wrapper = document.createElement('div');
+      wrapper.className = 'pdf-render-root';
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
+
+      const opt = {
+        margin:       [8, 8, 8, 8],
+        filename:     `Class_Placement_Analysis_${batchName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 1.8, useCORS: true, logging: false, scrollY: 0 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      await window.html2pdf().set(opt).from(wrapper).save();
+      wrapper.remove();
+      showToast('Classroom Analysis PDF report downloaded successfully!', 'success');
+    } else {
+      window.print();
+    }
+  } catch (err) {
+    console.error('PDF Generation failed, falling back to browser print:', err);
+    window.print();
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
+  }
 }
 
 function escHtml(str) {

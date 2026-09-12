@@ -320,25 +320,89 @@ function extractAndRewriteBullets(text) {
   return rewrites;
 }
 
+// Helper to format person names into clean Title Case
+function formatPersonName(str) {
+  if (!str) return '';
+  return str
+    .trim()
+    .split(/\s+/)
+    .map(w => {
+      if (w.length === 1) return w.toUpperCase();
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    })
+    .join(' ');
+}
+
+function isValidPersonName(name) {
+  if (!name || typeof name !== 'string') return false;
+  const clean = name.trim();
+  if (clean.length < 2 || clean.length > 45) return false;
+  const lower = clean.toLowerCase();
+  const blacklisted = [
+    'candidate', 'student', 'applicant', 'student applicant', 'resume', 'cv',
+    'curriculum', 'vitae', 'biodata', 'profile', 'unknown', 'contact', 'name',
+    'portfolio', 'summary', 'overview', 'details'
+  ];
+  if (blacklisted.includes(lower)) return false;
+  return /^[a-zA-Z\s\.\-]+$/.test(clean);
+}
+
+function extractCandidateName(text, email = null) {
+  if (!text) return null;
+  const headerLines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
+  // 1. Check explicit name labels: e.g. "Name: Saravan Prasanna", "Candidate Name: Rajana M"
+  for (const line of headerLines.slice(0, 15)) {
+    const labeledMatch = line.match(/^(?:candidate\s+name|student\s+name|applicant\s+name|full\s+name|name)\s*[:\-]\s*([A-Za-z\s\.\,\-]{2,40})/i);
+    if (labeledMatch) {
+      const candidate = formatPersonName(labeledMatch[1]);
+      if (isValidPersonName(candidate)) return candidate;
+    }
+  }
+
+  // 2. Scan initial preamble lines (before body sections start)
+  const sectionBoundary = /^(?:skills|technical\s+skills|work\s+experience|experience|employment|education|academic|projects|summary|professional\s+summary|profile\s+summary|objective|career\s+objective|certifications|achievements|publications|declaration)\b/i;
+  const forbiddenKeywords = /^(?:curriculum\s+vitae|resume|biodata|profile|contact|portfolio|page\s*\d+|personal\s+details|email|phone|address|declaration|mobile)/i;
+  const invalidSymbols = /[@\d\(\)\{\}\[\]\<\>\/\\\|\:\;\*\+\=\_\$\#\%\^\&~]/;
+
+  for (let i = 0; i < Math.min(headerLines.length, 12); i++) {
+    const rawLine = headerLines[i];
+    if (sectionBoundary.test(rawLine)) break;
+
+    let line = rawLine.replace(/[|•·,].*$/, '').trim();
+    if (!line || line.length < 2 || line.length > 40) continue;
+    if (forbiddenKeywords.test(line)) continue;
+    if (invalidSymbols.test(line)) continue;
+
+    // Disallow common job titles or degree abbreviations alone
+    if (/(?:engineer|developer|architect|designer|manager|specialist|analyst|intern|student|b\.?tech|b\.?e|m\.?tech|m\.?c\.?a|b\.?s\.?c|university|college|institute|department)/i.test(line)) continue;
+
+    const words = line.split(/\s+/).filter(Boolean);
+    if (words.length >= 1 && words.length <= 5 && /^[a-zA-Z\s\.\-]+$/.test(line)) {
+      const candidate = formatPersonName(line);
+      if (isValidPersonName(candidate)) return candidate;
+    }
+  }
+
+  // 3. Fallback: Extract from email address username
+  if (email) {
+    const emailUser = email.split('@')[0];
+    const cleanUser = emailUser.replace(/[\d_\-]+/g, ' ').replace(/\./g, ' ').trim();
+    if (cleanUser.length >= 3) {
+      const formatted = formatPersonName(cleanUser);
+      if (isValidPersonName(formatted)) return formatted;
+    }
+  }
+
+  return null;
+}
+
 // ─── 6. CORE EVIDENCE-BASED ANALYSER ───
 export function analyseResumeLocally(text, targetRole = '', jobDescription = '') {
   const clean = text.trim();
   const lower = clean.toLowerCase();
   const words = clean.split(/\s+/).filter(Boolean);
   const wordCount = words.length;
-
-  // Extract Candidate Name from initial lines
-  let candidateName = 'Candidate';
-  const headerLines = clean.split('\n').map(l => l.trim()).filter(Boolean);
-  for (let i = 0; i < Math.min(headerLines.length, 6); i++) {
-    const line = headerLines[i];
-    if (/@|http|\.com|\d{4}|phone|contact|curriculum|resume|page|email|github/i.test(line)) continue;
-    const wordsInLine = line.split(/\s+/).filter(Boolean);
-    if (wordsInLine.length >= 1 && wordsInLine.length <= 5 && /^[a-zA-Z\s\.\,\-]+$/.test(line) && line.length >= 3 && line.length <= 45) {
-      candidateName = line.toUpperCase();
-      break;
-    }
-  }
 
   // Extract Academic Score / CGPA if present
   let academicScore = null;
@@ -355,6 +419,9 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
   const phoneRegex = /(?:\+?\d{1,4}[-.\s]?)?(?:\(?\d{2,5}\)?[-.\s]?)?\d{3,5}[-.\s]?\d{3,5}/g;
 
   const emailFound = (clean.match(emailRegex) || [])[0] || null;
+
+  // Extract Candidate Name with multiple fallbacks
+  const candidateName = extractCandidateName(clean, emailFound);
 
   let phoneFound = null;
   const rawPhones = clean.match(phoneRegex) || [];

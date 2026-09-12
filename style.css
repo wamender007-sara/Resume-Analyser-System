@@ -2784,6 +2784,39 @@ body.light-theme .rewrite-block.improved {
   height: 36px;
 }
 
+.btn-export-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #ffffff;
+  padding: 0.45rem 0.95rem;
+  height: 36px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.btn-export-pdf:hover {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.45);
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .btn-export-csv {
   display: inline-flex;
   align-items: center;
@@ -3166,6 +3199,93 @@ body.light-theme .btn-podium-audit {
   background: #ffffff;
   border-color: #cbd5e1;
   color: #0f172a;
+}
+
+/* ── PDF RENDER CONTAINER & HIGH-FIDELITY PRINT EXPORT ── */
+.pdf-render-root {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 1040px;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.pdf-render-root .kpi-card,
+.pdf-render-root .podium-rank-card,
+.pdf-render-root .candidate-directory-card,
+.pdf-render-root .podium-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: none !important;
+}
+
+.pdf-render-root .student-name-text,
+.pdf-render-root .podium-student-name,
+.pdf-render-root .podium-title,
+.pdf-render-root .directory-title,
+.pdf-render-root .cgpa-val {
+  color: #0f172a !important;
+}
+
+.pdf-render-root .candidate-table th {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border-bottom: 2px solid #cbd5e1 !important;
+}
+
+.pdf-render-root .candidate-table td {
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+.pdf-render-root .table-skill-pill {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+/* Native Browser Print Styles */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .header,
+  .staff-batch-uploader-card,
+  .toolbar-controls,
+  .col-action,
+  .portal-nav-switcher,
+  .theme-toggle-btn,
+  #particles {
+    display: none !important;
+  }
+  .staff-main-container {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+  .staff-dashboard-section,
+  .batch-results-wrap {
+    display: block !important;
+  }
+  .kpi-card, .podium-rank-card, .candidate-directory-card, .podium-card {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+  .candidate-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  .student-name-text, .podium-student-name {
+    color: #000000 !important;
+  }
 }
 
 
