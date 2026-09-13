@@ -17,29 +17,26 @@
 export const TECH_TAXONOMY = {
   languages: [
     'python', 'javascript', 'typescript', 'java', 'c', 'c++', 'c#', '.net', 'go', 'golang',
-    'rust', 'ruby', 'rails', 'php', 'swift', 'kotlin', 'dart', 'sql', 'html', 'html5', 'css', 'css3',
-    'bash', 'shell', 'r', 'matlab', 'scala', 'solidity'
+    'rust', 'ruby', 'rails', 'php', 'swift', 'kotlin', 'dart', 'sql', 'html', 'html5', 'css', 'css3', 'bash', 'shell', 'r', 'matlab'
   ],
   frameworks: [
-    'react', 'react.js', 'next.js', 'vue', 'vue.js', 'angular', 'svelte', 'node.js', 'node', 'express', 'express.js',
+    'react', 'react.js', 'next.js', 'vue', 'vue.js', 'angular', 'svelte', 'node.js', 'express', 'express.js',
     'django', 'fastapi', 'flask', 'spring', 'spring boot', 'tailwind', 'tailwind css', 'bootstrap', 'redux',
-    'graphql', 'rest api', 'restful', 'grpc', 'pytorch', 'tensorflow', 'opencv', 'keras', 'scikit-learn', 'pandas', 'numpy',
-    'flutter', 'react native', 'nestjs', 'socket.io'
+    'graphql', 'rest api', 'restful', 'grpc', 'pytorch', 'tensorflow', 'opencv', 'keras', 'scikit-learn', 'pandas', 'numpy'
   ],
   databases: [
     'postgresql', 'postgres', 'mysql', 'mongodb', 'redis', 'sqlite', 'firebase', 'dynamodb',
-    'cassandra', 'elasticsearch', 'oracle', 'sql server', 'supabase', 'prisma', 'typeorm', 'snowflake', 'bigquery', 'mariadb'
+    'cassandra', 'elasticsearch', 'oracle', 'sql server', 'supabase', 'prisma', 'typeorm'
   ],
   cloud_devops: [
     'aws', 'amazon web services', 'azure', 'gcp', 'google cloud', 'docker', 'kubernetes', 'k8s',
-    'git', 'github', 'github actions', 'gitlab ci', 'jenkins', 'ci/cd', 'terraform', 'ansible', 'linux', 'nginx', 'datadog',
-    'kafka', 'rabbitmq', 'prometheus', 'grafana', 'helm'
+    'git', 'github', 'github actions', 'gitlab ci', 'jenkins', 'ci/cd', 'terraform', 'ansible', 'linux', 'nginx', 'datadog'
   ],
   domain_specialized: [
     'esp32', 'esp8266', 'arduino', 'raspberry pi', 'embedded systems', 'iot', 'robotics', 'microcontroller',
     'sensors', 'cad', 'solidworks', 'catia', 'ansys', 'powertrain', 'bms', 'can bus', 'ecu',
-    'computer vision', 'deep learning', 'machine learning', 'nlp', 'llm', 'generative ai', 'system design', 'microservices',
-    'distributed systems', 'unit testing', 'jest', 'cypress', 'agile', 'scrum', 'jira', 'oop', 'data structures', 'algorithms'
+    'computer vision', 'deep learning', 'machine learning', 'nlp', 'llm', 'system design', 'microservices',
+    'distributed systems', 'unit testing', 'jest', 'cypress', 'agile', 'scrum', 'jira'
   ]
 };
 
@@ -68,9 +65,10 @@ const SENIOR_PILLARS = {
 };
 
 // ─── 2. SENIORITY DETECTION ───
-export function detectSeniority(targetRole, resumeText) {
-  const role = (targetRole || '').toLowerCase();
-  const text = (resumeText.slice(0, 2500)).toLowerCase();
+export function detectSeniority(targetRole = '', resumeText = '') {
+  const role = (typeof targetRole === 'string' ? targetRole : '').toLowerCase();
+  const rawText = typeof resumeText === 'string' ? resumeText : (resumeText && typeof resumeText.text === 'string' ? resumeText.text : '');
+  const text = (rawText.slice(0, 2500)).toLowerCase();
   
   if (/\b(lead|principal|staff\b(?!.*\b(batch|portal|access|staff))\b|architect|director|vp|head)\b/i.test(role)) return 'lead';
   if (/\b(senior|sr\.?|specialist|expert)\b/i.test(role)) return 'senior';
@@ -532,127 +530,95 @@ export function detectEmploymentGaps(text) {
   return gaps;
 }
 
-/// ─── 8. LANGUAGE & PHRASING QUALITY AUDITOR (C7 CONSTRAINT) ───
+// ─── 8. LANGUAGE & PHRASING QUALITY AUDITOR ───
 export function auditLanguageQuality(text) {
   const language_issues = [];
-  const weak_verb_bullets = [];
   let score = 95;
 
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
 
-  const WEAK_OPENERS = [
-    { regex: /^(?:was\s+)?responsible\s+for\s+(.*)/i, text: 'Responsible for' },
-    { regex: /^worked\s+(?:on|with)\s+(.*)/i, text: 'Worked on' },
-    { regex: /^assisted\s+(?:in|with)\s+(.*)/i, text: 'Assisted with' },
-    { regex: /^helped\s+(?:to\s+|with\s+)?(.*)/i, text: 'Helped with' },
-    { regex: /^involved\s+in\s+(.*)/i, text: 'Involved in' },
-    { regex: /^participated\s+in\s+(.*)/i, text: 'Participated in' },
-    { regex: /^tasked\s+with\s+(.*)/i, text: 'Tasked with' },
-    { regex: /^duties\s+included\s+(.*)/i, text: 'Duties included' },
-    { regex: /^handled\s+(.*)/i, text: 'Handled' },
-    { regex: /^did\s+(.*)/i, text: 'Did' }
+  const weakOpeners = [
+    { regex: /^(?:was\s+)?responsible\s+for\s+(.*)/i, suggestion: 'Replace with an assertive action verb like "Spearheaded", "Directed", or "Engineered".' },
+    { regex: /^worked\s+(?:on|with)\s+(.*)/i, suggestion: 'Replace with specific contribution verbs like "Developed", "Integrated", or "Architected".' },
+    { regex: /^assisted\s+(?:in|with)\s+(.*)/i, suggestion: 'Highlight your direct technical ownership with verbs like "Co-engineered", "Implemented", or "Executed".' },
+    { regex: /^helped\s+(?:to\s+)?(.*)/i, suggestion: 'Specify your exact technical role, e.g., "Constructed", "Optimized", or "Delivered".' },
+    { regex: /^handled\s+(.*)/i, suggestion: 'Use higher-impact verbs like "Orchestrated", "Administered", or "Streamlined".' },
+    { regex: /^duties\s+included\s+(.*)/i, suggestion: 'Rewrite as an active achievement statement using power action verbs.' }
   ];
 
   for (const line of lines) {
     const stripped = line.replace(/^[●•—\-\*\d\.]+\s*/, '').trim();
     if (stripped.length < 15) continue;
 
-    for (const weak of WEAK_OPENERS) {
-      if (weak.regex.test(stripped)) {
-        weak_verb_bullets.push(stripped);
-        if (language_issues.length < 5) {
-          language_issues.push({
-            issue: `Weak passive opener ("${weak.text}")`,
-            location: stripped.length > 70 ? stripped.slice(0, 67) + '...' : stripped,
-            suggestion: `Replace with an assertive action verb (e.g. "Engineered", "Spearheaded", "Optimized").`
-          });
-        }
+    for (const weak of weakOpeners) {
+      const match = stripped.match(weak.regex);
+      if (match) {
+        language_issues.push({
+          issue: 'Weak passive verb opener',
+          location: stripped.length > 70 ? stripped.slice(0, 67) + '...' : stripped,
+          suggestion: weak.suggestion
+        });
+        score -= 6;
         break;
       }
     }
 
     // Conciseness check (> 30 words / ~2+ lines)
     const wordsInLine = stripped.split(/\s+/).filter(Boolean);
-    if (wordsInLine.length > 30 && language_issues.length < 5) {
+    if (wordsInLine.length > 30) {
       language_issues.push({
         issue: 'Bullet length exceeds 2 lines (~30 words)',
         location: wordsInLine.slice(0, 7).join(' ') + ' ... ' + wordsInLine.slice(-4).join(' '),
         suggestion: 'Split into two concise bullets under 25 words focused on specific outcomes.'
       });
-      score -= 3;
+      score -= 5;
     }
-  }
 
-  // C7 Constraint: Deduct 2 points per weak verb opener (max 10 points deduction)
-  const weakVerbPenalty = Math.min(10, weak_verb_bullets.length * 2);
-  score -= weakVerbPenalty;
+    if (language_issues.length >= 4) break;
+  }
 
   // Tense consistency check in experience blocks
   if (/\b(develop|implement|manage|create|build)\b/i.test(text) && /\b(developed|implemented|managed|created|built)\b/i.test(text)) {
-    if (language_issues.length < 5) {
+    if (language_issues.length < 4) {
       language_issues.push({
         issue: 'Tense consistency check',
         location: 'Experience / Projects section',
         suggestion: 'Ensure past roles strictly use past tense verbs (e.g. "Developed", "Engineered") and only active ongoing roles use present tense.'
       });
-      score -= 3;
+      score -= 4;
     }
   }
 
   return {
-    score: Math.floor(Math.min(100, Math.max(35, score))),
-    language_issues,
-    weak_verb_bullets: Array.from(new Set(weak_verb_bullets))
+    score: Math.min(100, Math.max(55, score)),
+    language_issues
   };
 }
 
-// ─── 9. QUANTIFIABLE IMPACT AUDITOR (C1 CONSTRAINT) ───
+// ─── 9. QUANTIFIABLE IMPACT AUDITOR ───
 export function auditQuantifiableImpact(text) {
   const strong_bullets = [];
-  const unquantified_bullets = [];
   const weak_bullets = [];
 
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  
-  // Robust metric regex capturing percentages, currency, rates, counts, durations, and multipliers
-  const metricRegex = /(\b\d+[\d,.]*\%|\$\s*\d+[\d,.]*|\b\d[\d,.]*\s*(?:x|times|users|clients|engineers|developers|customers|members|k|m|hours|days|weeks|months|requests|rps|qps|ms|seconds|minutes|accuracy|latency|endpoints|tables|records|queries|tasks|commits|tests|prs|services|microservices|pipelines|stars|downloads|sales|orders|lines|fps|mb|gb|tb)\b|\b\d+[\d,.]*\s*\/\s*(?:s|sec|second|min|minute|hr|hour|day|month)\b|\b\d+k\+?\b|\b\d+\+\s*(?:users|clients|engineers|records|requests)?\b|\bsub-\d+ms\b)/i;
+  const bulletLines = lines.filter(l => /^[●•—\-\*]/.test(l) || (l.length > 30 && !l.endsWith(':')));
 
-  for (const line of lines) {
-    const isExplicitBullet = /^[●•—\-\*]/.test(line);
+  const metricRegex = /(\b\d+[\d,.]*\%|\$\s*\d+[\d,.]*|\b\d+\s*(?:x|times|users|clients|engineers|k|m|hours|days|requests|rps|qps|ms|seconds|minutes|accuracy|latency)\b)/i;
+
+  for (const line of bulletLines) {
     const cleanLine = line.replace(/^[●•—\-\*\d\.]+\s*/, '').trim();
-
     if (cleanLine.length < 20) continue;
 
-    // Filter out contact, email, links, or education summary lines
-    if (/@|https?:\/\/|github\.com|linkedin\.com|\b(?:email|phone|contact|cgpa|b\.?e\b|b\.tech|bachelor|university|college|department)\b/i.test(cleanLine)) {
+    // Filter out header, contact, or education summary lines
+    if (/@|https?:\/\/|github\.com|linkedin\.com|\b(?:email|phone|contact|cgpa|b\.?e\b|b\.tech|bachelor|university|college)\b/i.test(cleanLine)) {
       continue;
-    }
-
-    // Filter out skill listing lines (e.g. "Languages & Frameworks: React, Node.js, Express...")
-    if (/^(?:languages|frameworks|databases|tools|skills|technical skills|technologies|cloud|devops|libraries|platforms)[\s&]*:\s*[\w\s,.\-+/]+$/i.test(cleanLine)) {
-      continue;
-    }
-
-    // Filter out company/role header lines containing date ranges (e.g. "Software Engineer, Acme Corp (Jan 2024 - Present)")
-    if (/\((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{4})[a-z]*\s*[-–]\s*(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{4}|present)[a-z]*\)/i.test(cleanLine)) {
-      continue;
-    }
-
-    // Filter out section headers
-    if (/^(?:experience|work experience|employment|projects|key projects|education|skills|certifications|summary|profile)$/i.test(cleanLine)) {
-      continue;
-    }
-
-    // If not explicit bullet, ensure it starts with an action or outcome verb (not a project title or category)
-    if (!isExplicitBullet) {
-      const startsWithAction = /^(?:developed|built|engineered|architected|implemented|created|designed|optimized|scaled|reduced|increased|automated|deployed|integrated|spearheaded|achieved|delivered|launched|refactored|mentored|wrote|cut|improved|collaborated|responsible|worked|assisted|helped)\b/i.test(cleanLine);
-      if (!startsWithAction) continue;
     }
 
     if (metricRegex.test(cleanLine)) {
-      strong_bullets.push(cleanLine);
+      if (strong_bullets.length < 6) {
+        strong_bullets.push(cleanLine);
+      }
     } else {
-      unquantified_bullets.push(cleanLine);
       if (weak_bullets.length < 4) {
         const actionStarter = cleanLine.charAt(0).toUpperCase() + cleanLine.slice(1).replace(/[.,;]+$/, '');
         weak_bullets.push({
@@ -663,179 +629,22 @@ export function auditQuantifiableImpact(text) {
     }
   }
 
-  const totalEvaluated = strong_bullets.length + unquantified_bullets.length;
-  const unquantifiedRatio = totalEvaluated > 0 ? (unquantified_bullets.length / totalEvaluated) : 0;
-  const unquantifiedPercent = Math.round(unquantifiedRatio * 100);
-
+  const totalEvaluated = strong_bullets.length + weak_bullets.length;
   const ratio = totalEvaluated > 0 
-    ? `${strong_bullets.length} achievement-oriented (${Math.round((strong_bullets.length / totalEvaluated) * 100)}%) vs ${unquantified_bullets.length} unquantified bullets (${unquantifiedPercent}%)`
-    : 'No distinct bullet points found; format project highlights with measurable bullet points.';
+    ? `${strong_bullets.length} achievement-oriented (${Math.round((strong_bullets.length / totalEvaluated) * 100)}%) vs ${weak_bullets.length} duty-listing bullets`
+    : 'No distinct bullet points found; format project highlights with bullet points.';
 
-  // Scoring independent category (pessimistic, rounded DOWN)
-  let score = 40;
-  if (strong_bullets.length >= 5) score = 92;
-  else if (strong_bullets.length >= 3) score = 80;
-  else if (strong_bullets.length >= 2) score = 68;
-  else if (strong_bullets.length >= 1) score = 52;
-  else score = 35;
-
-  if (unquantifiedRatio > 0.40) {
-    score = Math.min(score, 55);
-  }
+  let score = 45;
+  if (strong_bullets.length >= 4) score = 95;
+  else if (strong_bullets.length >= 2) score = 85;
+  else if (strong_bullets.length >= 1) score = 75;
+  else score = 55;
 
   return {
-    score: Math.floor(score),
+    score,
     strong_bullets,
-    unquantified_bullets,
     weak_bullets,
-    totalEvaluated,
-    unquantifiedRatio,
-    unquantifiedPercent,
-    isUnquantifiedCapped: unquantifiedRatio > 0.40,
     ratio
-  };
-}
-
-// ─── 9B. DUPLICATE & OVERLAPPING CONTENT DETECTOR (C3 CONSTRAINT) ───
-export function detectDuplicateContent(sections, cleanText = '') {
-  const duplicate_content_flags = [];
-  let expText = '';
-  let projText = '';
-
-  if (cleanText) {
-    const expMatch = cleanText.match(/(?:experience|work experience|employment|work history|internship)[\s\S]*?(?=(?:projects|key projects|academic projects|education|certifications|skills|technical skills|$))/i);
-    const projMatch = cleanText.match(/(?:projects|key projects|academic projects|personal projects)[\s\S]*?(?=(?:experience|work experience|employment|education|certifications|skills|technical skills|$))/i);
-    expText = expMatch ? expMatch[0] : '';
-    projText = projMatch ? projMatch[0] : '';
-  } else if (sections) {
-    expText = typeof sections.experience === 'string' ? sections.experience : '';
-    projText = typeof sections.projects === 'string' ? sections.projects : '';
-  }
-
-  if (!expText.trim() || !projText.trim()) return duplicate_content_flags;
-
-  const expLines = expText.split(/\r?\n/).map(l => l.replace(/^[●•—\-\*\d\.]+\s*/, '').trim()).filter(l => l.length >= 30);
-  const projLines = projText.split(/\r?\n/).map(l => l.replace(/^[●•—\-\*\d\.]+\s*/, '').trim()).filter(l => l.length >= 30);
-
-  for (const el of expLines) {
-    const elNorm = el.toLowerCase().replace(/[^a-z0-9]/g, '');
-    for (const pl of projLines) {
-      const plNorm = pl.toLowerCase().replace(/[^a-z0-9]/g, '');
-      if (elNorm === plNorm || (elNorm.length > 35 && (elNorm.includes(plNorm.slice(0, 30)) || plNorm.includes(elNorm.slice(0, 30))))) {
-        duplicate_content_flags.push({
-          entry_1: `Work Experience: "${el.slice(0, 55)}..."`,
-          entry_2: `Projects: "${pl.slice(0, 55)}..."`,
-          overlap_description: `Near-identical work description repeated across both Experience and Projects sections.`
-        });
-        break;
-      }
-    }
-    if (duplicate_content_flags.length >= 3) break;
-  }
-
-  return duplicate_content_flags;
-}
-
-// ─── 9C. FABRICATION & INFLATED CLAIMS AUDITOR (C2 CONSTRAINT) ───
-export function detectFabricatedClaims(text, seniority) {
-  const violations = [];
-  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-
-  const isJunior = seniority === 'junior' || /(?:intern|internship|trainee|student|undergraduate|fresher|campus)\b/i.test(text);
-
-  if (isJunior) {
-    const teamLeadPattern = /\b(?:led|managed|headed|directed|supervised)\s+(?:a\s+)?team\s+of\s+(?:[1-9]\d|\d{2,})\b/i;
-    const multiMillionPattern = /\b(?:scaled\s+to|served|processed|handled)\s+(?:multi-)?(?:million|billions?)\s+(?:users|requests|dollars|revenue)\b/i;
-    const enterpriseScaleShortPattern = /\b(?:1|2|3)\s*[- ]?months?\b.*\b(?:enterprise-wide|fortune 500|global enterprise)\b/i;
-
-    for (const line of lines) {
-      if (teamLeadPattern.test(line)) {
-        violations.push({
-          constraint: 'C2',
-          evidence: line.replace(/^[●•—\-\*\d\.]+\s*/, '').trim(),
-          penalty_applied: 'Unverifiable/Inflated Claim: Stated team leadership of 10+ people is implausible for entry/internship experience — capped overall score at 65.'
-        });
-        break;
-      }
-      if (multiMillionPattern.test(line)) {
-        violations.push({
-          constraint: 'C2',
-          evidence: line.replace(/^[●•—\-\*\d\.]+\s*/, '').trim(),
-          penalty_applied: 'Unverifiable/Inflated Claim: Claims of multi-million scale without commercial verification or architecture context — capped overall score at 65.'
-        });
-        break;
-      }
-      if (enterpriseScaleShortPattern.test(line)) {
-        violations.push({
-          constraint: 'C2',
-          evidence: line.replace(/^[●•—\-\*\d\.]+\s*/, '').trim(),
-          penalty_applied: 'Unverifiable/Inflated Claim: Short-duration internship claiming enterprise-scale outcomes — capped overall score at 65.'
-        });
-        break;
-      }
-    }
-  }
-
-  return violations;
-}
-
-// ─── 9D. CORE METADATA CHECK (C5 CONSTRAINT) ───
-export function detectMissingMetadata(clean, sections, seniority, academicScore) {
-  const missing_metadata = [];
-  const constraint_violations = [];
-  let education_deduction = 0;
-  let experience_deduction = 0;
-  let ats_deduction = 0;
-
-  const isJunior = seniority === 'junior' || /(?:student|fresher|graduate|campus|intern|b\.tech|b\.?e\b|degree)\b/i.test(clean);
-
-  // 1. Missing CGPA / GPA for freshers/students
-  const hasCgpa = Boolean(academicScore) || /(?:cgpa|gpa|percentage|\b\d\.\d{1,2}\s*\/\s*10|\b[6-9]\d(?:\.\d{1,2})?%)\b/i.test(clean);
-  if (isJunior && !hasCgpa) {
-    missing_metadata.push('No CGPA/GPA listed for educational degree (deducted 5 points from Education)');
-    constraint_violations.push({
-      constraint: 'C5',
-      evidence: 'Education section contains no stated CGPA/GPA or academic percentage',
-      penalty_applied: 'Deducted 5 points from Education score.'
-    });
-    education_deduction += 5;
-  }
-
-  // 2. Missing dates on project / experience entries
-  const hasExpOrProj = Boolean(sections && (sections.experience || sections.projects));
-  const expProjMatch = clean.match(/(?:experience|work experience|employment|internship|projects|key projects|academic projects)[\s\S]*?(?=(?:education|certifications|skills|technical skills|$))/i);
-  const expProjText = expProjMatch ? expProjMatch[0] : clean;
-  const hasDates = /(?:20\d{2}|19\d{2}|'(?:1\d|2\d)|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(?:20\d{2}|'\d{2})|\d{2}\/\d{4}|present|current)/i.test(expProjText);
-
-  if (hasExpOrProj && !hasDates) {
-    missing_metadata.push('No start/end dates listed on experience or project entries (deducted 5 points from Experience)');
-    constraint_violations.push({
-      constraint: 'C5',
-      evidence: 'Experience/Projects entries contain no month or year dates',
-      penalty_applied: 'Deducted 5 points from Experience Relevance score.'
-    });
-    experience_deduction += 5;
-  }
-
-  // 3. Location or remote-work clarity (Broad global + tech hub + international phone code regex)
-  const hasLocation = /\b(?:remote|hybrid|onsite|on-site|relocate|relocation|residing|based in|bangalore|bengaluru|chennai|hyderabad|mumbai|pune|delhi|noida|gurgaon|gurugram|kolkata|ahmedabad|jaipur|chandigarh|indore|bhopal|lucknow|coimbatore|trichy|madurai|salem|kochi|kerala|tamil nadu|karnataka|telangana|andhra|maharashtra|new york|san francisco|bay area|california|seattle|austin|boston|chicago|los angeles|atlanta|denver|dallas|texas|london|uk|manchester|berlin|munich|germany|dublin|ireland|amsterdam|paris|singapore|tokyo|sydney|melbourne|toronto|vancouver|canada|india|usa|us)\b/i.test(clean) || /\+\d{1,3}[-.\s]?\d{3,}/.test(clean);
-
-  if (!hasLocation) {
-    missing_metadata.push('No location or remote-work preference indicated (deducted 3 points from ATS Compatibility)');
-    constraint_violations.push({
-      constraint: 'C5',
-      evidence: 'Contact header contains no city, country, or remote-work indication',
-      penalty_applied: 'Deducted 3 points from ATS Compatibility score.'
-    });
-    ats_deduction += 3;
-  }
-
-  return {
-    missing_metadata,
-    constraint_violations,
-    education_deduction,
-    experience_deduction,
-    ats_deduction
   };
 }
 
@@ -857,76 +666,38 @@ export function auditKeywordMatch(clean, jobDescription, targetRole, uniqueSkill
 
   if (jobDescription && jobDescription.trim().length > 25) {
     const jdClean = jobDescription.toLowerCase();
-
-    // 1. Extract explicit technical competencies from JD using ontology
-    const jdTechSkills = [];
-    ALL_TECH_SKILLS.forEach(({ name }) => {
-      const esc = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const reg = new RegExp(`(^|[^a-zA-Z0-9_])${esc}(?=[^a-zA-Z0-9_]|$)`, 'i');
-      if (reg.test(jdClean) && !jdTechSkills.includes(name)) {
-        jdTechSkills.push(name);
-      }
-    });
-
-    // 2. Extract secondary domain keywords from JD
-    const stopWords = new Set([
-      'the', 'and', 'for', 'with', 'that', 'this', 'from', 'have', 'will', 'your', 'about', 'must', 'should',
-      'role', 'team', 'work', 'working', 'experience', 'looking', 'skills', 'responsibilities', 'qualifications',
-      'ability', 'preferred', 'required', 'strong', 'fundamentals', 'seeking', 'excellent', 'good', 'knowledge',
-      'understanding', 'years', 'plus', 'across', 'proven', 'track', 'record', 'demonstrated', 'familiarity',
-      'proficient', 'proficiency', 'including', 'environment', 'ideal', 'candidate', 'degree', 'bachelor',
-      'master', 'computer', 'science', 'related', 'field', 'joining', 'fast-paced', 'collaborate', 'cross-functional',
-      'high', 'quality', 'standards', 'help', 'build', 'within', 'modern', 'level', 'apply', 'opportunity',
-      'job', 'company', 'position', 'location', 'description', 'requirements', 'duties'
-    ]);
-
-    const rawTokens = jdClean.match(/\b[a-z]{4,}\b/g) || [];
-    const domainFreq = new Map();
+    const rawTokens = jdClean.match(/\b[a-z]{3,}\b/g) || [];
+    const stopWords = new Set(['the', 'and', 'for', 'with', 'that', 'this', 'from', 'have', 'will', 'your', 'about', 'must', 'should', 'role', 'team', 'work', 'experience', 'looking', 'skills', 'responsibilities', 'qualifications', 'ability', 'preferred', 'required']);
+    
+    const tokenFreq = new Map();
     rawTokens.forEach(t => {
-      if (!stopWords.has(t) && !jdTechSkills.some(ts => ts.includes(t))) {
-        domainFreq.set(t, (domainFreq.get(t) || 0) + 1);
+      if (!stopWords.has(t)) {
+        tokenFreq.set(t, (tokenFreq.get(t) || 0) + 1);
       }
     });
 
-    const topDomainWords = Array.from(domainFreq.entries())
+    const sortedJdTokens = Array.from(tokenFreq.entries())
       .sort((a, b) => b[1] - a[1])
       .map(entry => entry[0])
-      .slice(0, 15);
+      .slice(0, 30);
 
     let weightedMatchSum = 0;
     let totalWeight = 0;
 
-    // Helper for singular/plural and morphological stem matching
-    const matchesStemmed = (haystack, needle) => {
-      if (haystack.includes(needle)) return true;
-      if (needle.endsWith('s') && haystack.includes(needle.slice(0, -1))) return true;
-      if (!needle.endsWith('s') && haystack.includes(needle + 's')) return true;
-      const stem = needle.replace(/(?:ing|ed|ment|ers?|tions?)$/i, '');
-      if (stem.length >= 4 && haystack.includes(stem)) return true;
-      return false;
-    };
-
-    // Check JD Technical Skills (Weight 3x)
-    jdTechSkills.forEach(tech => {
-      const weight = 3;
+    sortedJdTokens.forEach(kw => {
+      const weight = tokenFreq.get(kw) || 1;
       totalWeight += weight;
 
-      const escTech = tech.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const inResume = new RegExp(`(^|[^a-zA-Z0-9_])${escTech}(?=[^a-zA-Z0-9_]|$)`, 'i').test(clean) || 
-        uniqueSkills.includes(tech) ||
-        matchesStemmed(lower, tech);
-
-      if (inResume) {
+      if (lower.includes(kw)) {
         weightedMatchSum += weight;
-        if (!matched_keywords.includes(tech)) matched_keywords.push(tech);
+        if (!matched_keywords.includes(kw)) matched_keywords.push(kw);
       } else {
-        // Synonym lookup
         let foundSynonym = false;
         for (const syn of SYNONYM_MAP) {
-          if (syn.jd.includes(tech) || tech.includes(syn.jd) || syn.resumePatterns.includes(tech)) {
+          if (syn.jd.includes(kw) || kw.includes(syn.jd)) {
             for (const pat of syn.resumePatterns) {
-              if ((lower.includes(pat) || matchesStemmed(lower, pat)) && !partial_matches.some(p => p.jd_term === tech)) {
-                partial_matches.push({ resume_term: pat, jd_term: tech });
+              if (lower.includes(pat) && !partial_matches.some(p => p.jd_term === kw)) {
+                partial_matches.push({ resume_term: pat, jd_term: kw });
                 weightedMatchSum += weight * 0.75;
                 foundSynonym = true;
                 break;
@@ -936,36 +707,18 @@ export function auditKeywordMatch(clean, jobDescription, targetRole, uniqueSkill
           if (foundSynonym) break;
         }
 
-        if (!foundSynonym) {
-          if (!missing_keywords.includes(tech)) missing_keywords.push(tech);
+        if (!foundSynonym && missing_keywords.length < 15) {
+          missing_keywords.push(kw);
         }
       }
     });
 
-    // Check Top Domain Words (Weight 1x)
-    topDomainWords.forEach(w => {
-      const weight = 1;
-      totalWeight += weight;
-
-      if (matchesStemmed(lower, w)) {
-        weightedMatchSum += weight;
-        if (!matched_keywords.includes(w) && matched_keywords.length < 18) {
-          matched_keywords.push(w);
-        }
-      } else {
-        if (!missing_keywords.includes(w) && missing_keywords.length < 12) {
-          missing_keywords.push(w);
-        }
-      }
-    });
-
-    const score = totalWeight > 0 ? Math.floor((weightedMatchSum / totalWeight) * 100) : 75;
+    const score = totalWeight > 0 ? Math.min(100, Math.round((weightedMatchSum / totalWeight) * 100)) : 75;
     return {
-      score: Math.min(100, Math.max(25, score)),
+      score,
       matched_keywords: matched_keywords.slice(0, 15),
       missing_keywords: missing_keywords.slice(0, 10),
-      partial_matches: partial_matches.slice(0, 5),
-      jdTechSkills
+      partial_matches: partial_matches.slice(0, 5)
     };
   }
 
@@ -998,34 +751,39 @@ export function auditKeywordMatch(clean, jobDescription, targetRole, uniqueSkill
   };
 }
 
-// ─── 11. JSON FORMATTER ACCORDING TO RECRUITER SPECIFICATION ───
+// ─── 11. JSON FORMATTER ACCORDING TO USER SPECIFICATION ───
 export function formatAnalysisAsJson(analysis) {
-  const overall = analysis.overall_score !== undefined ? analysis.overall_score : (analysis.overallScore !== undefined ? analysis.overallScore : null);
-  const cappedBy = analysis.score_capped_by || null;
-  const verdict = analysis.verdict || (overall === null ? 'Fail' : (overall >= 75 ? 'Pass' : (overall >= 50 ? 'Conditional Pass' : 'Fail')));
-
   return {
-    overall_score: overall,
-    score_capped_by: cappedBy,
-    verdict: verdict,
-    category_scores: {
-      keyword_match: analysis.scores?.keyword_match ?? (analysis.category_scores?.keyword_match ?? null),
-      experience_relevance: analysis.scores?.experience_relevance ?? (analysis.category_scores?.experience_relevance ?? null),
-      quantifiable_impact: analysis.scores?.quantifiable_impact ?? (analysis.category_scores?.quantifiable_impact ?? 40),
-      ats_compatibility: analysis.scores?.ats_compatibility ?? (analysis.category_scores?.ats_compatibility ?? 70),
-      education: analysis.scores?.education_certifications ?? (analysis.category_scores?.education ?? 75),
-      language_quality: analysis.scores?.language_quality ?? (analysis.category_scores?.language_quality ?? 75)
+    overall_score: analysis.overall_score || analysis.overallScore,
+    verdict: analysis.verdict || (analysis.overall_score >= 75 ? 'Strong Match' : (analysis.overall_score >= 50 ? 'Moderate Match — needs tailoring' : 'Weak Match')),
+    summary: analysis.summary,
+    scores: {
+      keyword_match: analysis.scores?.keyword_match ?? 85,
+      experience_relevance: analysis.scores?.experience_relevance ?? 80,
+      education_certifications: analysis.scores?.education_certifications ?? 88,
+      ats_compatibility: analysis.scores?.ats_compatibility ?? 90,
+      language_quality: analysis.scores?.language_quality ?? 90
     },
-    constraint_violations: analysis.constraint_violations || [],
-    duplicate_content_flags: analysis.duplicate_content_flags || [],
-    unquantified_bullets: analysis.unquantified_bullets || [],
-    weak_verb_bullets: analysis.weak_verb_bullets || [],
-    missing_metadata: analysis.missing_metadata || [],
-    recommendations: analysis.recommendations || analysis.top_recommendations || (analysis.actionPlan?.slice(0, 3) ?? [
+    keyword_analysis: {
+      matched_keywords: analysis.keyword_analysis?.matched_keywords ?? analysis.diagnostics?.skillsFound ?? [],
+      missing_keywords: analysis.keyword_analysis?.missing_keywords ?? [],
+      partial_matches: analysis.keyword_analysis?.partial_matches ?? []
+    },
+    experience_notes: analysis.experience_notes ?? [
+      `Seniority level assessed as ${analysis.seniority?.toUpperCase() || 'ENTRY'} based on career progression and project depth.`
+    ],
+    employment_gaps: analysis.employment_gaps ?? [],
+    quantifiable_impact: {
+      strong_bullets: analysis.quantifiable_impact?.strong_bullets ?? [],
+      weak_bullets: analysis.quantifiable_impact?.weak_bullets ?? []
+    },
+    ats_issues: analysis.ats_issues ?? analysis.atsCompatibility?.issues ?? [],
+    language_issues: analysis.language_issues ?? [],
+    top_recommendations: analysis.top_recommendations ?? analysis.actionPlan?.slice(0, 3) ?? [
       'Quantify results across project bullets with measurable metrics (% efficiency, user scale).',
       'Incorporate critical missing keywords directly into technical project descriptions.',
-      'Replace passive phrasing with power action verbs and maintain clean ATS typography.'
-    ])
+      'Maintain strong action verbs and clean single-column ATS typography.'
+    ]
   };
 }
 
@@ -1613,220 +1371,79 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
     overallScore = Math.min(97, Math.max(45, roleCalibratedScore));
   }
 
-  // ── PASS 11: RECRUITER 6-DIMENSIONAL CRITERIA & HARD CONSTRAINTS (C1–C8) ──
-  const constraint_violations = [];
+  // ── PASS 11: 6-DIMENSIONAL EVALUATION CRITERIA & WEIGHTED COMPOSITE ──
+  // 1. Keyword & Skill Match (30% Weight)
+  const keywordAudit = auditKeywordMatch(clean, jobDescription, targetRole, uniqueSkills);
+  const keyword_match = keywordAudit.score;
+  const keyword_analysis = {
+    matched_keywords: keywordAudit.matched_keywords,
+    missing_keywords: keywordAudit.missing_keywords,
+    partial_matches: keywordAudit.partial_matches
+  };
 
-  // 1. Keyword & Skill Match (25% Weight)
-  let keyword_match = null;
-  let keywordAudit = null;
-  let keyword_analysis = { matched_keywords: [], missing_keywords: [], partial_matches: [] };
-
-  const hasExplicitJd = Boolean(jobDescription && jobDescription.trim().length >= 15);
-  const hasTargetRole = Boolean(targetRole && targetRole.trim().length >= 2);
-
-  if (hasExplicitJd || hasTargetRole) {
-    keywordAudit = auditKeywordMatch(clean, jobDescription, targetRole, uniqueSkills);
-    keyword_match = keywordAudit.score;
-    keyword_analysis = {
-      matched_keywords: keywordAudit.matched_keywords,
-      missing_keywords: keywordAudit.missing_keywords,
-      partial_matches: keywordAudit.partial_matches
-    };
-
-    // C6: Each critical missing hard-skill keyword from JD -> deduct 4 points (max 40)
-    if (hasExplicitJd && keywordAudit.missing_keywords.length > 0) {
-      const criticalMissing = keywordAudit.missing_keywords.filter(kw => 
-        (keywordAudit.jdTechSkills && keywordAudit.jdTechSkills.includes(kw)) ||
-        ALL_TECH_SKILLS.some(ts => ts.name === kw)
-      );
-      const targetMissingList = criticalMissing.length > 0 ? criticalMissing : keywordAudit.missing_keywords;
-      const c6MissingCount = Math.min(10, targetMissingList.length);
-      const c6Deduction = c6MissingCount * 4;
-      keyword_match = Math.floor(Math.max(20, keyword_match - c6Deduction));
-      constraint_violations.push({
-        constraint: 'C6',
-        evidence: `Missing ${c6MissingCount} critical required hard skill(s): ${targetMissingList.slice(0, 4).join(', ')}`,
-        penalty_applied: `Deducted ${c6Deduction} points from Keyword Match (${c6MissingCount} missing skills × 4 pts).`
-      });
-    }
-  } else {
-    // C8: No JD or target role provided -> Set keyword_match & experience_relevance to null
-    keyword_match = null;
-    constraint_violations.push({
-      constraint: 'C8',
-      evidence: 'Not stated',
-      penalty_applied: 'Keyword match and experience relevance set to null due to absence of target job description and role.'
-    });
-  }
-
-  // 2. Experience Relevance (25% Weight)
-  let experience_relevance = null;
-  let experience_notes = [];
+  // 2. Experience Relevance (30% Weight)
+  const expAudit = auditExperienceRelevance(clean, targetRole, seniority, sections, projectScore, expScore, metricCount);
+  const experience_relevance = expAudit.score;
+  const experience_notes = expAudit.experience_notes;
   const employment_gaps = detectEmploymentGaps(clean);
 
-  if (hasExplicitJd || hasTargetRole) {
-    const expAudit = auditExperienceRelevance(clean, targetRole, seniority, sections, projectScore, expScore, metricCount);
-    experience_relevance = Math.floor(expAudit.score);
-    experience_notes = expAudit.experience_notes;
-  } else {
-    experience_relevance = null;
-  }
-
-  // 3. Quantifiable Impact (20% Weight) (C1 Constraint)
+  // 3. Quantifiable Impact (15% Weight)
   const quantImpactAudit = auditQuantifiableImpact(clean);
-  let quantifiable_impact = Math.floor(quantImpactAudit.score);
+  const quantifiable_impact = quantImpactAudit.score;
   const quantifiable_impact_data = {
     strong_bullets: quantImpactAudit.strong_bullets,
     weak_bullets: quantImpactAudit.weak_bullets,
     ratio: quantImpactAudit.ratio,
     score: quantImpactAudit.score
   };
-  const unquantified_bullets = quantImpactAudit.unquantified_bullets;
 
-  if (quantImpactAudit.isUnquantifiedCapped) {
-    constraint_violations.push({
-      constraint: 'C1',
-      evidence: unquantified_bullets[0] || 'Over 40% of experience/project bullets are unquantified',
-      penalty_applied: `Unquantified impact claims exceed 40% (${quantImpactAudit.unquantifiedPercent}% unquantified) — capped overall score at 60.`
-    });
-  }
+  // 4. Education & Certifications (10% Weight)
+  const education_certifications = auditEducationAndCerts(clean, sections, academicScore);
 
-  // 4. ATS Compatibility (15% Weight) (C4 Constraint)
-  let ats_compatibility = Math.floor(Math.max(35, atsNumericScore));
+  // 5. ATS Compatibility (10% Weight)
+  const ats_compatibility = Math.max(35, atsNumericScore);
 
-  // C4: Hard ATS parsing failure check
-  const hasMultiColumn = /\|\s*[^|\n]+\s*\|\s*[^|\n]+\s*\|/m.test(clean) || (atsIssues.some(i => i.toLowerCase().includes('multi-column') || i.toLowerCase().includes('table')));
-  if (hasMultiColumn) {
-    ats_compatibility = Math.min(20, ats_compatibility);
-    constraint_violations.push({
-      constraint: 'C4',
-      evidence: 'Multi-column / table layout detected in parsed resume stream',
-      penalty_applied: 'ATS Compatibility subscore capped at 20 due to ATS parsing hazard.'
-    });
-  }
-
-  // 5. Education & Certifications (10% Weight)
-  let education_certifications = Math.floor(auditEducationAndCerts(clean, sections, academicScore));
-
-  // 6. Language Quality (5% Weight) (C7 Constraint)
+  // 6. Language Quality (5% Weight)
   const langAudit = auditLanguageQuality(clean);
-  let language_quality = Math.floor(langAudit.score);
+  const language_quality = langAudit.score;
   const language_issues = langAudit.language_issues;
-  const weak_verb_bullets = langAudit.weak_verb_bullets;
 
-  if (weak_verb_bullets.length > 0) {
-    const weakCount = Math.min(5, weak_verb_bullets.length);
-    constraint_violations.push({
-      constraint: 'C7',
-      evidence: weak_verb_bullets[0],
-      penalty_applied: `Passive/weak verb opener detected — deducted ${weakCount * 2} points from Language Quality.`
-    });
-  }
+  // Weighted Composite Overall Score:
+  // 30% Keyword + 30% Experience + 15% Impact + 10% Education + 10% ATS + 5% Language
+  const compositeOverall = Math.round(
+    (keyword_match * 0.30) +
+    (experience_relevance * 0.30) +
+    (quantifiable_impact * 0.15) +
+    (education_certifications * 0.10) +
+    (ats_compatibility * 0.10) +
+    (language_quality * 0.05)
+  );
 
-  // C2: Fabrication & Inflated Claims Check
-  const fabricatedClaims = detectFabricatedClaims(clean, seniority);
-  fabricatedClaims.forEach(fc => constraint_violations.push(fc));
-
-  // C3: Duplicate Content Check
-  const duplicate_content_flags = detectDuplicateContent(sections, clean);
-  if (duplicate_content_flags.length > 0) {
-    duplicate_content_flags.forEach(df => {
-      constraint_violations.push({
-        constraint: 'C3',
-        evidence: `${df.entry_1} vs ${df.entry_2}`,
-        penalty_applied: 'Duplicate/overlapping content detected across sections — deducted 10 points per duplicate.'
-      });
-    });
-  }
-
-  // C5: Missing Metadata Check
-  const metadataCheck = detectMissingMetadata(clean, sections, seniority, academicScore);
-  const missing_metadata = metadataCheck.missing_metadata;
-  metadataCheck.constraint_violations.forEach(cv => constraint_violations.push(cv));
-
-  if (metadataCheck.education_deduction > 0) {
-    education_certifications = Math.floor(Math.max(25, education_certifications - metadataCheck.education_deduction));
-  }
-  if (metadataCheck.experience_deduction > 0 && experience_relevance !== null) {
-    experience_relevance = Math.floor(Math.max(25, experience_relevance - metadataCheck.experience_deduction));
-  }
-  if (metadataCheck.ats_deduction > 0) {
-    ats_compatibility = Math.floor(Math.max(20, ats_compatibility - metadataCheck.ats_deduction));
-  }
-
-  // ── WEIGHTED COMPOSITE SCORING (25% Kw, 25% Exp, 20% Imp, 15% ATS, 10% Edu, 5% Lang) ──
-  overallScore = null;
-  let score_capped_by = null;
-  let verdict = 'Fail';
-
-  if (keyword_match === null || experience_relevance === null) {
-    overallScore = null;
-    score_capped_by = null;
-    verdict = 'Fail';
+  // Blend with target role fit if specified
+  if (targetRoleFit && targetRole && targetRole.trim().length >= 2) {
+    overallScore = Math.min(98, Math.max(40, Math.round(compositeOverall * 0.70 + targetRoleFit.fitPercentage * 0.30)));
   } else {
-    // 25% Keyword + 25% Experience + 20% Impact + 15% ATS + 10% Education + 5% Language
-    let rawWeighted = (keyword_match * 0.25) +
-      (experience_relevance * 0.25) +
-      (quantifiable_impact * 0.20) +
-      (ats_compatibility * 0.15) +
-      (education_certifications * 0.10) +
-      (language_quality * 0.05);
-
-    // C3 Deduction
-    rawWeighted -= (duplicate_content_flags.length * 10);
-    rawWeighted = Math.floor(Math.max(25, rawWeighted));
-
-    // Hard Constraint Score Capping:
-    // C1: >40% unquantified bullets -> cap at 60
-    // C2: Implausible/inflated claims -> cap at 65
-    let capLimit = 100;
-    if (quantImpactAudit.isUnquantifiedCapped) {
-      capLimit = Math.min(capLimit, 60);
-      score_capped_by = 'C1';
-    }
-    if (fabricatedClaims.length > 0) {
-      if (capLimit > 65) {
-        capLimit = 65;
-        score_capped_by = 'C2';
-      } else {
-        score_capped_by = 'C1';
-      }
-    }
-
-    if (rawWeighted > capLimit) {
-      overallScore = capLimit;
-    } else {
-      overallScore = rawWeighted;
-      if (capLimit < 100) {
-        score_capped_by = score_capped_by;
-      } else {
-        score_capped_by = null;
-      }
-    }
-
-    // Verdict strictly based on recruiter standards: Pass (>=75), Conditional Pass (50-74), Fail (<50)
-    if (overallScore >= 75) {
-      verdict = 'Pass';
-    } else if (overallScore >= 50) {
-      verdict = 'Conditional Pass';
-    } else {
-      verdict = 'Fail';
-    }
+    overallScore = Math.min(98, Math.max(40, compositeOverall));
   }
 
-  // Recommendations: strictly prioritized, constructive tone
+  // One-line Verdict
+  let verdict = 'Moderate Match — needs tailoring';
+  if (overallScore >= 75) {
+    verdict = 'Strong Match';
+  } else if (overallScore < 50) {
+    verdict = 'Weak Match';
+  }
+
+  // Top 3 Prioritized Action Recommendations
   const top_recommendations = [];
-  if (quantImpactAudit.isUnquantifiedCapped || quantImpactAudit.unquantified_bullets.length > 0) {
-    top_recommendations.push(`Quantify project bullets with concrete metrics (e.g. throughput, users served, % latency reduction) to remove the C1 score cap.`);
+  if (keyword_analysis.missing_keywords.length > 0) {
+    top_recommendations.push(`Incorporate key required technologies (${keyword_analysis.missing_keywords.slice(0, 3).join(', ')}) into your active project descriptions.`);
   }
-  if (weak_verb_bullets.length > 0) {
-    top_recommendations.push(`Replace passive opener phrases ("${weak_verb_bullets[0].slice(0, 40)}...") with power technical verbs (e.g. "Engineered", "Architected").`);
+  if (quantImpactAudit.weak_bullets.length > 0) {
+    top_recommendations.push(`Quantify project achievements with measurable metrics (e.g. latency reduced %, throughput, users served).`);
   }
-  if (missing_metadata.length > 0) {
-    top_recommendations.push(`Add required metadata: ${missing_metadata[0].replace(/\s*\(deducted.*?\)/i, '')}.`);
-  }
-  if (keyword_analysis.missing_keywords.length > 0 && top_recommendations.length < 3) {
-    top_recommendations.push(`Incorporate high-priority hard skill keywords (${keyword_analysis.missing_keywords.slice(0, 3).join(', ')}) into your active project descriptions.`);
+  if (language_issues.length > 0) {
+    top_recommendations.push(`Replace passive phrasing ("${language_issues[0].location}") with assertive action verbs.`);
   }
   if (top_recommendations.length < 3) {
     top_recommendations.push('Maintain clean single-column ATS typography and ensure all public code repositories are live and linked.');
@@ -1834,8 +1451,7 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
 
   // Letter Grade
   let grade = 'B';
-  if (overallScore === null) grade = 'F';
-  else if (overallScore >= 90) grade = 'A+';
+  if (overallScore >= 90) grade = 'A+';
   else if (overallScore >= 80) grade = 'A';
   else if (overallScore >= 72) grade = 'B+';
   else if (overallScore >= 64) grade = 'B';
@@ -1858,16 +1474,13 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
   }
 
   const roleContextText = targetRoleFit ? ` · ${targetRoleFit.targetRole} (${targetRoleFit.fitPercentage}% Match - ${targetRoleFit.priorityLabel})` : '';
-  const summary = overallScore !== null
-    ? `${verdict}: Composite score of ${overallScore}/100 across ${wordCount} words, ${uniqueSkills.length} verified technical competencies, and ${metricCount} quantifiable impact metrics.${score_capped_by ? ` (Capped by ${score_capped_by})` : ''}`
-    : `Evaluation incomplete: Target Job Description and Role are required to score Keyword Match and Experience Relevance (Constraint C8).`;
+  const summary = `${verdict}: Composite score of ${overallScore}/100 across ${wordCount} words, ${uniqueSkills.length} verified technical competencies, and ${metricCount} quantifiable impact metrics.`;
 
   return {
     candidateName,
     academicScore,
     overall_score: overallScore,
     overallScore,
-    score_capped_by,
     verdict,
     grade,
     summary,
@@ -1880,19 +1493,6 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
       ats_compatibility,
       language_quality
     },
-    category_scores: {
-      keyword_match,
-      experience_relevance,
-      quantifiable_impact,
-      ats_compatibility,
-      education: education_certifications,
-      language_quality
-    },
-    constraint_violations,
-    duplicate_content_flags,
-    unquantified_bullets,
-    weak_verb_bullets,
-    missing_metadata,
     keyword_analysis,
     experience_notes,
     employment_gaps,
@@ -1900,7 +1500,6 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
     ats_issues: atsIssues,
     language_issues,
     top_recommendations,
-    recommendations: top_recommendations,
     jdMatch,
     targetRoleFit,
     suggestedRoles,
@@ -1935,7 +1534,7 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
     weaknesses: weaknesses.slice(0, 4),
     atsCompatibility: {
       score: atsRating,
-      numericScore: ats_compatibility,
+      numericScore: Math.max(35, atsNumericScore),
       breakdown: atsBreakdown,
       issues: atsIssues.slice(0, 3)
     },
@@ -1947,8 +1546,16 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
 
 // ─── 7. UNIVERSAL CAREER COACH & RESUME AI CHATBOT ENGINE ───
 export function generateChatResponse(userMessage, resumeContext = '', targetRole = '', currentAnalysis = null) {
-  const query = userMessage.trim().toLowerCase();
-  const rawMsg = userMessage.trim();
+  // Support both (userMessage, resumeText, targetRole, currentAnalysis) and (userMessage, currentAnalysis, targetRole)
+  if (resumeContext && typeof resumeContext === 'object') {
+    if (!currentAnalysis && (resumeContext.overallScore !== undefined || resumeContext.scores !== undefined || resumeContext.diagnostics !== undefined)) {
+      currentAnalysis = resumeContext;
+      resumeContext = currentAnalysis.text || '';
+    }
+  }
+
+  const query = (userMessage || '').trim().toLowerCase();
+  const rawMsg = (userMessage || '').trim();
   const seniority = detectSeniority(targetRole, resumeContext);
 
   // 0. Explicit JSON Evaluation Request (conforming to USER MESSAGE FORMAT)

@@ -12,7 +12,7 @@ import {
   renderKeywords, renderActionPlan, renderAuditGrid,
   renderSuggestedRoles, renderCategorizedSkills, renderBulletRewrites,
   renderVerdictBadge, renderEvaluationDimensions, renderEmploymentGaps,
-  renderLanguageIssues, setupCopyJsonButton, renderRecruiterAudit,
+  renderLanguageIssues, setupCopyJsonButton,
   showSkeleton, hideSkeleton, showResults,
   showToast,
   appendChatMessage, appendTypingIndicator, removeTypingIndicator,
@@ -318,16 +318,13 @@ function renderAnalysis(data) {
   // Score ring & Verdict
   const { gradeEl, summaryEl } = renderScoreRing(data.overall_score || data.overallScore || 0);
   renderGrade(gradeEl, data.grade || 'B', summaryEl, data.summary || '');
-  renderVerdictBadge(data.verdict, data.overall_score || data.overallScore || 0, data.score_capped_by);
+  renderVerdictBadge(data.verdict, data.overall_score || data.overallScore || 0);
   setupCopyJsonButton(data);
 
   // 6 Core Evaluative Dimensions & Weights
   if (data.scores) {
     renderEvaluationDimensions(data.scores);
   }
-
-  // Recruiter Hard Constraints & Evidence Audit (C1–C8)
-  renderRecruiterAudit(data);
 
   // Section bars
   if (data.sectionScores) {
