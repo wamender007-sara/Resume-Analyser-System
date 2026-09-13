@@ -381,18 +381,41 @@ function formatPersonName(str) {
 export function isInstitutionOrOrg(name) {
   if (!name || typeof name !== 'string') return true;
   const s = name.trim().toLowerCase();
-  
+
   // Academic, institutional, college, campus, or university keywords
   const institutionPattern = /\b(campus|technical|techical|technology|technologies|college|university|institute|institution|institutions|polytechnic|academy|school|engineering|autonomous|accredited|affiliated|approved|department|faculty|center|centre|education|educational|trust|society|placement|cell|hall\s+of\s+residence|hostel|vidyalaya|vidyapeeth|sansthan|kendra|anna\s+university|paavai|anna\s+univ)\b/i;
   if (institutionPattern.test(s)) return true;
 
   // Job titles, degrees, or document terms
-  const rolePattern = /\b(engineer|developer|architect|designer|manager|specialist|analyst|intern|trainee|student|applicant|candidate|fresher|graduate|curriculum|vitae|resume|biodata|profile|portfolio|summary|overview|details|declaration|semester|cgpa|gpa|percentage|marks|b\.?tech|b\.?e\b|m\.?tech|m\.?c\.?a|b\.?s\.?c|diploma|degree)\b/i;
+  const rolePattern = /\b(engineer|developer|architect|designer|manager|specialist|analyst|intern|trainee|student|applicant|candidate|fresher|graduate|curriculum|vitae|resume|biodata|profile|portfolio|summary|overview|details|declaration|semester|cgpa|gpa|percentage|marks|b\.?tech|b\.?e\b|m\.?tech|m\.?c\.?a|b\.?s\\.?c|diploma|degree)\b/i;
   if (rolePattern.test(s)) return true;
 
   // Geographical cities standing alone
   const locationPattern = /^(coimbatore|namakkal|salem|erode|trichy|madurai|chennai|bengaluru|bangalore|hyderabad|mumbai|pune|delhi|noida|gurgaon|tamil\s*nadu|kerala|karnataka|andhra|india|usa)(\s*,\s*(tamil\s*nadu|kerala|karnataka|india|usa))?$/i;
   if (locationPattern.test(s)) return true;
+
+  // AI / CS / STEM domain subject phrases that appear as resume headers
+  const techDomainPattern = /\b(artificial\s+intelligence|machine\s+learning|deep\s+learning|natural\s+language\s+processing|computer\s+science|information\s+technology|information\s+science|data\s+science|data\s+analytics|cyber\s+security|cybersecurity|cloud\s+computing|internet\s+of\s+things|blockchain|robotic|automation|software\s+development|web\s+development|full\s+stack|front\s+end|back\s+end|devops|generative\s+ai|large\s+language|neural\s+network|computer\s+vision|big\s+data|data\s+engineering|electrical\s+electronics|electronics\s+communication|embedded\s+systems|vlsi|iot)\b/i;
+  if (techDomainPattern.test(s)) return true;
+
+  // Lines ending with conjunctions/prepositions are subject headings, not names
+  // e.g. "Artificial Intelligence And", "Machine Learning With"
+  // NOTE: single-letter words are initials (e.g. "Mohamed Riyas A") — exclude them
+  if (/\b(and|or|with|for|of|in|to|the|an|by|from|at|on|as|into|about|using|through|via)\s*$/i.test(s)) return true;
+
+  // A valid person name must have at least one token that is NOT a common English stop word
+  // NOTE: 'a' is excluded from stopWords because it is used as a name initial (e.g. "Rajana M", "Mohamed Riyas A")
+  const stopWords = new Set([
+    'an','the','and','or','but','for','nor','so','yet',
+    'with','in','on','at','to','of','by','from','as','into',
+    'about','through','via','up','down','over','under','between',
+    'among','around','against','along','during','before','after',
+    'above','below','near','across','within','without','upon',
+    'regarding','concerning','including','excluding','following'
+  ]);
+  const tokens = s.split(/\s+/);
+  const hasRealNameToken = tokens.some(t => t.length >= 2 && !stopWords.has(t));
+  if (!hasRealNameToken) return true;
 
   return false;
 }
