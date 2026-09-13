@@ -378,21 +378,34 @@ function formatPersonName(str) {
     .join(' ');
 }
 
-function isValidPersonName(name) {
+export function isInstitutionOrOrg(name) {
+  if (!name || typeof name !== 'string') return true;
+  const s = name.trim().toLowerCase();
+  
+  // Academic, institutional, college, campus, or university keywords
+  const institutionPattern = /\b(campus|technical|techical|technology|technologies|college|university|institute|institution|institutions|polytechnic|academy|school|engineering|autonomous|accredited|affiliated|approved|department|faculty|center|centre|education|educational|trust|society|placement|cell|hall\s+of\s+residence|hostel|vidyalaya|vidyapeeth|sansthan|kendra|anna\s+university|paavai|anna\s+univ)\b/i;
+  if (institutionPattern.test(s)) return true;
+
+  // Job titles, degrees, or document terms
+  const rolePattern = /\b(engineer|developer|architect|designer|manager|specialist|analyst|intern|trainee|student|applicant|candidate|fresher|graduate|curriculum|vitae|resume|biodata|profile|portfolio|summary|overview|details|declaration|semester|cgpa|gpa|percentage|marks|b\.?tech|b\.?e\b|m\.?tech|m\.?c\.?a|b\.?s\.?c|diploma|degree)\b/i;
+  if (rolePattern.test(s)) return true;
+
+  // Geographical cities standing alone
+  const locationPattern = /^(coimbatore|namakkal|salem|erode|trichy|madurai|chennai|bengaluru|bangalore|hyderabad|mumbai|pune|delhi|noida|gurgaon|tamil\s*nadu|kerala|karnataka|andhra|india|usa)(\s*,\s*(tamil\s*nadu|kerala|karnataka|india|usa))?$/i;
+  if (locationPattern.test(s)) return true;
+
+  return false;
+}
+
+export function isValidPersonName(name) {
   if (!name || typeof name !== 'string') return false;
   const clean = name.trim();
   if (clean.length < 2 || clean.length > 45) return false;
-  const lower = clean.toLowerCase();
-  const blacklisted = [
-    'candidate', 'student', 'applicant', 'student applicant', 'resume', 'cv',
-    'curriculum', 'vitae', 'biodata', 'profile', 'unknown', 'contact', 'name',
-    'portfolio', 'summary', 'overview', 'details'
-  ];
-  if (blacklisted.includes(lower)) return false;
+  if (isInstitutionOrOrg(clean)) return false;
   return /^[a-zA-Z\s\.\-]+$/.test(clean);
 }
 
-function extractCandidateName(text, email = null) {
+export function extractCandidateName(text, email = null) {
   if (!text) return null;
   const headerLines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
 
@@ -410,7 +423,7 @@ function extractCandidateName(text, email = null) {
   const forbiddenKeywords = /^(?:curriculum\s+vitae|resume|biodata|profile|contact|portfolio|page\s*\d+|personal\s+details|email|phone|address|declaration|mobile)/i;
   const invalidSymbols = /[@\d\(\)\{\}\[\]\<\>\/\\\|\:\;\*\+\=\_\$\#\%\^\&~]/;
 
-  for (let i = 0; i < Math.min(headerLines.length, 12); i++) {
+  for (let i = 0; i < Math.min(headerLines.length, 14); i++) {
     const rawLine = headerLines[i];
     if (sectionBoundary.test(rawLine)) break;
 
@@ -419,8 +432,8 @@ function extractCandidateName(text, email = null) {
     if (forbiddenKeywords.test(line)) continue;
     if (invalidSymbols.test(line)) continue;
 
-    // Disallow common job titles or degree abbreviations alone
-    if (/(?:engineer|developer|architect|designer|manager|specialist|analyst|intern|student|b\.?tech|b\.?e|m\.?tech|m\.?c\.?a|b\.?s\.?c|university|college|institute|department)/i.test(line)) continue;
+    // Disallow institutional names, job titles, or degree abbreviations
+    if (isInstitutionOrOrg(line)) continue;
 
     const words = line.split(/\s+/).filter(Boolean);
     if (words.length >= 1 && words.length <= 5 && /^[a-zA-Z\s\.\-]+$/.test(line)) {
@@ -429,10 +442,22 @@ function extractCandidateName(text, email = null) {
     }
   }
 
-  // 3. Fallback: Extract from email address username
+  // 3. Fallback: Extract from email address username and cross-reference header text
   if (email) {
     const emailUser = email.split('@')[0];
     const cleanUser = emailUser.replace(/[\d_\-]+/g, ' ').replace(/\./g, ' ').trim();
+    const userTokens = cleanUser.split(/\s+/).filter(w => w.length >= 3);
+
+    // Scan header lines to see if candidate's real name matches email tokens
+    for (const line of headerLines.slice(0, 15)) {
+      if (isInstitutionOrOrg(line)) continue;
+      const lowerLine = line.toLowerCase();
+      const hasEmailToken = userTokens.some(t => lowerLine.includes(t)) || (cleanUser.length >= 5 && lowerLine.replace(/\s+/g, '').includes(cleanUser));
+      if (hasEmailToken && isValidPersonName(line)) {
+        return formatPersonName(line);
+      }
+    }
+
     if (cleanUser.length >= 3) {
       const formatted = formatPersonName(cleanUser);
       if (isValidPersonName(formatted)) return formatted;

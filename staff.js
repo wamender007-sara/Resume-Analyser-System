@@ -296,15 +296,34 @@ async function startBatchAudit() {
 }
 
 // ─── Robust Candidate Name Extraction & Resolution ────────────
+function isInstitutionOrOrg(name) {
+  if (!name || typeof name !== 'string') return true;
+  const s = name.trim().toLowerCase();
+  
+  // Academic, institutional, college, campus, or university keywords
+  const institutionPattern = /\b(campus|technical|techical|technology|technologies|college|university|institute|institution|institutions|polytechnic|academy|school|engineering|autonomous|accredited|affiliated|approved|department|faculty|center|centre|education|educational|trust|society|placement|cell|hall\s+of\s+residence|hostel|vidyalaya|vidyapeeth|sansthan|kendra|anna\s+university|paavai|anna\s+univ)\b/i;
+  if (institutionPattern.test(s)) return true;
+
+  // Job titles, degrees, or document terms
+  const rolePattern = /\b(engineer|developer|architect|designer|manager|specialist|analyst|intern|trainee|student|applicant|candidate|fresher|graduate|curriculum|vitae|resume|biodata|profile|portfolio|summary|overview|details|declaration|semester|cgpa|gpa|percentage|marks|b\.?tech|b\.?e\b|m\.?tech|m\.?c\.?a|b\.?s\.?c|diploma|degree)\b/i;
+  if (rolePattern.test(s)) return true;
+
+  // Geographical cities standing alone
+  const locationPattern = /^(coimbatore|namakkal|salem|erode|trichy|madurai|chennai|bengaluru|bangalore|hyderabad|mumbai|pune|delhi|noida|gurgaon|tamil\s*nadu|kerala|karnataka|andhra|india|usa)(\s*,\s*(tamil\s*nadu|kerala|karnataka|india|usa))?$/i;
+  if (locationPattern.test(s)) return true;
+
+  return false;
+}
+
 function resolveCandidateName(analysisName, filename, email, text) {
   // 1. If engine returned a valid, non-generic person name
   if (isValidCandidateName(analysisName)) {
     return formatToTitleCase(analysisName);
   }
 
-  // 2. Try extracting from resume text top lines
+  // 2. Try extracting from resume text top lines with email cross-referencing
   if (text) {
-    const textName = extractNameFromText(text);
+    const textName = extractNameFromText(text, email);
     if (isValidCandidateName(textName)) {
       return formatToTitleCase(textName);
     }
@@ -333,13 +352,7 @@ function isValidCandidateName(name) {
   if (!name || typeof name !== 'string') return false;
   const clean = name.trim();
   if (clean.length < 2 || clean.length > 45) return false;
-  const lower = clean.toLowerCase();
-  const blacklist = [
-    'candidate', 'student', 'applicant', 'student applicant', 'resume', 'cv',
-    'curriculum', 'vitae', 'biodata', 'profile', 'unknown', 'none', 'n/a', 'name',
-    'portfolio', 'summary', 'overview', 'details'
-  ];
-  if (blacklist.includes(lower)) return false;
+  if (isInstitutionOrOrg(clean)) return false;
   return /[a-zA-Z]/.test(clean);
 }
 
@@ -365,18 +378,46 @@ function extractNameFromEmail(email) {
   return null;
 }
 
-function extractNameFromText(text) {
+function extractNameFromText(text, email = null) {
   if (!text) return null;
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  for (let i = 0; i < Math.min(lines.length, 10); i++) {
-    const line = lines[i].replace(/[|•·,].*$/, '').trim();
+
+  // 1. Check explicit name labels: e.g. "Name: Saravan Prasanna", "Candidate Name: Rajana M"
+  for (const line of lines.slice(0, 15)) {
+    const labeledMatch = line.match(/^(?:candidate\s+name|student\s+name|applicant\s+name|full\s+name|name)\s*[:\-]\s*([A-Za-z\s\.\,\-]{2,40})/i);
+    if (labeledMatch) {
+      const cand = labeledMatch[1].trim();
+      if (isValidCandidateName(cand)) return cand;
+    }
+  }
+
+  // 2. Scan top 14 lines
+  for (let i = 0; i < Math.min(lines.length, 14); i++) {
+    const rawLine = lines[i];
+    let line = rawLine.replace(/[|•·,].*$/, '').trim();
     if (/@|http|\.com|phone|contact|curriculum|resume|page|email|github|linkedin/i.test(line)) continue;
-    if (/(?:engineer|developer|architect|designer|manager|specialist|analyst|intern|student|b\.?tech|b\.?e)/i.test(line)) continue;
+    if (isInstitutionOrOrg(line)) continue;
     const words = line.split(/\s+/).filter(Boolean);
     if (words.length >= 1 && words.length <= 5 && /^[a-zA-Z\s\.\-]+$/.test(line) && line.length >= 3 && line.length <= 40) {
       return line;
     }
   }
+
+  // 3. Fallback: match email username tokens against lines in resume
+  if (email) {
+    const emailUser = email.split('@')[0];
+    const cleanUser = emailUser.replace(/[\d_\-]+/g, ' ').replace(/\./g, ' ').trim();
+    const userTokens = cleanUser.split(/\s+/).filter(w => w.length >= 3);
+    for (const line of lines.slice(0, 15)) {
+      if (isInstitutionOrOrg(line)) continue;
+      const lowerLine = line.toLowerCase();
+      const hasToken = userTokens.some(t => lowerLine.includes(t)) || (cleanUser.length >= 5 && lowerLine.replace(/\s+/g, '').includes(cleanUser));
+      if (hasToken && isValidCandidateName(line)) {
+        return line;
+      }
+    }
+  }
+
   return null;
 }
 
