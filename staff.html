@@ -81,11 +81,20 @@
               <select id="targetDriveRole" class="input select-input-sm">
                 <option value="Full Stack Developer">Full Stack Developer</option>
                 <option value="Software Engineer" selected>Software Engineer (General)</option>
-                <option value="Backend Engineer">Backend & API Engineer</option>
+                <option value="Backend Engineer">Backend &amp; API Engineer</option>
                 <option value="AI / Machine Learning Engineer">AI / ML Engineer</option>
-                <option value="Cloud & DevOps Engineer">Cloud & DevOps Engineer</option>
+                <option value="Cloud &amp; DevOps Engineer">Cloud &amp; DevOps Engineer</option>
                 <option value="Automobile / Automotive Systems Engineer">Automobile / EV Systems</option>
+                <option value="__custom__">✏️ Custom Role...</option>
               </select>
+              <input
+                type="text"
+                id="customRoleInput"
+                class="input input-sm"
+                placeholder="e.g. Data Engineer, QA Analyst..."
+                style="display:none; margin-top:0.4rem;"
+                maxlength="80"
+              />
             </div>
             <div class="setting-item">
               <label for="classBatchLabel">Batch Identifier:</label>

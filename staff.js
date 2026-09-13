@@ -28,6 +28,18 @@ const filesCountBadge      = document.getElementById('filesCountBadge');
 const filesSizeInfo        = document.getElementById('filesSizeInfo');
 const btnStartBatchAudit   = document.getElementById('btnStartBatchAudit');
 const targetDriveRole      = document.getElementById('targetDriveRole');
+const customRoleInput      = document.getElementById('customRoleInput');
+
+// Show/hide custom role text input based on dropdown selection
+targetDriveRole.addEventListener('change', () => {
+  if (targetDriveRole.value === '__custom__') {
+    customRoleInput.style.display = 'block';
+    customRoleInput.focus();
+  } else {
+    customRoleInput.style.display = 'none';
+    customRoleInput.value = '';
+  }
+});
 
 const batchProgressWrap    = document.getElementById('batchProgressWrap');
 const batchProgressFill    = document.getElementById('batchProgressFill');
@@ -208,7 +220,15 @@ async function startBatchAudit() {
     return;
   }
 
-  const role = targetDriveRole.value;
+  let role = targetDriveRole.value;
+  if (role === '__custom__') {
+    role = (customRoleInput?.value || '').trim();
+    if (!role) {
+      showToast('Please enter your custom job role before starting the audit.', 'error');
+      customRoleInput?.focus();
+      return;
+    }
+  }
   btnStartBatchAudit.disabled = true;
   btnStartBatchAudit.textContent = 'Analyzing Batch…';
 
@@ -1292,7 +1312,14 @@ async function exportClassAnalysisPdf() {
     return;
   }
 
-  const roleText = targetDriveRole ? targetDriveRole.options[targetDriveRole.selectedIndex].text : 'General Campus Placement Drive';
+  let roleText = 'General Campus Placement Drive';
+  if (targetDriveRole) {
+    if (targetDriveRole.value === '__custom__') {
+      roleText = (customRoleInput?.value || '').trim() || 'Custom Recruitment Profile';
+    } else {
+      roleText = targetDriveRole.options[targetDriveRole.selectedIndex]?.text || targetDriveRole.value;
+    }
+  }
   const batchNameInput = document.getElementById('classBatchLabel') || document.getElementById('batchIdentifier');
   const batchName = batchNameInput ? (batchNameInput.value.trim() || 'Classroom Batch 2026') : 'Classroom Batch 2026';
   const avgScore = Math.round(batchResults.reduce((acc, c) => acc + c.analysis.overallScore, 0) / batchResults.length);
