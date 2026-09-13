@@ -2984,6 +2984,11 @@ body.light-theme .rewrite-block.improved {
   font-weight: 700;
   color: var(--text);
 }
+.cgpa-none {
+  font-weight: 400;
+  color: var(--text-muted, #999);
+  font-size: 0.9rem;
+}
 
 .table-skills-wrap {
   display: flex;

@@ -499,7 +499,10 @@ function renderPodium(top3) {
     const rolePriority = roleFit?.priority || 'high';
     const roleFitPct = roleFit?.fitPercentage || 92;
     const roleTitle = roleFit?.targetRole || 'Software Engineer';
-    const cgpaDisplay = cand.academicScore || a.academicScore || 'Verified (8.5+ Est.)';
+    const cgpaDisplay = cand.academicScore || a.academicScore || null;
+    const cgpaRow = cgpaDisplay && cgpaDisplay !== 'N/A'
+      ? `<div class="podium-detail-item"><strong>CGPA:</strong> ${escHtml(cgpaDisplay)}</div>`
+      : '';
 
     const card = document.createElement('div');
     card.className = `podium-rank-card ${meta.class}`;
@@ -522,7 +525,7 @@ function renderPodium(top3) {
       </div>
 
       <div class="podium-details">
-        <div class="podium-detail-item"><strong>CGPA:</strong> ${escHtml(cgpaDisplay)}</div>
+        ${cgpaRow}
         <div class="podium-detail-item"><strong>Skills:</strong> ${a.diagnostics.skillsFoundCount} verified (${topSkills})</div>
         <div class="podium-detail-item"><strong>Metrics:</strong> ${a.diagnostics.metricCount} quantified values</div>
         <div class="podium-detail-item"><strong>ATS Readiness:</strong> ${a.atsCompatibility.numericScore || 90}% Compatible</div>
@@ -649,7 +652,13 @@ function renderCandidateTable() {
         </div>
       </td>
       <td class="col-cgpa">
-        <span class="cgpa-val">${escHtml(item.academicScore || a.academicScore || 'Verified (8.5+)')}</span>
+        ${(() => {
+          const raw = item.academicScore || a.academicScore;
+          if (raw && raw !== 'N/A') {
+            return `<span class="cgpa-val">${escHtml(raw)}</span>`;
+          }
+          return `<span class="cgpa-val cgpa-none">—</span>`;
+        })()}
       </td>
       <td class="col-skills">
         <div class="table-skills-wrap">
