@@ -579,6 +579,7 @@ function renderCandidateTable() {
           <strong>${a.overallScore}</strong> / 100
         </div>
         <span class="table-grade-pill">${a.grade}</span>
+        ${a.score_capped_by ? `<div class="table-cap-pill" title="Score capped by Hard Constraint ${escHtml(a.score_capped_by)}">⚠️ Capped [${escHtml(a.score_capped_by)}]</div>` : ''}
         <div class="table-priority-tag priority-${a.targetRoleFit?.priority || 'high'}">
           ${a.targetRoleFit?.fitPercentage || 90}% Match (${(a.targetRoleFit?.priority || 'high').toUpperCase()})
         </div>
@@ -775,6 +776,27 @@ function openStudentModal(item) {
     </div>
     ` : ''}
 
+    <!-- Recruiter Hard Constraints & Evidence Audit (C1–C8) -->
+    <div class="card card-recruiter-audit">
+      <div class="recruiter-audit-header">
+        <h3 class="card-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Recruiter Hard Constraints & Evidence Audit
+        </h3>
+        <span class="recruiter-standard-badge">Senior Recruiter Audit (C1–C8)</span>
+      </div>
+      ${a.score_capped_by ? `
+        <div class="recruiter-cap-alert-box" style="margin-top: 1rem;">
+          <div class="cap-alert-icon">⚠️</div>
+          <div class="cap-alert-body">
+            <div class="cap-alert-title">AUTOMATIC SCORE CAP ACTIVE: [${escHtml(a.score_capped_by)}]</div>
+            <div class="cap-alert-desc">Score capped at ${a.overallScore} by Senior Recruiter Hard Constraint ${escHtml(a.score_capped_by)}.</div>
+          </div>
+        </div>
+      ` : ''}
+      <div class="recruiter-audit-sections" id="modalRecruiterAudit"></div>
+    </div>
+
     <!-- Section Breakdown Bars -->
     <div class="card">
       <h3 class="card-title">Section Scoring Breakdown</h3>
@@ -891,13 +913,15 @@ function openStudentModal(item) {
     renderEvaluationDimensionsToContainer(a.scores, 'modalEvalDimensionsGrid');
   }
 
+  renderModalRecruiterAudit(a, 'modalRecruiterAudit');
+
   const btnCopy = document.getElementById('btnModalCopyJson');
   if (btnCopy) {
     btnCopy.onclick = async () => {
       try {
         const json = formatAnalysisAsJson(a);
         await navigator.clipboard.writeText(JSON.stringify(json, null, 2));
-        showToast(`Copied ${item.candidateName}'s 6-Dimension Analysis JSON!`, 'success');
+        showToast(`Copied ${item.candidateName}'s Recruiter Analysis JSON!`, 'success');
       } catch (e) {
         showToast('Clipboard copy failed. Please check permissions.', 'error');
       }
@@ -912,11 +936,11 @@ function renderEvaluationDimensionsToContainer(scores, containerId) {
   if (!container || !scores) return;
 
   const dims = [
-    { key: 'keyword_match', label: 'Keyword & Skill Match', weight: '30% Weight', icon: '🎯' },
-    { key: 'experience_relevance', label: 'Experience Relevance', weight: '30% Weight', icon: '💼' },
-    { key: 'quantifiable_impact', label: 'Quantifiable Impact', weight: '15% Weight', icon: '📈' },
+    { key: 'keyword_match', label: 'Keyword & Skill Match', weight: '25% Weight', icon: '🎯' },
+    { key: 'experience_relevance', label: 'Experience Relevance', weight: '25% Weight', icon: '💼' },
+    { key: 'quantifiable_impact', label: 'Quantifiable Impact', weight: '20% Weight', icon: '📈' },
+    { key: 'ats_compatibility', label: 'ATS Compatibility', weight: '15% Weight', icon: '🤖' },
     { key: 'education_certifications', label: 'Education & Certifications', weight: '10% Weight', icon: '🎓' },
-    { key: 'ats_compatibility', label: 'ATS Compatibility', weight: '10% Weight', icon: '🤖' },
     { key: 'language_quality', label: 'Language Quality', weight: '5% Weight', icon: '✍️' },
   ];
 
@@ -939,6 +963,100 @@ function renderEvaluationDimensionsToContainer(scores, containerId) {
       </div>
     `;
   }).join('');
+}
+
+function renderModalRecruiterAudit(a, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container || !a) return;
+
+  const violations = a.constraint_violations || [];
+  const unquantified = a.unquantified_bullets || [];
+  const weakVerbs = a.weak_verb_bullets || [];
+  const missingMeta = a.missing_metadata || [];
+
+  let html = '';
+
+  if (violations.length > 0) {
+    html += `
+      <div class="recruiter-audit-block">
+        <h4 class="recruiter-block-title"><span class="block-title-icon">🚨</span> Constraint Violations & Deductions (${violations.length})</h4>
+        <div class="violations-table-wrap">
+          <table class="violations-table">
+            <thead>
+              <tr>
+                <th style="width:90px;">Constraint</th>
+                <th>Exact Evidence Quoted</th>
+                <th style="width:230px;">Recruiter Penalty</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${violations.map(v => `
+                <tr>
+                  <td class="col-constraint"><span class="constraint-tag constraint-${escHtml(v.constraint)}">${escHtml(v.constraint)}</span></td>
+                  <td class="col-evidence"><code>"${escHtml(v.evidence)}"</code></td>
+                  <td class="col-penalty">${escHtml(v.penalty_applied)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="recruiter-clean-box">
+        <span class="clean-icon">✓</span>
+        <span>Zero hard constraint violations detected. Meets recruiter audit standards.</span>
+      </div>
+    `;
+  }
+
+  if (unquantified.length > 0) {
+    html += `
+      <div class="recruiter-audit-block">
+        <h4 class="recruiter-block-title"><span class="block-title-icon">📉</span> Unquantified Bullet Points (${unquantified.length} flagged)</h4>
+        <div class="audit-quote-list">
+          ${unquantified.slice(0, 5).map(b => `
+            <div class="audit-quote-item unquantified">
+              <span class="quote-bullet">✗</span>
+              <span class="quote-text">"${escHtml(b)}"</span>
+              <span class="quote-fix">Lacks measurable numbers or metrics</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  if (weakVerbs.length > 0) {
+    html += `
+      <div class="recruiter-audit-block">
+        <h4 class="recruiter-block-title"><span class="block-title-icon">⚠️</span> Passive / Weak Verb Openers (${weakVerbs.length} flagged)</h4>
+        <div class="audit-quote-list">
+          ${weakVerbs.slice(0, 4).map(b => `
+            <div class="audit-quote-item weak-verb">
+              <span class="quote-bullet">✗</span>
+              <span class="quote-text">"${escHtml(b)}"</span>
+              <span class="quote-fix">Replace passive opener</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  if (missingMeta.length > 0) {
+    html += `
+      <div class="recruiter-audit-block">
+        <h4 class="recruiter-block-title"><span class="block-title-icon">📋</span> Missing Core Metadata (${missingMeta.length})</h4>
+        <ul class="recruiter-meta-list">
+          ${missingMeta.map(m => `<li>${escHtml(m)}</li>`).join('')}
+        </ul>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
 }
 
 function renderModalSectionBars(sectionScores) {
@@ -1143,6 +1261,8 @@ function exportPlacementCsv() {
     'Rank',
     'Student Name',
     'Overall Score',
+    'Score Capped By',
+    'Verdict',
     'Grade',
     'Academic CGPA',
     'Skills Count',
@@ -1165,6 +1285,8 @@ function exportPlacementCsv() {
       item.rank,
       `"${item.candidateName.replace(/"/g, '""')}"`,
       a.overallScore,
+      `"${(a.score_capped_by || 'None').replace(/"/g, '""')}"`,
+      `"${(a.verdict || 'Pass').replace(/"/g, '""')}"`,
       a.grade,
       `"${(item.academicScore || 'N/A').replace(/"/g, '""')}"`,
       d.skillsFoundCount,

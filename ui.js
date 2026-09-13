@@ -69,25 +69,26 @@ export function renderGrade(gradeEl, grade, summaryEl, summary) {
 }
 
 // ─── Verdict Badge ───────────────────────────────────────────
-export function renderVerdictBadge(verdict, score) {
+export function renderVerdictBadge(verdict, score, cappedBy = null) {
   const el = document.getElementById('scoreVerdict');
   if (!el) return;
-  const v = verdict || (score >= 75 ? 'Strong Match' : (score >= 50 ? 'Moderate Match — needs tailoring' : 'Weak Match'));
+  const v = verdict || (score === null ? 'Fail' : (score >= 75 ? 'Pass' : (score >= 50 ? 'Conditional Pass' : 'Fail')));
   let cls = 'verdict-moderate';
-  if (v.toLowerCase().includes('strong')) cls = 'verdict-strong';
-  else if (v.toLowerCase().includes('weak')) cls = 'verdict-weak';
+  if (v.toLowerCase().includes('pass') && !v.toLowerCase().includes('conditional')) cls = 'verdict-strong';
+  else if (v.toLowerCase().includes('conditional')) cls = 'verdict-moderate';
+  else if (v.toLowerCase().includes('fail') || v.toLowerCase().includes('weak')) cls = 'verdict-weak';
   
   el.className = `verdict-pill ${cls}`;
-  el.textContent = v;
+  el.innerHTML = `${escHtml(v)}${cappedBy ? ` <span class="verdict-cap-tag">⚠️ Capped by ${escHtml(cappedBy)}</span>` : ''}`;
 }
 
 // ─── 6 Core Evaluative Dimensions ───────────────────────────
 const EVAL_DIMENSIONS = [
-  { key: 'keyword_match', label: 'Keyword & Skill Match', weight: '30% Weight', icon: '🎯' },
-  { key: 'experience_relevance', label: 'Experience Relevance', weight: '30% Weight', icon: '💼' },
-  { key: 'quantifiable_impact', label: 'Quantifiable Impact', weight: '15% Weight', icon: '📈' },
+  { key: 'keyword_match', label: 'Keyword & Skill Match', weight: '25% Weight', icon: '🎯' },
+  { key: 'experience_relevance', label: 'Experience Relevance', weight: '25% Weight', icon: '💼' },
+  { key: 'quantifiable_impact', label: 'Quantifiable Impact', weight: '20% Weight', icon: '📈' },
+  { key: 'ats_compatibility', label: 'ATS Compatibility', weight: '15% Weight', icon: '🤖' },
   { key: 'education_certifications', label: 'Education & Certifications', weight: '10% Weight', icon: '🎓' },
-  { key: 'ats_compatibility', label: 'ATS Compatibility', weight: '10% Weight', icon: '🤖' },
   { key: 'language_quality', label: 'Language Quality', weight: '5% Weight', icon: '✍️' },
 ];
 
@@ -97,8 +98,9 @@ export function renderEvaluationDimensions(scores) {
   container.innerHTML = '';
 
   EVAL_DIMENSIONS.forEach(dim => {
-    const val = scores[dim.key] ?? 70;
-    const color = scoreColor(val);
+    const val = scores[dim.key] ?? (dim.key === 'keyword_match' || dim.key === 'experience_relevance' ? null : 70);
+    const displayVal = val !== null ? val : 'N/A';
+    const color = val !== null ? scoreColor(val) : '#64748b';
     const item = document.createElement('div');
     item.className = 'eval-dimension-item';
     item.innerHTML = `
@@ -107,11 +109,11 @@ export function renderEvaluationDimensions(scores) {
         <span class="dim-weight-tag">${dim.weight}</span>
       </div>
       <div class="dim-meter-track">
-        <div class="dim-meter-fill" data-target="${val}" style="background:${color}; width:0%"></div>
+        <div class="dim-meter-fill" data-target="${val !== null ? val : 0}" style="background:${color}; width:0%"></div>
       </div>
       <div class="dim-footer">
-        <span class="dim-score-text">Score: <strong>${val}</strong> / 100</span>
-        <span class="dim-status-text">${val >= 80 ? '✓ Exceptional' : (val >= 60 ? '⚡ Competent' : '⚠️ Needs Polish')}</span>
+        <span class="dim-score-text">Score: <strong>${displayVal}</strong> ${val !== null ? '/ 100' : '(Requires JD)'}</span>
+        <span class="dim-status-text">${val !== null ? (val >= 80 ? '✓ Exceptional' : (val >= 60 ? '⚡ Competent' : '⚠️ Needs Polish')) : 'Constraint C8'}</span>
       </div>
     `;
     container.appendChild(item);
@@ -123,6 +125,162 @@ export function renderEvaluationDimensions(scores) {
       el.style.width = target + '%';
     });
   });
+}
+
+// ─── Recruiter Hard Constraints & Evidence Audit (C1–C8) ─────
+export function renderRecruiterAudit(data) {
+  const capAlert = document.getElementById('recruiterCapAlert');
+  const container = document.getElementById('recruiterAuditContent');
+  if (!container || !data) return;
+
+  // 1. Cap Alert Banner
+  if (capAlert) {
+    if (data.score_capped_by) {
+      const capDescriptions = {
+        'C1': 'Hard Constraint C1: More than 40% of experience and project bullet points lack numbers, percentages, or measurable units. Score capped at 60 regardless of other strengths.',
+        'C2': 'Hard Constraint C2: Implausible or unverifiable scope claim detected for candidate experience level. Score capped at 65.',
+        'C3': 'Hard Constraint C3: Duplicate/overlapping content detected across multiple sections. Deducted 10 points per duplicate entry.',
+        'C4': 'Hard Constraint C4: Severe ATS parsing failure (multi-column layout or table content stream). ATS subscore capped at 20.'
+      };
+      const desc = capDescriptions[data.score_capped_by] || `Score capped by Hard Constraint ${data.score_capped_by}.`;
+      capAlert.innerHTML = `
+        <div class="recruiter-cap-alert-box">
+          <div class="cap-alert-icon">⚠️</div>
+          <div class="cap-alert-body">
+            <div class="cap-alert-title">AUTOMATIC SCORE CAP ACTIVE: [${escHtml(data.score_capped_by)}]</div>
+            <div class="cap-alert-desc">${escHtml(desc)}</div>
+          </div>
+        </div>
+      `;
+      capAlert.classList.remove('hidden');
+    } else {
+      capAlert.innerHTML = '';
+      capAlert.classList.add('hidden');
+    }
+  }
+
+  // 2. Extract Data Collections
+  const violations = data.constraint_violations || [];
+  const unquantified = data.unquantified_bullets || [];
+  const weakVerbs = data.weak_verb_bullets || [];
+  const missingMeta = data.missing_metadata || [];
+  const duplicates = data.duplicate_content_flags || [];
+
+  let html = '';
+
+  // Constraint Violations Table
+  if (violations.length > 0) {
+    html += `
+      <div class="recruiter-audit-block">
+        <h4 class="recruiter-block-title">
+          <span class="block-title-icon">🚨</span> Constraint Violations & Evidence Deductions (${violations.length})
+        </h4>
+        <div class="violations-table-wrap">
+          <table class="violations-table">
+            <thead>
+              <tr>
+                <th style="width: 100px;">Constraint</th>
+                <th>Exact Evidence Quoted from Resume</th>
+                <th style="width: 240px;">Recruiter Penalty Applied</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${violations.map(v => `
+                <tr>
+                  <td class="col-constraint"><span class="constraint-tag constraint-${escHtml(v.constraint)}">${escHtml(v.constraint)}</span></td>
+                  <td class="col-evidence"><code>"${escHtml(v.evidence)}"</code></td>
+                  <td class="col-penalty">${escHtml(v.penalty_applied)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="recruiter-clean-box">
+        <span class="clean-icon">✓</span>
+        <span>Zero hard constraint violations detected. Candidate claims and structure meet recruiter audit standards.</span>
+      </div>
+    `;
+  }
+
+  // Unquantified Bullets List (C1 Evidence)
+  if (unquantified.length > 0) {
+    html += `
+      <div class="recruiter-audit-block">
+        <h4 class="recruiter-block-title">
+          <span class="block-title-icon">📉</span> Unquantified Bullet Points (${unquantified.length} flagged — treated as unverifiable claims)
+        </h4>
+        <div class="audit-quote-list">
+          ${unquantified.slice(0, 6).map(b => `
+            <div class="audit-quote-item unquantified">
+              <span class="quote-bullet">✗</span>
+              <span class="quote-text">"${escHtml(b)}"</span>
+              <span class="quote-fix">Requires metric (%, numbers, or scale)</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // Weak/Passive Verb Bullets List (C7 Evidence)
+  if (weakVerbs.length > 0) {
+    html += `
+      <div class="recruiter-audit-block">
+        <h4 class="recruiter-block-title">
+          <span class="block-title-icon">⚠️</span> Passive / Weak Verb Openers (${weakVerbs.length} flagged)
+        </h4>
+        <div class="audit-quote-list">
+          ${weakVerbs.slice(0, 5).map(b => `
+            <div class="audit-quote-item weak-verb">
+              <span class="quote-bullet">✗</span>
+              <span class="quote-text">"${escHtml(b)}"</span>
+              <span class="quote-fix">Replace passive opener with assertive power verb</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // Missing Metadata (C5 Evidence)
+  if (missingMeta.length > 0) {
+    html += `
+      <div class="recruiter-audit-block">
+        <h4 class="recruiter-block-title">
+          <span class="block-title-icon">📋</span> Missing Core Metadata (${missingMeta.length} items)
+        </h4>
+        <ul class="recruiter-meta-list">
+          ${missingMeta.map(m => `<li>${escHtml(m)}</li>`).join('')}
+        </ul>
+      </div>
+    `;
+  }
+
+  // Duplicate Content Flags (C3 Evidence)
+  if (duplicates.length > 0) {
+    html += `
+      <div class="recruiter-audit-block">
+        <h4 class="recruiter-block-title">
+          <span class="block-title-icon">🔁</span> Duplicate / Overlapping Content Flags (${duplicates.length})
+        </h4>
+        <div class="duplicates-list">
+          ${duplicates.map(d => `
+            <div class="duplicate-item">
+              <div class="dup-row"><strong>Entry 1:</strong> ${escHtml(d.entry_1)}</div>
+              <div class="dup-row"><strong>Entry 2:</strong> ${escHtml(d.entry_2)}</div>
+              <div class="dup-desc">${escHtml(d.overlap_description)}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
 }
 
 // ─── Employment Gaps (Neutral Observations) ──────────────────
