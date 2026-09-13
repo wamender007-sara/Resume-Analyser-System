@@ -17,26 +17,29 @@
 export const TECH_TAXONOMY = {
   languages: [
     'python', 'javascript', 'typescript', 'java', 'c', 'c++', 'c#', '.net', 'go', 'golang',
-    'rust', 'ruby', 'rails', 'php', 'swift', 'kotlin', 'dart', 'sql', 'html', 'html5', 'css', 'css3', 'bash', 'shell', 'r', 'matlab'
+    'rust', 'ruby', 'rails', 'php', 'swift', 'kotlin', 'dart', 'sql', 'html', 'html5', 'css', 'css3',
+    'bash', 'shell', 'r', 'matlab', 'scala', 'solidity'
   ],
   frameworks: [
-    'react', 'react.js', 'next.js', 'vue', 'vue.js', 'angular', 'svelte', 'node.js', 'express', 'express.js',
+    'react', 'react.js', 'next.js', 'vue', 'vue.js', 'angular', 'svelte', 'node.js', 'node', 'express', 'express.js',
     'django', 'fastapi', 'flask', 'spring', 'spring boot', 'tailwind', 'tailwind css', 'bootstrap', 'redux',
-    'graphql', 'rest api', 'restful', 'grpc', 'pytorch', 'tensorflow', 'opencv', 'keras', 'scikit-learn', 'pandas', 'numpy'
+    'graphql', 'rest api', 'restful', 'grpc', 'pytorch', 'tensorflow', 'opencv', 'keras', 'scikit-learn', 'pandas', 'numpy',
+    'flutter', 'react native', 'nestjs', 'socket.io'
   ],
   databases: [
     'postgresql', 'postgres', 'mysql', 'mongodb', 'redis', 'sqlite', 'firebase', 'dynamodb',
-    'cassandra', 'elasticsearch', 'oracle', 'sql server', 'supabase', 'prisma', 'typeorm'
+    'cassandra', 'elasticsearch', 'oracle', 'sql server', 'supabase', 'prisma', 'typeorm', 'snowflake', 'bigquery', 'mariadb'
   ],
   cloud_devops: [
     'aws', 'amazon web services', 'azure', 'gcp', 'google cloud', 'docker', 'kubernetes', 'k8s',
-    'git', 'github', 'github actions', 'gitlab ci', 'jenkins', 'ci/cd', 'terraform', 'ansible', 'linux', 'nginx', 'datadog'
+    'git', 'github', 'github actions', 'gitlab ci', 'jenkins', 'ci/cd', 'terraform', 'ansible', 'linux', 'nginx', 'datadog',
+    'kafka', 'rabbitmq', 'prometheus', 'grafana', 'helm'
   ],
   domain_specialized: [
     'esp32', 'esp8266', 'arduino', 'raspberry pi', 'embedded systems', 'iot', 'robotics', 'microcontroller',
     'sensors', 'cad', 'solidworks', 'catia', 'ansys', 'powertrain', 'bms', 'can bus', 'ecu',
-    'computer vision', 'deep learning', 'machine learning', 'nlp', 'llm', 'system design', 'microservices',
-    'distributed systems', 'unit testing', 'jest', 'cypress', 'agile', 'scrum', 'jira'
+    'computer vision', 'deep learning', 'machine learning', 'nlp', 'llm', 'generative ai', 'system design', 'microservices',
+    'distributed systems', 'unit testing', 'jest', 'cypress', 'agile', 'scrum', 'jira', 'oop', 'data structures', 'algorithms'
   ]
 };
 
@@ -802,7 +805,7 @@ export function detectMissingMetadata(clean, sections, seniority, academicScore)
   const hasExpOrProj = Boolean(sections && (sections.experience || sections.projects));
   const expProjMatch = clean.match(/(?:experience|work experience|employment|internship|projects|key projects|academic projects)[\s\S]*?(?=(?:education|certifications|skills|technical skills|$))/i);
   const expProjText = expProjMatch ? expProjMatch[0] : clean;
-  const hasDates = /(?:20\d{2}|19\d{2}|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+20\d{2}|present|current)/i.test(expProjText);
+  const hasDates = /(?:20\d{2}|19\d{2}|'(?:1\d|2\d)|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(?:20\d{2}|'\d{2})|\d{2}\/\d{4}|present|current)/i.test(expProjText);
 
   if (hasExpOrProj && !hasDates) {
     missing_metadata.push('No start/end dates listed on experience or project entries (deducted 5 points from Experience)');
@@ -814,8 +817,9 @@ export function detectMissingMetadata(clean, sections, seniority, academicScore)
     experience_deduction += 5;
   }
 
-  // 3. Location or remote-work clarity
-  const hasLocation = /\b(?:remote|hybrid|onsite|on-site|bangalore|bengaluru|chennai|hyderabad|mumbai|pune|delhi|noida|gurgaon|new york|san francisco|california|texas|london|singapore|india|usa|uk|canada)\b/i.test(clean);
+  // 3. Location or remote-work clarity (Broad global + tech hub + international phone code regex)
+  const hasLocation = /\b(?:remote|hybrid|onsite|on-site|relocate|relocation|residing|based in|bangalore|bengaluru|chennai|hyderabad|mumbai|pune|delhi|noida|gurgaon|gurugram|kolkata|ahmedabad|jaipur|chandigarh|indore|bhopal|lucknow|coimbatore|trichy|madurai|salem|kochi|kerala|tamil nadu|karnataka|telangana|andhra|maharashtra|new york|san francisco|bay area|california|seattle|austin|boston|chicago|los angeles|atlanta|denver|dallas|texas|london|uk|manchester|berlin|munich|germany|dublin|ireland|amsterdam|paris|singapore|tokyo|sydney|melbourne|toronto|vancouver|canada|india|usa|us)\b/i.test(clean) || /\+\d{1,3}[-.\s]?\d{3,}/.test(clean);
+
   if (!hasLocation) {
     missing_metadata.push('No location or remote-work preference indicated (deducted 3 points from ATS Compatibility)');
     constraint_violations.push({
@@ -853,7 +857,18 @@ export function auditKeywordMatch(clean, jobDescription, targetRole, uniqueSkill
 
   if (jobDescription && jobDescription.trim().length > 25) {
     const jdClean = jobDescription.toLowerCase();
-    const rawTokens = jdClean.match(/\b[a-z]{3,}\b/g) || [];
+
+    // 1. Extract explicit technical competencies from JD using ontology
+    const jdTechSkills = [];
+    ALL_TECH_SKILLS.forEach(({ name }) => {
+      const esc = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const reg = new RegExp(`(^|[^a-zA-Z0-9_])${esc}(?=[^a-zA-Z0-9_]|$)`, 'i');
+      if (reg.test(jdClean) && !jdTechSkills.includes(name)) {
+        jdTechSkills.push(name);
+      }
+    });
+
+    // 2. Extract secondary domain keywords from JD
     const stopWords = new Set([
       'the', 'and', 'for', 'with', 'that', 'this', 'from', 'have', 'will', 'your', 'about', 'must', 'should',
       'role', 'team', 'work', 'working', 'experience', 'looking', 'skills', 'responsibilities', 'qualifications',
@@ -861,38 +876,57 @@ export function auditKeywordMatch(clean, jobDescription, targetRole, uniqueSkill
       'understanding', 'years', 'plus', 'across', 'proven', 'track', 'record', 'demonstrated', 'familiarity',
       'proficient', 'proficiency', 'including', 'environment', 'ideal', 'candidate', 'degree', 'bachelor',
       'master', 'computer', 'science', 'related', 'field', 'joining', 'fast-paced', 'collaborate', 'cross-functional',
-      'high', 'quality', 'standards', 'help', 'build', 'within', 'modern', 'level', 'apply', 'opportunity'
+      'high', 'quality', 'standards', 'help', 'build', 'within', 'modern', 'level', 'apply', 'opportunity',
+      'job', 'company', 'position', 'location', 'description', 'requirements', 'duties'
     ]);
-    
-    const tokenFreq = new Map();
+
+    const rawTokens = jdClean.match(/\b[a-z]{4,}\b/g) || [];
+    const domainFreq = new Map();
     rawTokens.forEach(t => {
-      if (!stopWords.has(t)) {
-        tokenFreq.set(t, (tokenFreq.get(t) || 0) + 1);
+      if (!stopWords.has(t) && !jdTechSkills.some(ts => ts.includes(t))) {
+        domainFreq.set(t, (domainFreq.get(t) || 0) + 1);
       }
     });
 
-    const sortedJdTokens = Array.from(tokenFreq.entries())
+    const topDomainWords = Array.from(domainFreq.entries())
       .sort((a, b) => b[1] - a[1])
       .map(entry => entry[0])
-      .slice(0, 30);
+      .slice(0, 15);
 
     let weightedMatchSum = 0;
     let totalWeight = 0;
 
-    sortedJdTokens.forEach(kw => {
-      const weight = tokenFreq.get(kw) || 1;
+    // Helper for singular/plural and morphological stem matching
+    const matchesStemmed = (haystack, needle) => {
+      if (haystack.includes(needle)) return true;
+      if (needle.endsWith('s') && haystack.includes(needle.slice(0, -1))) return true;
+      if (!needle.endsWith('s') && haystack.includes(needle + 's')) return true;
+      const stem = needle.replace(/(?:ing|ed|ment|ers?|tions?)$/i, '');
+      if (stem.length >= 4 && haystack.includes(stem)) return true;
+      return false;
+    };
+
+    // Check JD Technical Skills (Weight 3x)
+    jdTechSkills.forEach(tech => {
+      const weight = 3;
       totalWeight += weight;
 
-      if (lower.includes(kw)) {
+      const escTech = tech.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const inResume = new RegExp(`(^|[^a-zA-Z0-9_])${escTech}(?=[^a-zA-Z0-9_]|$)`, 'i').test(clean) || 
+        uniqueSkills.includes(tech) ||
+        matchesStemmed(lower, tech);
+
+      if (inResume) {
         weightedMatchSum += weight;
-        if (!matched_keywords.includes(kw)) matched_keywords.push(kw);
+        if (!matched_keywords.includes(tech)) matched_keywords.push(tech);
       } else {
+        // Synonym lookup
         let foundSynonym = false;
         for (const syn of SYNONYM_MAP) {
-          if (syn.jd.includes(kw) || kw.includes(syn.jd)) {
+          if (syn.jd.includes(tech) || tech.includes(syn.jd) || syn.resumePatterns.includes(tech)) {
             for (const pat of syn.resumePatterns) {
-              if (lower.includes(pat) && !partial_matches.some(p => p.jd_term === kw)) {
-                partial_matches.push({ resume_term: pat, jd_term: kw });
+              if ((lower.includes(pat) || matchesStemmed(lower, pat)) && !partial_matches.some(p => p.jd_term === tech)) {
+                partial_matches.push({ resume_term: pat, jd_term: tech });
                 weightedMatchSum += weight * 0.75;
                 foundSynonym = true;
                 break;
@@ -902,18 +936,36 @@ export function auditKeywordMatch(clean, jobDescription, targetRole, uniqueSkill
           if (foundSynonym) break;
         }
 
-        if (!foundSynonym && missing_keywords.length < 15) {
-          missing_keywords.push(kw);
+        if (!foundSynonym) {
+          if (!missing_keywords.includes(tech)) missing_keywords.push(tech);
         }
       }
     });
 
-    const score = totalWeight > 0 ? Math.min(100, Math.round((weightedMatchSum / totalWeight) * 100)) : 75;
+    // Check Top Domain Words (Weight 1x)
+    topDomainWords.forEach(w => {
+      const weight = 1;
+      totalWeight += weight;
+
+      if (matchesStemmed(lower, w)) {
+        weightedMatchSum += weight;
+        if (!matched_keywords.includes(w) && matched_keywords.length < 18) {
+          matched_keywords.push(w);
+        }
+      } else {
+        if (!missing_keywords.includes(w) && missing_keywords.length < 12) {
+          missing_keywords.push(w);
+        }
+      }
+    });
+
+    const score = totalWeight > 0 ? Math.floor((weightedMatchSum / totalWeight) * 100) : 75;
     return {
-      score,
+      score: Math.min(100, Math.max(25, score)),
       matched_keywords: matched_keywords.slice(0, 15),
       missing_keywords: missing_keywords.slice(0, 10),
-      partial_matches: partial_matches.slice(0, 5)
+      partial_matches: partial_matches.slice(0, 5),
+      jdTechSkills
     };
   }
 
@@ -1583,12 +1635,17 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
 
     // C6: Each critical missing hard-skill keyword from JD -> deduct 4 points (max 40)
     if (hasExplicitJd && keywordAudit.missing_keywords.length > 0) {
-      const c6MissingCount = Math.min(10, keywordAudit.missing_keywords.length);
+      const criticalMissing = keywordAudit.missing_keywords.filter(kw => 
+        (keywordAudit.jdTechSkills && keywordAudit.jdTechSkills.includes(kw)) ||
+        ALL_TECH_SKILLS.some(ts => ts.name === kw)
+      );
+      const targetMissingList = criticalMissing.length > 0 ? criticalMissing : keywordAudit.missing_keywords;
+      const c6MissingCount = Math.min(10, targetMissingList.length);
       const c6Deduction = c6MissingCount * 4;
       keyword_match = Math.floor(Math.max(20, keyword_match - c6Deduction));
       constraint_violations.push({
         constraint: 'C6',
-        evidence: `Missing ${c6MissingCount} critical required hard skill(s): ${keywordAudit.missing_keywords.slice(0, 4).join(', ')}`,
+        evidence: `Missing ${c6MissingCount} critical required hard skill(s): ${targetMissingList.slice(0, 4).join(', ')}`,
         penalty_applied: `Deducted ${c6Deduction} points from Keyword Match (${c6MissingCount} missing skills × 4 pts).`
       });
     }
