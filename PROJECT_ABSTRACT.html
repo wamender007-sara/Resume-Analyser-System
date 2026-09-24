@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Project Abstract - ResumeAI</title>
+  <style>
+    @media print {
+      body { margin: 1.5cm; }
+      .no-print { display: none; }
+    }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      line-height: 1.6;
+      color: #1a202c;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    h1 {
+      color: #2b3674;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 10px;
+      font-size: 26px;
+      margin-bottom: 5px;
+    }
+    h2 {
+      color: #4a5568;
+      font-size: 18px;
+      margin-top: 0;
+      font-weight: 500;
+    }
+    h3 {
+      color: #3182ce;
+      font-size: 18px;
+      margin-top: 25px;
+      border-left: 4px solid #3182ce;
+      padding-left: 8px;
+    }
+    h4 {
+      color: #2d3748;
+      font-size: 15px;
+      margin-bottom: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 14px;
+    }
+    th {
+      background-color: #f1f5f9;
+      color: #334155;
+    }
+    ul {
+      margin-top: 5px;
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 6px;
+    }
+    .print-btn {
+      background-color: #3182ce;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    .print-btn:hover {
+      background-color: #2b6cb0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="no-print">
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  </div>
+
+  <h1>ResumeAI</h1>
+  <h2>An Intelligent, Client-Side Resume Analyser and Conversational Career Optimization Assistant</h2>
+
+  <hr style="border: 0; height: 1px; background: #e2e8f0; margin: 20px 0;">
+
+  <h3>1. Executive Summary</h3>
+  <p>In the contemporary recruitment landscape, over 75% of resumes are filtered out before reaching a human recruiter due to automated Applicant Tracking Systems (ATS) and misaligned keyword profiles. Job applicants often struggle with identifying structural weaknesses, quantifying achievements, and targeting specific job roles effectively.</p>
+  <p><strong>ResumeAI</strong> is an interactive, browser-native web platform designed to bridge this gap. Powered by Google's large language model (Gemini API) and client-side document processing (PDF.js), the system provides instant, comprehensive, and multi-dimensional resume evaluations accompanied by an embedded, context-aware conversational AI career coach.</p>
+
+  <h3>2. Problem Statement</h3>
+  <ul>
+    <li><strong>ATS Disqualification:</strong> Candidates frequently use non-standard templates, missing essential industry keywords and proper heading structures, leading to premature rejection by automated screening pipelines.</li>
+    <li><strong>Vague & Qualitative Feedback:</strong> Traditional resume evaluation tools offer superficial spell-checks or rigid keyword counts without understanding role relevance, career progression, or measurable metrics.</li>
+    <li><strong>Lack of Actionable Guidance:</strong> Existing tools diagnose issues but do not assist candidates in rewriting weak bullet points, restructuring content, or preparing for job-specific expectations.</li>
+    <li><strong>Data Privacy & Server Overhead:</strong> Many cloud solutions store personal contact information and career history on external databases, introducing data compliance concerns and operational server expenses.</li>
+  </ul>
+
+  <h3>3. Proposed Solution & Architecture</h3>
+  <p>ResumeAI introduces a <strong>decentralized, privacy-first, serverless web application</strong> where all document parsing, rendering, and API communication occur directly in the user’s browser.</p>
+
+  <h4>Key Modules:</h4>
+  <ul>
+    <li><strong>In-Browser Document Extraction Engine:</strong> Leverages <strong>PDF.js</strong> to parse text streams, layout blocks, and characters directly from <code>.pdf</code>, <code>.docx</code>, and <code>.txt</code> files without uploading files to an external backend server.</li>
+    <li><strong>Deterministic & Structured LLM Evaluation Engine:</strong> Evaluates resume content using strict JSON schemas sent via authenticated Gemini API endpoints. Computes overall score (0–100), letter grade, and section-by-section breakdown (Contact Info, Summary, Experience, Skills, Education, Certifications, Projects). Diagnoses Strengths, Missing Sections, ATS Compatibility, and Prioritized Severity Weaknesses.</li>
+    <li><strong>Embedded Co-Pilot (Context-Aware Assistant):</strong> A side-by-side interactive chatbot maintaining stateful conversation history. Injects the applicant's resume content into the prompt context to perform real-time bullet-point rewrites (e.g., using the <strong>STAR method</strong>), compose summaries, and suggest strategic improvements.</li>
+    <li><strong>Resilience & Fault Tolerance:</strong> Built-in exponential backoff retry algorithms to handle network fluctuations, rate limits (<code>429</code>), and temporary upstream server load (<code>503</code>). Browser-local credential storage (<code>localStorage</code>) supporting modern API key formats.</li>
+  </ul>
+
+  <h3>4. Technical Specifications</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Metric / Aspect</th>
+        <th>Implementation Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Frontend Stack</strong></td>
+        <td>Semantic HTML5, Vanilla JavaScript (ES6+ Modules), CSS3 (Custom Variables)</td>
+      </tr>
+      <tr>
+        <td><strong>Design Paradigm</strong></td>
+        <td>Dark-mode glassmorphism (backdrop-filter: blur), responsive CSS Grid/Flexbox</td>
+      </tr>
+      <tr>
+        <td><strong>Document Parser</strong></td>
+        <td>Mozilla PDF.js (CDN-integrated)</td>
+      </tr>
+      <tr>
+        <td><strong>AI/LLM Model</strong></td>
+        <td>Google Gemini API (Generative Language REST interface)</td>
+      </tr>
+      <tr>
+        <td><strong>Data Privacy</strong></td>
+        <td>100% Client-side processing; zero persistent server database; keys stored in localStorage</td>
+      </tr>
+      <tr>
+        <td><strong>Visual Indicators</strong></td>
+        <td>Dynamic animated SVG radial gauges, CSS animated score bars, skeleton shimmer loaders</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>5. Key System Features</h3>
+  <ul>
+    <li><strong>Multi-Format Input:</strong> Drag-and-drop file uploader (PDF/DOCX/TXT) and manual text paste with live character/word counters.</li>
+    <li><strong>Role-Targeted Optimization:</strong> Optional target job title field to tailor analysis and keyword suggestions to specific market requirements.</li>
+    <li><strong>Visual Score Metrics:</strong> Real-time animated score ring displaying overall rating, ATS compliance badge, and categorized action lists.</li>
+    <li><strong>Step-by-Step Action Plan:</strong> Numbered, prioritized improvement checklist ordered by impact.</li>
+    <li><strong>Side-by-Side Co-Pilot:</strong> Real-time conversational assistant for iterative resume editing and interview preparation questions.</li>
+  </ul>
+
+  <h3>6. Significance & Future Scope</h3>
+  <p>ResumeAI democratizes executive-tier career coaching by putting an intelligent, real-time feedback loop directly into job seekers' browsers.</p>
+  <ul>
+    <li><strong>Future Enhancements:</strong>
+      <ul>
+        <li>Direct side-by-side Job Description (JD) comparison with match percentage calculations.</li>
+        <li>Automated one-click PDF export of rewritten resumes using clean, ATS-compliant LaTeX or HTML templates.</li>
+        <li>Multi-language resume parsing and international localization support.</li>
+      </ul>
+    </li>
+  </ul>
+
+</body>
+</html>
