@@ -44,6 +44,49 @@
           Placement Staff (Batch 60)
         </a>
       </div>
+
+      <!-- Gemini API Key Manager -->
+      <div class="api-key-wrap" id="apiKeyWrap">
+        <button class="api-key-toggle" id="apiKeyToggle" title="Configure Gemini API key to enable AI-powered Career Advisor">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="3"/><path d="M10.5 10.5L21 21"/><path d="M7 12.5v1.5a2 2 0 0 0 2 2h1"/></svg>
+          <span id="geminiStatusBadge" class="gemini-badge gemini-builtin">◈ Built-in</span>
+        </button>
+
+        <!-- Collapsible API Key Panel -->
+        <div class="api-key-panel hidden" id="apiKeyPanel">
+          <div class="api-key-panel-header">
+            <span class="api-key-panel-title">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="3"/><path d="M10.5 10.5L21 21"/></svg>
+              Gemini API Key
+            </span>
+            <span class="api-key-panel-sub">Powers free-form AI responses in Career Advisor</span>
+          </div>
+          <div class="api-key-input-row">
+            <input
+              type="password"
+              id="apiKeyInput"
+              class="api-key-input"
+              placeholder="AIza… or AQ.…"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+          <div class="api-key-actions">
+            <button class="btn-save-key" id="saveApiKeyBtn">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+              Save Key
+            </button>
+            <button class="btn-clear-key" id="clearApiKeyBtn">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+              Clear
+            </button>
+          </div>
+          <p class="api-key-note">
+            Key stored only in your browser. Never sent to any server except Google's API.
+            Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>.
+          </p>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -190,6 +233,10 @@
               <button class="btn-open-editor" id="btnOpenEditor" title="Open AI Integrated Resume Editor with auto-corrected mistakes & downloadable preview">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                 Resume Editor
+              </button>
+              <button class="btn-export-pdf" id="btnExportPdf" title="Export full analysis report as PDF">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export PDF
               </button>
             </div>
             <p class="score-summary" id="scoreSummary"></p>
@@ -415,6 +462,9 @@
 
   <!-- TOAST CONTAINER -->
   <div class="toast-container" id="toastContainer"></div>
+
+  <!-- PDF Report Container: hidden during normal use, visible only during window.print() -->
+  <div id="pdfReportContainer" aria-hidden="true"></div>
 
   <!-- SCRIPTS -->
   <script type="module" src="app.js"></script>

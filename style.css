@@ -3921,3 +3921,229 @@ button, input, select, textarea {
   }
 }
 
+
+/* ─── GEMINI API KEY PANEL & STATUS BADGE ──────────────────────────── */
+
+/* Wrapper keeps the panel positioned relative to the toggle button */
+.api-key-wrap {
+  position: relative;
+}
+
+/* Toggle button in the header */
+.api-key-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--border, #c5dcee);
+  border-radius: 8px;
+  background: var(--bg-card, #f0f6fc);
+  color: var(--text-2, #334155);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+.api-key-toggle:hover {
+  border-color: var(--primary, #0284c7);
+  background: var(--primary-subtle, #dcedfa);
+}
+
+/* Gemini status badge inside the toggle */
+.gemini-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  transition: background 0.2s, color 0.2s;
+}
+.gemini-builtin {
+  background: rgba(100, 116, 139, 0.12);
+  color: var(--text-3, #64748b);
+  border: 1px solid var(--border, #c5dcee);
+}
+.gemini-active {
+  background: rgba(16, 185, 129, 0.15);
+  color: #15803d;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+/* Collapsible panel */
+.api-key-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 9999;
+  width: 300px;
+  background: var(--bg-card, #f0f6fc);
+  border: 1px solid var(--border, #c5dcee);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+  padding: 14px 16px 12px;
+}
+.api-key-panel.hidden {
+  display: none;
+}
+
+.api-key-panel-header {
+  margin-bottom: 10px;
+}
+.api-key-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text, #0f172a);
+}
+.api-key-panel-sub {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-3, #64748b);
+  margin-top: 2px;
+}
+
+.api-key-input-row {
+  margin-bottom: 8px;
+}
+.api-key-input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border, #c5dcee);
+  border-radius: 7px;
+  background: var(--surface, rgba(235,244,252,0.96));
+  color: var(--text, #0f172a);
+  font-size: 0.8rem;
+  font-family: 'Courier New', monospace;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.api-key-input:focus {
+  border-color: var(--primary, #0284c7);
+}
+
+.api-key-actions {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 9px;
+}
+.btn-save-key,
+.btn-clear-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+}
+.btn-save-key {
+  background: var(--primary, #0284c7);
+  color: #fff;
+  flex: 1;
+}
+.btn-save-key:hover { opacity: 0.88; }
+.btn-clear-key {
+  background: var(--red-bg, #fce1ed);
+  color: var(--red, #be123c);
+  border: 1px solid var(--red-border, #f69ebd);
+}
+.btn-clear-key:hover { opacity: 0.80; }
+
+.api-key-note {
+  font-size: 0.69rem;
+  color: var(--text-3, #64748b);
+  line-height: 1.45;
+  margin: 0;
+}
+.api-key-note a {
+  color: var(--primary, #0284c7);
+  text-decoration: none;
+}
+.api-key-note a:hover { text-decoration: underline; }
+
+/* ─── END GEMINI API KEY PANEL ─────────────────────────────────────── */
+
+/* ─── PDF EXPORT BUTTON ─────────────────────────────────────────────── */
+
+.btn-export-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border, #c5dcee);
+  background: var(--bg-card, #f0f6fc);
+  color: var(--text-2, #334155);
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+.btn-export-pdf:hover {
+  background: var(--primary-subtle, #dcedfa);
+  border-color: var(--primary, #0284c7);
+  color: var(--primary, #0284c7);
+}
+.btn-export-pdf:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Hidden by default — only shown during print ─────────────────────── */
+#pdfReportContainer {
+  display: none;
+}
+
+/* ─── PRINT LAYOUT ───────────────────────────────────────────────────── */
+@media print {
+
+  /* Hide the entire application shell */
+  body > *:not(#pdfReportContainer) {
+    display: none !important;
+  }
+
+  /* Show only the report */
+  #pdfReportContainer {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #0f172a !important;
+    font-family: -apple-system, 'Segoe UI', system-ui, sans-serif !important;
+  }
+
+  /* Page settings */
+  @page {
+    size: A4 portrait;
+    margin: 15mm 15mm 18mm 15mm;
+  }
+
+  /* Ensure ad slots are also hidden (belt and braces with existing rule) */
+  .ad-slot,
+  .ad-slot-placeholder-wrap {
+    display: none !important;
+  }
+
+  /* Prevent page breaks inside key cards */
+  .rr-avoid-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Force page break before major sections when needed */
+  .rr-section {
+    break-inside: auto;
+  }
+}
+
+/* ─── END PDF EXPORT ─────────────────────────────────────────────────── */

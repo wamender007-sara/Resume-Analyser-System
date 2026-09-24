@@ -1,7 +1,6 @@
 /**
  * app.js — Core orchestration module
- * Powered by built-in Analysis Engine & Career Coach
- * Completely free of external API keys or server setup
+ * Powered by built-in Analysis Engine & Gemini-powered Career Advisor
  */
 
 import { analyseResumeLocally, generateChatResponse, validateResumeDocument } from './analysis-engine.js';
@@ -20,11 +19,15 @@ import {
   updateAllAdSlots,
 } from './ui.js';
 import { openResumeEditor } from './resume-editor.js';
+import { getApiKey, saveApiKey, chatStream } from './gemini.js';
+import { generatePdfReport } from './pdf-export.js';
 
 // ─── State ────────────────────────────────────────────────────
 let currentResumeText = '';
 let currentAnalysis = null;
 let isChatting = false;
+/** @type {Array<{role:'user'|'assistant', content:string}>} */
+let chatHistory = [];
 
 // ─── DOM Refs ─────────────────────────────────────────────────
 const fileInput        = document.getElementById('fileInput');
@@ -51,7 +54,9 @@ function init() {
   setupChat();
   setupTextarea();
   setupEditorTriggers();
+  setupApiKey();
   updateAllAdSlots();
+  updateGeminiStatusBadge();
 }
 
 // ─── AI Resume Editor Trigger Setup ───────────────────────────
@@ -75,6 +80,30 @@ function setupEditorTriggers() {
 
   if (btnOpenEditor) btnOpenEditor.addEventListener('click', handleOpen);
   if (btnLaunchBanner) btnLaunchBanner.addEventListener('click', handleOpen);
+
+  // ─── PDF Export Trigger ─────────────────────────────────────
+  const btnExportPdf = document.getElementById('btnExportPdf');
+  if (btnExportPdf) {
+    btnExportPdf.addEventListener('click', () => {
+      if (!currentAnalysis) {
+        showToast('Please analyse a resume first before exporting.', 'error');
+        return;
+      }
+      btnExportPdf.disabled = true;
+      btnExportPdf.textContent = 'Preparing…';
+      try {
+        generatePdfReport(currentAnalysis, showToast);
+      } finally {
+        // Re-enable after a short delay (print dialog may be synchronous or async)
+        setTimeout(() => {
+          btnExportPdf.disabled = false;
+          btnExportPdf.innerHTML = `
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export PDF`;
+        }, 1200);
+      }
+    });
+  }
 }
 
 // ─── Particle Background (Clean No-Op) ────────────────────────
@@ -218,6 +247,19 @@ function updateAnalyseButton() {
 
 // ─── API Key ──────────────────────────────────────────────────
 function setupApiKey() {
+  const apiKeyToggle  = document.getElementById('apiKeyToggle');
+  const apiKeyPanel   = document.getElementById('apiKeyPanel');
+  const apiKeyInput   = document.getElementById('apiKeyInput');
+  const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+  const clearApiKeyBtn = document.getElementById('clearApiKeyBtn');
+
+  if (!apiKeyToggle || !apiKeyPanel) return; // Elements not present — skip
+
+  // Pre-fill input if a key is already saved
+  if (apiKeyInput && getApiKey()) {
+    apiKeyInput.value = getApiKey();
+  }
+
   apiKeyToggle.addEventListener('click', (e) => {
     e.stopPropagation();
     apiKeyPanel.classList.toggle('hidden');
@@ -229,20 +271,54 @@ function setupApiKey() {
     }
   });
 
-  saveApiKeyBtn.addEventListener('click', () => {
-    const key = apiKeyInput.value.trim();
-    if (!key.startsWith('AIza') && !key.startsWith('AQ.')) {
-      showToast('That doesn\'t look like a valid Gemini API key. It should start with "AIza" or "AQ.".', 'error');
-      return;
-    }
-    saveApiKey(key);
-    showToast('API key saved!', 'success');
-    apiKeyPanel.classList.add('hidden');
-  });
+  if (saveApiKeyBtn) {
+    saveApiKeyBtn.addEventListener('click', () => {
+      const key = (apiKeyInput?.value || '').trim();
+      if (!key.startsWith('AIza') && !key.startsWith('AQ.')) {
+        showToast('That doesn\'t look like a valid Gemini API key. It should start with "AIza" or "AQ.".', 'error');
+        return;
+      }
+      saveApiKey(key);
+      showToast('✅ Gemini API key saved! Career Advisor is now AI-powered.', 'success');
+      apiKeyPanel.classList.add('hidden');
+      updateGeminiStatusBadge();
+    });
+  }
 
-  apiKeyInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') saveApiKeyBtn.click();
-  });
+  if (clearApiKeyBtn) {
+    clearApiKeyBtn.addEventListener('click', () => {
+      localStorage.removeItem('resumeai_apikey');
+      if (apiKeyInput) apiKeyInput.value = '';
+      showToast('API key cleared. Switched to built-in advisor.', 'info');
+      apiKeyPanel.classList.add('hidden');
+      updateGeminiStatusBadge();
+    });
+  }
+
+  if (apiKeyInput) {
+    apiKeyInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') saveApiKeyBtn?.click();
+    });
+  }
+}
+
+// ─── Gemini Status Badge ───────────────────────────────────────
+function updateGeminiStatusBadge() {
+  const badge = document.getElementById('geminiStatusBadge');
+  const chatStatusEl = document.getElementById('chatStatus');
+  const hasKey = Boolean(getApiKey());
+
+  if (badge) {
+    badge.textContent = hasKey ? '✦ AI' : '◈ Built-in';
+    badge.className = hasKey ? 'gemini-badge gemini-active' : 'gemini-badge gemini-builtin';
+    badge.title = hasKey
+      ? 'Gemini AI is active — freeform career questions enabled'
+      : 'Using built-in advisor — add a Gemini API key for full AI responses';
+  }
+
+  if (chatStatusEl) {
+    chatStatusEl.textContent = hasKey ? 'Powered by Gemini AI' : 'Resume Review Specialist';
+  }
 }
 
 // ─── Analyse ──────────────────────────────────────────────────
@@ -430,31 +506,111 @@ async function sendChatMessage() {
   // Render user bubble
   appendChatMessage('user', text);
 
+  // Add to history for Gemini multi-turn conversation
+  chatHistory.push({ role: 'user', content: text });
+
   // Disable input while responding
   isChatting = true;
   chatSend.disabled = true;
-  const chatStatus = document.getElementById('chatStatus');
-  chatStatus.textContent = 'Thinking…';
+  const chatStatusEl = document.getElementById('chatStatus');
+  if (chatStatusEl) chatStatusEl.textContent = 'Thinking…';
 
+  const apiKey = getApiKey();
+
+  if (apiKey) {
+    // ── Gemini streaming path ──────────────────────────────────
+    await sendChatMessageViaGemini(text, chatStatusEl);
+  } else {
+    // ── Built-in fallback path (unchanged behaviour) ───────────
+    sendChatMessageViaBuiltIn(text, chatStatusEl);
+  }
+}
+
+async function sendChatMessageViaGemini(text, chatStatusEl) {
+  // Show typing indicator while we open the stream
+  appendTypingIndicator();
+
+  // Create an empty assistant bubble we'll stream tokens into
+  let streamingDiv = null;
+  let accumulated = '';
+
+  try {
+    if (!currentResumeText) currentResumeText = getActiveResumeText();
+    const targetRole = targetRoleInput ? targetRoleInput.value.trim() : '';
+
+    // Build message list for Gemini — only user/assistant turns (no system)
+    const geminiMessages = chatHistory.map(m => ({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.content
+    }));
+
+    removeTypingIndicator();
+    // Create the streaming bubble before first token arrives
+    streamingDiv = appendChatMessage('assistant', '');
+
+    const stream = chatStream(geminiMessages, currentResumeText);
+
+    for await (const chunk of stream) {
+      accumulated += chunk;
+      updateStreamingBubble(streamingDiv, accumulated);
+    }
+
+    if (!accumulated.trim()) {
+      // Empty stream — use fallback
+      throw new Error('Empty Gemini response');
+    }
+
+    // Persist assistant reply in history
+    chatHistory.push({ role: 'assistant', content: accumulated });
+
+  } catch (err) {
+    // Remove partial streaming bubble if it exists
+    if (streamingDiv) streamingDiv.remove();
+    removeTypingIndicator();
+
+    const isKeyError = err.message === 'NO_API_KEY'
+      || err.message === 'INVALID_API_KEY'
+      || err.message?.includes('API key');
+
+    if (isKeyError) {
+      showToast('Gemini API key is invalid or expired. Switched to built-in advisor.', 'error');
+      localStorage.removeItem('resumeai_apikey');
+      updateGeminiStatusBadge();
+    }
+
+    // Always fall back gracefully — never leave the user with no response
+    const targetRole = targetRoleInput ? targetRoleInput.value.trim() : '';
+    const fallbackReply = generateChatResponse(text, currentResumeText, targetRole, currentAnalysis);
+    appendChatMessage('assistant', fallbackReply);
+    chatHistory.push({ role: 'assistant', content: fallbackReply });
+
+  } finally {
+    if (chatStatusEl) chatStatusEl.textContent = getApiKey() ? 'Powered by Gemini AI' : 'Resume Review Specialist';
+    isChatting = false;
+    chatSend.disabled = false;
+    chatInput.focus();
+  }
+}
+
+function sendChatMessageViaBuiltIn(text, chatStatusEl) {
   // Show typing indicator
   appendTypingIndicator();
 
-  // Natural response simulation
+  // Preserve original 450ms natural-feeling delay for built-in path
   setTimeout(() => {
     try {
       removeTypingIndicator();
-      if (!currentResumeText) {
-        currentResumeText = getActiveResumeText();
-      }
+      if (!currentResumeText) currentResumeText = getActiveResumeText();
       const targetRole = targetRoleInput ? targetRoleInput.value.trim() : '';
       const reply = generateChatResponse(text, currentResumeText, targetRole, currentAnalysis);
       appendChatMessage('assistant', reply);
+      chatHistory.push({ role: 'assistant', content: reply });
     } catch (err) {
       console.error('Chat error:', err);
       removeTypingIndicator();
-      appendChatMessage('assistant', `⚠️ Sorry, I encountered an issue while generating that response: ${err.message}. Please try asking again!`);
+      appendChatMessage('assistant', `⚠️ Sorry, I encountered an issue: ${err.message}. Please try again!`);
     } finally {
-      chatStatus.textContent = 'Career Coach & Review Specialist';
+      if (chatStatusEl) chatStatusEl.textContent = 'Resume Review Specialist';
       isChatting = false;
       chatSend.disabled = false;
       chatInput.focus();
