@@ -667,6 +667,89 @@ export function updateStreamingBubble(div, text) {
   }
 }
 
+
+// ─── Score Potential Panel ───────────────────────────────────
+/**
+ * Render the Score Improvement Potential panel.
+ * @param {object} potential — result of computeScorePotential(analysis)
+ */
+export function renderScorePotential(potential) {
+  const container = document.getElementById('scorePotentialContainer');
+  if (!container || !potential) return;
+
+  const { currentScore, potentialScore, pointsGain, improvements, alreadyStrong } = potential;
+
+  if (pointsGain <= 0 || improvements.length === 0) {
+    // Score is already near maximum — show congratulatory message
+    container.innerHTML = `
+      <div class="sp-perfect-row">
+        <span class="sp-perfect-icon">✦</span>
+        <span class="sp-perfect-text">Your resume is performing near its maximum potential across all dimensions. Focus on tailoring to each specific job description.</span>
+      </div>`;
+    return;
+  }
+
+  const gainColor   = pointsGain >= 10 ? 'var(--green, #15803d)' : 'var(--primary, #0284c7)';
+  const strongHtml  = alreadyStrong.length > 0
+    ? `<div class="sp-strong-row">
+        <span class="sp-strong-label">✓ Already strong:</span>
+        ${alreadyStrong.map(l => `<span class="sp-strong-chip">${escHtml(l)}</span>`).join('')}
+       </div>`
+    : '';
+
+  const itemsHtml = improvements.map((imp, idx) => {
+    const barPct  = Math.round((imp.currentScore / 100) * 100);
+    const barColor = imp.currentScore >= 80 ? 'var(--green,#15803d)'
+                   : imp.currentScore >= 60 ? 'var(--primary,#0284c7)'
+                   : imp.currentScore >= 40 ? 'var(--yellow,#b45309)'
+                   : 'var(--red,#be123c)';
+    const weightPct = Math.round(imp.weight * 100);
+    return `
+      <div class="sp-item">
+        <div class="sp-item-header">
+          <div class="sp-item-left">
+            <span class="sp-rank">${idx + 1}</span>
+            <span class="sp-dim-label">${escHtml(imp.label)}</span>
+            <span class="sp-weight-tag">${weightPct}% weight</span>
+          </div>
+          <div class="sp-item-right">
+            <span class="sp-current-score">${imp.currentScore}<span class="sp-denom">/100</span></span>
+            <span class="sp-arrow">→</span>
+            <span class="sp-ceiling-score">${imp.ceiling}</span>
+            <span class="sp-gain-tag">+${imp.weightedGain} pts</span>
+          </div>
+        </div>
+        <div class="sp-bar-track">
+          <div class="sp-bar-fill" style="width:${barPct}%;background:${barColor};"></div>
+          <div class="sp-bar-potential" style="width:${Math.round(imp.ceiling)}%;"></div>
+        </div>
+        <p class="sp-hint">${escHtml(imp.hint)}</p>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="sp-headline-row">
+      <div class="sp-score-from">
+        <span class="sp-score-val">${currentScore}</span>
+        <span class="sp-score-meta">current</span>
+      </div>
+      <div class="sp-arrow-big">→</div>
+      <div class="sp-score-to">
+        <span class="sp-score-val" style="color:${gainColor};">${potentialScore}</span>
+        <span class="sp-score-meta">potential</span>
+      </div>
+      <div class="sp-gain-summary">
+        <span class="sp-gain-pill" style="background:${gainColor}22;color:${gainColor};border:1px solid ${gainColor}55;">
+          +${pointsGain} points within reach
+        </span>
+        <span class="sp-gain-sub">Fix the ${improvements.length} dimension${improvements.length > 1 ? 's' : ''} below</span>
+      </div>
+    </div>
+    ${strongHtml}
+    <div class="sp-items-list">${itemsHtml}</div>`;
+}
+
+
 // ─── Utilities ───────────────────────────────────────────────
 function escHtml(str) {
   return String(str)

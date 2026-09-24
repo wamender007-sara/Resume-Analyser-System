@@ -4147,3 +4147,270 @@ button, input, select, textarea {
 }
 
 /* ─── END PDF EXPORT ─────────────────────────────────────────────────── */
+
+/* ─── SCORE POTENTIAL PANEL ─────────────────────────────────────────── */
+
+.card-score-potential {
+  border-left: 3px solid var(--primary, #0284c7);
+}
+
+.card-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.sp-subtitle {
+  font-size: 0.76rem;
+  color: var(--text-3, #64748b);
+  font-style: italic;
+}
+
+/* Headline row: current → potential */
+.sp-headline-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  background: var(--bg-subtle, #dde8f2);
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+
+.sp-score-from,
+.sp-score-to {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.sp-score-val {
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text, #0f172a);
+}
+
+.sp-score-meta {
+  font-size: 0.68rem;
+  color: var(--text-3, #64748b);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sp-arrow-big {
+  font-size: 1.3rem;
+  color: var(--text-3, #64748b);
+  flex-shrink: 0;
+}
+
+.sp-gain-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.sp-gain-pill {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 11px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.sp-gain-sub {
+  font-size: 0.72rem;
+  color: var(--text-3, #64748b);
+}
+
+/* "Already strong" chips row */
+.sp-strong-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 0.78rem;
+}
+
+.sp-strong-label {
+  color: var(--green, #15803d);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.sp-strong-chip {
+  background: rgba(21,128,61,0.10);
+  color: var(--green, #15803d);
+  border: 1px solid rgba(21,128,61,0.25);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+/* Improvement items list */
+.sp-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sp-item {
+  background: var(--bg-card, #f0f6fc);
+  border: 1px solid var(--border, #c5dcee);
+  border-radius: 8px;
+  padding: 11px 13px;
+}
+
+.sp-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 7px;
+}
+
+.sp-item-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.sp-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: var(--primary, #0284c7);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sp-dim-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text, #0f172a);
+}
+
+.sp-weight-tag {
+  font-size: 0.68rem;
+  color: var(--text-3, #64748b);
+  background: var(--bg-subtle, #dde8f2);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.sp-item-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.sp-current-score {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-2, #334155);
+}
+
+.sp-denom {
+  font-size: 0.68rem;
+  color: var(--text-3, #64748b);
+  font-weight: 400;
+}
+
+.sp-arrow {
+  font-size: 0.75rem;
+  color: var(--text-3, #64748b);
+}
+
+.sp-ceiling-score {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--green, #15803d);
+}
+
+.sp-gain-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(21,128,61,0.12);
+  color: var(--green, #15803d);
+  border: 1px solid rgba(21,128,61,0.25);
+}
+
+/* Progress bar: filled portion + potential ghost */
+.sp-bar-track {
+  position: relative;
+  height: 6px;
+  background: var(--bg-subtle, #dde8f2);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 7px;
+}
+
+.sp-bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.7s cubic-bezier(.4,0,.2,1);
+}
+
+.sp-bar-potential {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(2,132,199,0.15);
+  border-right: 2px dashed rgba(2,132,199,0.5);
+}
+
+/* Hint text */
+.sp-hint {
+  font-size: 0.79rem;
+  color: var(--text-2, #334155);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Perfect score state */
+.sp-perfect-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  background: rgba(21,128,61,0.08);
+  border-radius: 8px;
+  border: 1px solid rgba(21,128,61,0.2);
+}
+
+.sp-perfect-icon {
+  font-size: 1.1rem;
+  color: var(--green, #15803d);
+  flex-shrink: 0;
+}
+
+.sp-perfect-text {
+  font-size: 0.82rem;
+  color: var(--green, #15803d);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* ─── END SCORE POTENTIAL PANEL ─────────────────────────────────────── */

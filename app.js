@@ -17,10 +17,12 @@ import {
   appendChatMessage, appendTypingIndicator, removeTypingIndicator,
   updateStreamingBubble,
   updateAllAdSlots,
+  renderScorePotential,
 } from './ui.js';
 import { openResumeEditor } from './resume-editor.js';
 import { getApiKey, saveApiKey, chatStream } from './gemini.js';
 import { generatePdfReport } from './pdf-export.js';
+import { computeScorePotential } from './score-potential.js';
 
 // ─── State ────────────────────────────────────────────────────
 let currentResumeText = '';
@@ -466,6 +468,9 @@ function renderAnalysis(data) {
 
   // Action plan
   renderActionPlan(data.actionPlan || []);
+
+  // Score Improvement Potential Panel
+  renderScorePotential(computeScorePotential(data));
 }
 
 // ─── Chat ─────────────────────────────────────────────────────
