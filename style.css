@@ -6048,34 +6048,416 @@ button, input, select, textarea {
 }
 
 /* ==========================================================================
-   RESPONSIVE DESIGN
+   MOBILE & TABLET RESPONSIVE SUITE (Screen width down to 320px)
    ========================================================================== */
+
+/* Toggle helpers for mobile header text */
+.btn-text-mobile,
+.nav-text-mobile {
+  display: none;
+}
+
 @media (max-width: 768px) {
-  .opp-hero-title {
-    font-size: 1.4rem;
+  /* Header & Navigation Bar on Mobile */
+  .header {
+    padding: 0.65rem 0.85rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
+  .brand-name {
+    font-size: 1.05rem;
+  }
+  .brand-tag {
+    display: none;
+  }
+  .header-actions {
+    gap: 0.5rem;
+  }
+  .portal-nav-switcher {
+    overflow-x: auto;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 2px;
+  }
+  .portal-nav-switcher::-webkit-scrollbar {
+    display: none;
+  }
+  .portal-nav-btn {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.76rem;
+    gap: 0.35rem;
+  }
+  .portal-nav-btn svg {
+    width: 13px;
+    height: 13px;
+  }
+  .nav-pill-badge {
+    padding: 1px 4px;
+    font-size: 0.62rem;
+  }
+
+  /* Main Container & Breadcrumbs */
+  .opp-main-container {
+    padding: 1rem 0.85rem 3.5rem;
+    gap: 1.25rem;
+  }
+  .opp-breadcrumb-nav {
+    font-size: 0.75rem;
+    gap: 0.4rem;
+  }
+  .opp-breadcrumb-link {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  .opp-breadcrumb-current {
+    font-size: 0.75rem;
+  }
+
+  /* Hero Card */
   .opp-hero-card {
-    padding: 1.35rem 1.25rem;
+    padding: 1.25rem 1.15rem;
+    border-radius: 12px;
   }
-  .opp-jobs-grid {
-    grid-template-columns: 1fr;
+  .opp-hero-title {
+    font-size: 1.35rem;
+    letter-spacing: -0.015em;
   }
+  .opp-hero-desc {
+    font-size: 0.825rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+  .opp-badge-row {
+    gap: 0.35rem;
+    margin-bottom: 0.6rem;
+  }
+  .opp-badge-pill {
+    font-size: 0.68rem;
+    padding: 2px 7px;
+  }
+
+  /* Search & Filter Controls */
   .opp-search-box {
     flex-direction: column;
+    gap: 0.5rem;
+  }
+  .search-input-wrap,
+  .location-select-wrap {
+    width: 100%;
+    min-width: 0;
+  }
+  .search-input-wrap input {
+    padding: 0.62rem 2.2rem 0.62rem 2.3rem;
+    font-size: 0.84rem;
+  }
+  .location-select-wrap select {
+    padding: 0.62rem 0.85rem 0.62rem 2.2rem;
+    font-size: 0.84rem;
+  }
+  .opp-category-tabs {
+    padding-bottom: 6px;
+    gap: 0.4rem;
+    -webkit-overflow-scrolling: touch;
+  }
+  .opp-tab {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  /* 1-Click Search Portals Grid */
+  .section-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+  .active-query-tag {
+    align-self: flex-start;
+  }
+  .opp-portals-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.6rem;
+  }
+
+  /* Jobs Grid & Cards */
+  .opp-jobs-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .opp-job-card {
+    padding: 1.15rem 1rem;
+    border-radius: 10px;
+    gap: 0.75rem;
+  }
+  .job-card-header {
+    gap: 0.5rem;
+  }
+  .company-badge-wrap {
+    gap: 0.65rem;
+  }
+  .company-avatar {
+    width: 40px;
+    height: 40px;
+    padding: 4px;
+  }
+  .job-title {
+    font-size: 0.98rem;
+  }
+  .job-company {
+    font-size: 0.78rem;
+  }
+  .job-match-badge {
+    padding: 0.3rem 0.55rem;
+  }
+  .job-match-badge .match-num {
+    font-size: 0.85rem;
+  }
+  .job-match-badge .match-text {
+    font-size: 0.68rem;
+  }
+  .job-meta-row {
+    gap: 0.4rem;
+    font-size: 0.72rem;
+  }
+  .job-desc {
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  .job-skills-section {
+    padding: 0.65rem 0.75rem;
+  }
+
+  /* Role Prep Modal */
+  .modal-dialog.role-intel-dialog {
+    width: 95%;
+    max-width: 95%;
+    max-height: 92vh;
+    border-radius: 12px;
+    margin: auto;
+  }
+  .modal-header {
+    padding: 1rem 1.15rem;
+  }
+  .modal-title {
+    font-size: 1.1rem;
+    line-height: 1.3;
+  }
+  .modal-subtitle {
+    font-size: 0.76rem;
+  }
+  .role-intel-body {
+    padding: 1.15rem;
+    max-height: 65vh;
+    gap: 1rem;
+  }
+  .intel-process-step {
+    padding: 0.65rem 0.75rem;
+    gap: 0.6rem;
+  }
+  .process-round-title {
+    font-size: 0.8rem;
+  }
+  .process-round-desc {
+    font-size: 0.75rem;
   }
   .intel-grid-row {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
+  .modal-footer {
+    padding: 0.85rem 1.15rem;
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+  .btn-modal-dismiss {
+    width: 100%;
+    text-align: center;
+    padding: 0.55rem;
+  }
+  .btn-modal-action {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    padding: 0.58rem;
+  }
+}
+
+/* Specific Adjustments for Screens <= 640px */
+@media (max-width: 640px) {
+  /* Resume Match Bar Stacking */
+  .match-bar-loaded {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .match-score-badge {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0.5rem 0.85rem;
+  }
+  .match-score-badge .score-val {
+    font-size: 1.2rem;
+  }
+  .match-actions {
+    width: 100%;
+  }
+  .reanalyse-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .match-bar-empty {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.25rem 0;
+  }
+  .match-bar-empty .empty-badge-icon {
+    display: none;
+  }
+  .btn-match-cta {
+    width: 100%;
+    justify-content: center;
+    padding: 0.55rem 1rem;
+  }
+
+  /* Live Feed Sync Bar */
+  .live-sync-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+    padding: 0.65rem 0.85rem;
+  }
+  .live-sync-left {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .live-sync-right {
+    width: 100%;
+    gap: 0.45rem;
+  }
+  .time-filter-toggle {
+    flex: 1;
+  }
+  .time-pill {
+    flex: 1;
+    text-align: center;
+    padding: 3px 4px;
+    font-size: 0.68rem;
+  }
+  .refresh-feed-btn {
+    padding: 0.35rem 0.55rem;
+    font-size: 0.72rem;
+    flex-shrink: 0;
+  }
+  .listings-header-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.45rem;
+  }
+  .listings-stat-label {
+    font-size: 0.8rem;
+  }
+  .listings-sort-wrap {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .listings-sort-wrap select {
+    flex: 1;
+    max-width: none;
+    margin-left: 0.5rem;
+  }
+}
+
+/* Specific Adjustments for Screens <= 600px */
+@media (max-width: 600px) {
+  .header-brand {
+    gap: 0.5rem;
+  }
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+  }
+  .portal-tag {
+    display: none !important;
+  }
+  .btn-text-full,
+  .nav-text-full {
+    display: none !important;
+  }
+  .btn-text-mobile,
+  .nav-text-mobile {
+    display: inline !important;
+  }
+  .portal-nav-btn.back-to-reviewer-btn {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.76rem;
+  }
+}
+
+/* Action Buttons Grid for Mobile Phones (<= 540px) */
+@media (max-width: 540px) {
   .job-card-actions {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr 42px;
+    gap: 0.5rem;
+  }
+  .direct-apply-btn {
+    grid-column: 1 / 2;
+    width: 100%;
+    padding: 0.58rem 0.85rem;
+    font-size: 0.825rem;
+    justify-content: center;
+  }
+  .btn-linkedin-icon {
+    grid-column: 2 / 3;
+    width: 42px;
+    height: 100%;
+    min-height: 38px;
+    border-radius: 8px;
   }
   .btn-interview-prep,
   .intel-modal-btn {
-    flex: 1;
-  }
-  .direct-apply-btn {
-    flex: 2;
+    grid-column: 1 / -1;
+    width: 100%;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.8125rem;
+    justify-content: center;
   }
 }
+
+/* Small Screens (<= 480px down to 320px) */
+@media (max-width: 480px) {
+  .opp-main-container {
+    padding: 0.75rem 0.65rem 3rem;
+    gap: 1rem;
+  }
+  .opp-breadcrumb-current,
+  .opp-breadcrumb-divider {
+    display: none;
+  }
+  .opp-portals-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+  .opp-portal-card {
+    padding: 0.75rem;
+  }
+  .portal-name {
+    font-size: 0.825rem;
+  }
+  .portal-sub {
+    display: none;
+  }
+  .portal-action-btn {
+    font-size: 0.72rem;
+  }
+  .job-meta-row {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+}
+
 
 
