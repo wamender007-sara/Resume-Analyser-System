@@ -5455,6 +5455,18 @@ button, input, select, textarea {
   border: 1px solid #fde68a;
 }
 
+.job-skill-chip.neutral {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.job-match-badge.no-resume-badge {
+  background: #f0fdf4 !important;
+  color: #15803d !important;
+  border: 1px solid #bbf7d0 !important;
+}
+
 .job-card-actions {
   display: flex;
   align-items: center;

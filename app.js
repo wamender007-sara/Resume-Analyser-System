@@ -281,7 +281,7 @@ function setupApiKey() {
         return;
       }
       saveApiKey(key);
-      showToast('✅ Gemini API key saved! Career Advisor is now AI-powered.', 'success');
+      showToast('✅ Personal Precise AI activated! Responses are now powered with maximum precision.', 'success');
       apiKeyPanel.classList.add('hidden');
       updateGeminiStatusBadge();
     });
@@ -291,7 +291,7 @@ function setupApiKey() {
     clearApiKeyBtn.addEventListener('click', () => {
       localStorage.removeItem('resumeai_apikey');
       if (apiKeyInput) apiKeyInput.value = '';
-      showToast('API key cleared. Switched to built-in advisor.', 'info');
+      showToast('Personal API key cleared.', 'info');
       apiKeyPanel.classList.add('hidden');
       updateGeminiStatusBadge();
     });
@@ -311,15 +311,15 @@ function updateGeminiStatusBadge() {
   const hasKey = Boolean(getApiKey());
 
   if (badge) {
-    badge.textContent = hasKey ? '✦ AI' : '◈ Built-in';
+    badge.textContent = hasKey ? '✨ Personal Precise (Active)' : '🎯 Personal Precise';
     badge.className = hasKey ? 'gemini-badge gemini-active' : 'gemini-badge gemini-builtin';
     badge.title = hasKey
-      ? 'Gemini AI is active — freeform career questions enabled'
-      : 'Using built-in advisor — add a Gemini API key for full AI responses';
+      ? 'Personal Precise AI is active — deep, high-precision answers enabled'
+      : 'Click to configure your personal Gemini API key for maximum accuracy & precision';
   }
 
   if (chatStatusEl) {
-    chatStatusEl.textContent = hasKey ? 'Powered by Gemini AI' : 'Resume Review Specialist';
+    chatStatusEl.textContent = hasKey ? 'Powered by Personal Precise AI' : 'Personal Precise Mode';
   }
 }
 
@@ -552,10 +552,15 @@ async function sendChatMessage() {
   const apiKey = getApiKey();
 
   if (apiKey) {
-    // ── Gemini streaming path ──────────────────────────────────
+    // ── Gemini streaming path (Personal Precise) ───────────────
     await sendChatMessageViaGemini(text, chatStatusEl);
   } else {
-    // ── Built-in fallback path (unchanged behaviour) ───────────
+    // ── Prompt user to enter API key for maximum precision ──────
+    const panel = document.getElementById('apiKeyPanel');
+    if (panel) panel.classList.remove('hidden');
+    const input = document.getElementById('apiKeyInput');
+    if (input) input.focus();
+    showToast('🔑 Please provide your personal Gemini API key for precise, accurate answers.', 'info');
     sendChatMessageViaBuiltIn(text, chatStatusEl);
   }
 }
@@ -607,7 +612,7 @@ async function sendChatMessageViaGemini(text, chatStatusEl) {
       || err.message?.includes('API key');
 
     if (isKeyError) {
-      showToast('Gemini API key is invalid or expired. Switched to built-in advisor.', 'error');
+      showToast('Personal API key is invalid or expired. Switched to standard mode.', 'error');
       localStorage.removeItem('resumeai_apikey');
       updateGeminiStatusBadge();
     }
@@ -619,7 +624,7 @@ async function sendChatMessageViaGemini(text, chatStatusEl) {
     chatHistory.push({ role: 'assistant', content: fallbackReply });
 
   } finally {
-    if (chatStatusEl) chatStatusEl.textContent = getApiKey() ? 'Powered by Gemini AI' : 'Resume Review Specialist';
+    if (chatStatusEl) chatStatusEl.textContent = getApiKey() ? 'Powered by Personal Precise AI' : 'Personal Precise Mode';
     isChatting = false;
     chatSend.disabled = false;
     chatInput.focus();
@@ -630,13 +635,14 @@ function sendChatMessageViaBuiltIn(text, chatStatusEl) {
   // Show typing indicator
   appendTypingIndicator();
 
-  // Preserve original 450ms natural-feeling delay for built-in path
+  // Preserve natural-feeling delay for standard path
   setTimeout(() => {
     try {
       removeTypingIndicator();
       if (!currentResumeText) currentResumeText = getActiveResumeText();
       const targetRole = targetRoleInput ? targetRoleInput.value.trim() : '';
-      const reply = generateChatResponse(text, currentResumeText, targetRole, currentAnalysis);
+      const baseReply = generateChatResponse(text, currentResumeText, targetRole, currentAnalysis);
+      const reply = `💡 *Personal Precise AI:* Activate your personal key above for deep, high-precision answers tailored to your specific questions.\n\n` + baseReply;
       appendChatMessage('assistant', reply);
       chatHistory.push({ role: 'assistant', content: reply });
     } catch (err) {

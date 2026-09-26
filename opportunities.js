@@ -770,15 +770,19 @@ function renderResumeMatchBar() {
       </div>
     `;
   } else {
-    // No profile yet
     bar.innerHTML = `
       <div class="match-bar-empty">
-        <div class="empty-badge-icon">💡</div>
-        <div class="empty-info">
-          <div class="empty-title">Want precision match scores calibrated to your resume?</div>
-          <div class="empty-desc">Upload your resume in the Candidate Reviewer to automatically unlock live percentage match scores and bridge skill gaps.</div>
+        <div class="empty-badge-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         </div>
-        <a href="index.html" class="btn btn-primary btn-sm">Upload Resume Now</a>
+        <div class="empty-info">
+          <div class="empty-title">Viewing Verified Campus Drives &amp; Placement Openings</div>
+          <div class="empty-desc">No resume evaluated yet. To unlock personalized match percentages, verified skill checklists, and custom deep search, evaluate your resume in the Candidate Reviewer.</div>
+        </div>
+        <a href="index.html" class="btn btn-primary btn-sm" style="display:inline-flex; align-items:center; gap:6px; flex-shrink:0;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Evaluate Resume to Unlock Match %
+        </a>
       </div>
     `;
   }
@@ -950,12 +954,16 @@ function initSorting() {
 
 // ─── Calculate Dynamic Match % against Candidate Skills ───
 function calculateJobMatch(job) {
-  if (!candidateProfile || !candidateProfile.flatSkills || candidateProfile.flatSkills.length === 0) {
-    // Default baseline calibrated by role match
-    if (job.roleCategory && activeTargetRole && job.roleCategory.toLowerCase().includes(activeTargetRole.toLowerCase().split(' ')[0])) {
-      return { matchPercentage: 88, matchedSkills: job.requiredSkills.slice(0, 4), missingSkills: job.requiredSkills.slice(4) };
-    }
-    return { matchPercentage: 78, matchedSkills: job.requiredSkills.slice(0, 3), missingSkills: job.requiredSkills.slice(3) };
+  const hasResume = Boolean(candidateProfile && candidateProfile.flatSkills && candidateProfile.flatSkills.length > 0);
+
+  if (!hasResume) {
+    // Strictly zero fake percentages without resume upload!
+    return {
+      hasResumeMatch: false,
+      matchPercentage: null,
+      matchedSkills: [],
+      missingSkills: []
+    };
   }
 
   const candidateSkills = (candidateProfile.flatSkills || []).map(s => s.toLowerCase());
@@ -973,10 +981,15 @@ function calculateJobMatch(job) {
     }
   });
 
-  const ratio = jobSkills.length > 0 ? (matched.length / jobSkills.length) : 0.75;
-  const matchPercentage = Math.min(99, Math.max(45, Math.round(ratio * 100)));
+  const ratio = jobSkills.length > 0 ? (matched.length / jobSkills.length) : 0.5;
+  const matchPercentage = Math.min(99, Math.max(30, Math.round(ratio * 100)));
 
-  return { matchPercentage, matchedSkills: matched, missingSkills: missing };
+  return {
+    hasResumeMatch: true,
+    matchPercentage,
+    matchedSkills: matched,
+    missingSkills: missing
+  };
 }
 
 // ─── Render Opportunities Grid with Exact Official Logos & Live Badges ───
@@ -1037,7 +1050,7 @@ function renderOpportunitiesList() {
 
   // Sort items
   if (currentSort === 'match') {
-    filtered.sort((a, b) => b.matchPercentage - a.matchPercentage);
+    filtered.sort((a, b) => (b.matchPercentage || 0) - (a.matchPercentage || 0));
   } else if (currentSort === 'stipend') {
     filtered.sort((a, b) => (b.salaryNumeric || 0) - (a.salaryNumeric || 0));
   } else if (currentSort === 'recent') {
@@ -1066,9 +1079,41 @@ function renderOpportunitiesList() {
 
   // Render cards with Guaranteed Exact Brand Logos
   grid.innerHTML = filtered.map(job => {
-    const scoreColor = job.matchPercentage >= 75 ? '#10b981' : (job.matchPercentage >= 55 ? '#f59e0b' : '#64748b');
-    const matchedBadges = (job.matchedSkills || []).map(s => `<span class="job-skill-chip match">✓ ${escHtml(s)}</span>`).join('');
-    const missingBadges = (job.missingSkills || []).slice(0, 3).map(s => `<span class="job-skill-chip missing">+ ${escHtml(s)}</span>`).join('');
+    const hasMatch = Boolean(job.hasResumeMatch && job.matchPercentage !== null);
+    const scoreColor = hasMatch
+      ? (job.matchPercentage >= 75 ? '#10b981' : (job.matchPercentage >= 55 ? '#f59e0b' : '#64748b'))
+      : '#0284c7';
+
+    const matchBadgeHtml = hasMatch ? `
+      <div class="job-match-badge" style="background:${scoreColor}15; color:${scoreColor}; border:1px solid ${scoreColor}44;" title="${job.matchPercentage}% skills match based on your evaluated resume">
+        <span class="match-num">${job.matchPercentage}%</span>
+        <span class="match-text">Match</span>
+      </div>
+    ` : `
+      <div class="job-match-badge no-resume-badge" title="Evaluate your resume in the Candidate Reviewer to see personalized match score">
+        <span class="match-num">Active</span>
+        <span class="match-text">Drive</span>
+      </div>
+    `;
+
+    const skillsSectionHtml = hasMatch ? `
+      <div class="skills-label-line">
+        <span>Verified Skills Match:</span>
+        <span class="skills-ratio">${job.matchedSkills ? job.matchedSkills.length : 0} of ${job.requiredSkills.length} Verified</span>
+      </div>
+      <div class="job-skills-chips">
+        ${(job.matchedSkills || []).map(s => `<span class="job-skill-chip match">✓ ${escHtml(s)}</span>`).join('')}
+        ${(job.missingSkills || []).slice(0, 3).map(s => `<span class="job-skill-chip missing">+ ${escHtml(s)}</span>`).join('')}
+      </div>
+    ` : `
+      <div class="skills-label-line">
+        <span>Required Tech Stack:</span>
+        <span class="skills-ratio">${job.requiredSkills.length} Core Competencies</span>
+      </div>
+      <div class="job-skills-chips">
+        ${(job.requiredSkills || []).slice(0, 6).map(s => `<span class="job-skill-chip neutral">${escHtml(s)}</span>`).join('')}
+      </div>
+    `;
 
     const typeBadgeClass = job.type === 'internship' ? 'type-internship' : 'type-fresher';
     const dateBadge = getPostingBadge(job.postedDaysAgo || 0);
@@ -1104,10 +1149,7 @@ function renderOpportunitiesList() {
               <h4 class="job-title">${escHtml(job.title)}</h4>
             </div>
           </div>
-          <div class="job-match-badge" style="background:${scoreColor}15; color:${scoreColor}; border:1px solid ${scoreColor}44;">
-            <span class="match-num">${job.matchPercentage}%</span>
-            <span class="match-text">Match</span>
-          </div>
+          ${matchBadgeHtml}
         </div>
 
         <div class="job-meta-row">
@@ -1125,14 +1167,7 @@ function renderOpportunitiesList() {
         <p class="job-desc">${escHtml(job.summary)}</p>
 
         <div class="job-skills-section">
-          <div class="skills-label-line">
-            <span>Required Skills Match:</span>
-            <span class="skills-ratio">${job.matchedSkills ? job.matchedSkills.length : 0} of ${job.requiredSkills.length} Verified</span>
-          </div>
-          <div class="job-skills-chips">
-            ${matchedBadges}
-            ${missingBadges}
-          </div>
+          ${skillsSectionHtml}
         </div>
 
         <div class="job-card-actions">
