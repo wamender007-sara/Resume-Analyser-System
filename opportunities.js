@@ -5,24 +5,24 @@
  * 1-click deep search portals, and automated daily/weekly live feeds.
  */
 
-// ─── Exact Official Brand Vector SVGs (Guaranteed Zero-Lag Display) ───
+// ─── Real Official Company Brand Logos (Stored Locally in assets/companies/) ───
 const COMPANY_LOGOS = {
-  zoho: `<svg viewBox="0 0 100 100" width="34" height="34"><rect x="6" y="6" width="40" height="40" rx="8" fill="#e11d48"/><rect x="54" y="6" width="40" height="40" rx="8" fill="#10b981"/><rect x="6" y="54" width="40" height="40" rx="8" fill="#0284c7"/><rect x="54" y="54" width="40" height="40" rx="8" fill="#f59e0b"/><text x="50" y="63" font-family="'Space Grotesk',sans-serif" font-weight="900" font-size="34" fill="#ffffff" text-anchor="middle">Z</text></svg>`,
-  amazon: `<svg viewBox="0 0 100 60" width="38" height="24"><path d="M14 28c0-6 5-11 11-11 4 0 7 2 9 5V18h6v22h-6v-3c-2 3-5 5-9 5-6 0-11-5-11-11zm11 6c3 0 6-3 6-6s-3-6-6-6-6 3-6 6 3 6 6 6z" fill="#111827"/><path d="M44 26c0-5 4-9 9-9 3 0 6 2 7 4V18h6v24h-6v-3c-1 2-4 4-7 4-5 0-9-4-9-9zm9 5c3 0 5-2 5-5s-2-5-5-5-5 2-5 5 2 5 5 5z" fill="#111827"/><path d="M8 44c18 10 46 10 64 0 2-1 4 1 2 3-20 12-50 12-70 0-2-2 1-4 4-3z" fill="#ff9900"/><path d="M72 41c2 1 5 2 7 2-1-2-2-4-3-7-1 1-2 3-4 5z" fill="#ff9900"/></svg>`,
-  swiggy: `<svg viewBox="0 0 24 24" width="28" height="28" fill="#fc8019"><path d="M12 0C5.373 0 0 5.373 0 12c0 4.962 3.015 9.222 7.306 11.026.04-.047.086-.098.136-.153l2.842-3.136a.667.667 0 0 1 .494-.22h2.444c3.676 0 6.666-2.99 6.666-6.667 0-4.04-3.284-7.323-7.324-7.323-4.04 0-7.324 3.283-7.324 7.323 0 1.22.3 2.37.83 3.39.06.12.02.26-.08.35l-1.43 1.26a.25.25 0 0 1-.39-.08C2.53 16.27 2.11 14.7 2.11 13.01c0-5.46 4.43-9.89 9.89-9.89 5.46 0 9.89 4.43 9.89 9.89 0 4.36-2.83 8.07-6.78 9.35l-1.92 2.12c-.22.24-.53.38-.86.38a11.97 11.97 0 0 1-2.33-.23C4.54 22.84 0 17.95 0 12 0 5.373 5.373 0 12 0z"/></svg>`,
-  razorpay: `<svg viewBox="0 0 24 24" width="28" height="28" fill="#0284c7"><path d="M14.078 0L2.836 13.568h7.086L7.24 24l13.924-14.72h-7.086z"/></svg>`,
-  tcs: `<svg viewBox="0 0 100 100" width="36" height="36"><rect width="100" height="100" rx="16" fill="#001844"/><text x="50" y="60" font-family="'Space Grotesk',sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="1">TCS</text><rect x="25" y="70" width="50" height="4" rx="2" fill="#00a3e0"/></svg>`,
-  infosys: `<svg viewBox="0 0 100 50" width="46" height="24"><text x="50" y="34" font-family="'Outfit',sans-serif" font-weight="900" font-size="28" fill="#007cc3" text-anchor="middle">Infosys</text></svg>`,
-  cognizant: `<svg viewBox="0 0 100 100" width="34" height="34"><rect width="100" height="100" rx="16" fill="#0033a0"/><circle cx="50" cy="50" r="28" fill="none" stroke="#ffffff" stroke-width="9" stroke-dasharray="135 45"/><circle cx="50" cy="50" r="11" fill="#00a3e0"/></svg>`,
-  groww: `<svg viewBox="0 0 100 100" width="34" height="34"><rect width="100" height="100" rx="16" fill="#00d09c"/><circle cx="50" cy="50" r="26" fill="#ffffff"/><path d="M40 52l8 8 14-16" fill="none" stroke="#00d09c" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-  freshworks: `<svg viewBox="0 0 100 100" width="34" height="34"><rect width="100" height="100" rx="16" fill="#f8fafc"/><path d="M26 24h48c2 0 4 2 4 4v16c0 2-2 4-4 4H44v14h24c2 0 4 2 4 4v12c0 2-2 4-4 4H30c-2 0-4-2-4-4V28c0-2 2-4 4-4z" fill="#f26522"/><circle cx="70" cy="24" r="8" fill="#00a3e0"/></svg>`,
-  postman: `<svg viewBox="0 0 24 24" width="28" height="28" fill="#ff6c37"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm6.54 13.38l-4.14 2.4-1.2-2.07 4.14-2.4 1.2 2.07zm-7.6-5.46c1.45 0 2.62 1.17 2.62 2.62s-1.17 2.62-2.62 2.62-2.62-1.17-2.62-2.62 1.17-2.62 2.62-2.62zm-.86 11.23l-2.07-1.2 4.14-7.18 2.07 1.2-4.14 7.18z"/></svg>`,
-  phonepe: `<svg viewBox="0 0 100 100" width="34" height="34"><rect width="100" height="100" rx="16" fill="#5f259f"/><text x="50" y="68" font-family="'Inter',sans-serif" font-weight="900" font-size="52" fill="#ffffff" text-anchor="middle">पे</text></svg>`,
-  cred: `<svg viewBox="0 0 100 100" width="34" height="34"><rect width="100" height="100" rx="16" fill="#121212"/><rect x="25" y="25" width="50" height="50" rx="8" fill="none" stroke="#ffffff" stroke-width="8"/><circle cx="50" cy="50" r="12" fill="#ffffff"/></svg>`,
-  juspay: `<svg viewBox="0 0 100 100" width="34" height="34"><rect width="100" height="100" rx="16" fill="#059669"/><path d="M30 30h40v14H46v18h20v14H30z" fill="#ffffff"/><circle cx="70" cy="37" r="7" fill="#34d399"/></svg>`,
-  accenture: `<svg viewBox="0 0 100 100" width="34" height="34"><rect width="100" height="100" rx="16" fill="#000000"/><path d="M32 30l28 20-28 20V58l14-8-14-8z" fill="#a100ff"/></svg>`,
-  zomato: `<svg viewBox="0 0 100 100" width="34" height="34"><rect width="100" height="100" rx="16" fill="#cb202d"/><text x="50" y="60" font-family="'Space Grotesk',sans-serif" font-weight="900" font-size="44" fill="#ffffff" text-anchor="middle" font-style="italic">z</text></svg>`,
-  wipro: `<svg viewBox="0 0 100 100" width="34" height="34"><rect width="100" height="100" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/><circle cx="38" cy="42" r="14" fill="#e11d48"/><circle cx="62" cy="42" r="14" fill="#0284c7"/><circle cx="50" cy="62" r="14" fill="#10b981"/></svg>`
+  zoho: 'assets/companies/zoho.svg',
+  amazon: 'assets/companies/amazon.svg',
+  swiggy: 'assets/companies/swiggy.svg',
+  razorpay: 'assets/companies/razorpay.svg',
+  tcs: 'assets/companies/tcs.svg',
+  infosys: 'assets/companies/infosys.svg',
+  cognizant: 'assets/companies/cognizant.svg',
+  groww: 'assets/companies/groww.png',
+  freshworks: 'assets/companies/freshworks.svg',
+  postman: 'assets/companies/postman.svg',
+  phonepe: 'assets/companies/phonepe.svg',
+  cred: 'assets/companies/cred.png',
+  juspay: 'assets/companies/juspay.png',
+  accenture: 'assets/companies/accenture.svg',
+  zomato: 'assets/companies/zomato.svg',
+  wipro: 'assets/companies/wipro.svg'
 };
 
 // ─── Curated Live Opportunities Dataset (India Tech Ecosystem 2026) ───
@@ -1073,12 +1073,12 @@ function renderOpportunitiesList() {
     const typeBadgeClass = job.type === 'internship' ? 'type-internship' : 'type-fresher';
     const dateBadge = getPostingBadge(job.postedDaysAgo || 0);
 
-    // Guaranteed Official Logo Rendering: Inline SVG vector first!
-    const logoContent = COMPANY_LOGOS[job.brandKey] || `
-      <img src="https://www.google.com/s2/favicons?domain=${job.domain || 'google.com'}&sz=128" 
-           alt="${escHtml(job.company)} logo" class="company-logo-img" loading="lazy" 
-           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-      <span class="company-fallback-initial" style="display:none; background:${job.companyColor};">${job.companyLogo}</span>
+    // Guaranteed Real Official Brand Logo Image
+    const logoSrc = COMPANY_LOGOS[job.brandKey] || `https://www.google.com/s2/favicons?domain=${job.domain || 'google.com'}&sz=128`;
+    const logoContent = `
+      <img src="${logoSrc}" 
+           alt="${escHtml(job.company)} logo" class="company-logo-img" loading="eager" 
+           onerror="this.onerror=null; this.src='https://www.google.com/s2/favicons?domain=${job.domain || 'google.com'}&sz=128';" />
     `;
 
     return `
@@ -1196,7 +1196,15 @@ function openRoleIntelligenceModal(jobId) {
   const body = document.getElementById('intelModalBody');
 
   if (title) title.textContent = job.title;
-  if (company) company.textContent = `${job.company} • ${job.location} • ${job.package}`;
+  if (company) {
+    const logoSrc = COMPANY_LOGOS[job.brandKey] || `https://www.google.com/s2/favicons?domain=${job.domain || 'google.com'}&sz=128`;
+    company.innerHTML = `
+      <span style="display:inline-flex; align-items:center; gap:6px;">
+        <img src="${logoSrc}" alt="${escHtml(job.company)} logo" style="width:18px; height:18px; object-fit:contain; border-radius:3px;" />
+        <span><strong>${escHtml(job.company)}</strong> • ${escHtml(job.location)} • ${escHtml(job.package)}</span>
+      </span>
+    `;
+  }
   if (category) category.textContent = `${job.roleCategory} Intelligence`;
 
   const processHtml = (job.interviewProcess || []).map(p => `
