@@ -5,7 +5,7 @@
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 const MODEL_ID = 'gemini-2.0-flash-lite';
-const MAX_RETRIES = 4;
+const MAX_RETRIES = 6;
 
 // Exponential backoff retry for 503/429 overload errors
 async function fetchWithRetry(url, options, attempt = 0) {

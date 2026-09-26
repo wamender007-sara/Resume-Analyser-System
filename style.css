@@ -235,6 +235,40 @@ button, input, select, textarea {
   gap: 0.85rem;
 }
 
+/* Data Privacy & Security Badges */
+.privacy-trust-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #065f46;
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.privacy-assurance-callout {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  background: rgba(240, 253, 250, 0.8);
+  border: 1px solid rgba(20, 184, 166, 0.2);
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  color: #0f766e;
+  line-height: 1.4;
+}
+
+.privacy-assurance-callout svg {
+  flex-shrink: 0;
+  color: #0d9488;
+}
+
 /* Platform Segmented Navigation Switcher */
 .portal-nav-switcher {
   display: flex;
