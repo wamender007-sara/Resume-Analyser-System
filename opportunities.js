@@ -1142,12 +1142,18 @@ function renderOpportunitiesList() {
         </div>
 
         <div class="job-card-header">
-          <div class="company-badge-wrap">
+          <div class="company-badge-wrap intel-modal-btn" data-job-id="${job.id}" role="button" tabindex="0" title="Click to view ${escHtml(job.company)} Interview Guide & Hiring Rounds">
             <div class="company-avatar" title="${escHtml(job.company)}">
               ${logoContent}
             </div>
             <div>
-              <div class="job-company">${escHtml(job.company)} <span class="verified-icon" title="Verified Campus Recruiter">✓</span></div>
+              <div class="job-company">
+                ${escHtml(job.company)} <span class="verified-icon" title="Verified Campus Recruiter">✓</span>
+                <span class="company-guide-badge" title="Interview Guide Available">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                  Interview Guide
+                </span>
+              </div>
               <h4 class="job-title">${escHtml(job.title)}</h4>
             </div>
           </div>
@@ -1173,11 +1179,6 @@ function renderOpportunitiesList() {
         </div>
 
         <div class="job-card-actions">
-          <button type="button" class="btn-interview-prep intel-modal-btn" data-job-id="${job.id}" title="View round-by-round interview process, coding topics & recruiter tips">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-            <span>Interview Guide</span>
-          </button>
-          
           <a href="${job.applyUrl}" target="_blank" rel="noopener noreferrer" class="direct-apply-btn" title="Apply on official company portal">
             <span>Apply on Official Portal</span>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -1193,9 +1194,17 @@ function renderOpportunitiesList() {
 
   // Attach modal trigger listeners
   document.querySelectorAll('.intel-modal-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const jobId = btn.dataset.jobId;
       openRoleIntelligenceModal(jobId);
+    });
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const jobId = btn.dataset.jobId;
+        openRoleIntelligenceModal(jobId);
+      }
     });
   });
 }

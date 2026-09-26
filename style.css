@@ -5413,6 +5413,60 @@ button, input, select, textarea {
   display: flex;
   align-items: center;
   gap: 0.85rem;
+  cursor: pointer;
+  padding: 0.35rem 0.5rem;
+  margin: -0.35rem -0.5rem;
+  border-radius: 10px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  user-select: none;
+  text-decoration: none;
+}
+
+.company-badge-wrap:hover,
+.company-badge-wrap:focus-visible {
+  background: #f8fafc;
+}
+
+.company-badge-wrap:hover .job-company,
+.company-badge-wrap:focus-visible .job-company {
+  color: #2563eb;
+}
+
+.company-badge-wrap:hover .company-avatar,
+.company-badge-wrap:focus-visible .company-avatar {
+  border-color: #93c5fd;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.16);
+  transform: translateY(-1px) scale(1.02);
+}
+
+.company-badge-wrap:active {
+  transform: translateY(0);
+}
+
+.company-guide-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 0.12rem 0.45rem;
+  border-radius: 12px;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+  transition: all 0.18s ease;
+  line-height: 1.3;
+}
+
+.company-badge-wrap:hover .company-guide-badge,
+.company-badge-wrap:focus-visible .company-guide-badge {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
 }
 
 .company-avatar {
@@ -5611,58 +5665,14 @@ button, input, select, textarea {
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  margin-top: 0.35rem;
+  margin-top: 0.45rem;
+  width: 100%;
 }
 
-/* 1. Interview Guide Button (Redesigned from Blueprint) */
-.btn-interview-prep,
-.intel-modal-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  font-family: inherit;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #334155;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 0.52rem 0.95rem;
-  cursor: pointer;
-  text-decoration: none;
-  white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.btn-interview-prep:hover,
-.intel-modal-btn:hover {
-  background: #f8fafc;
-  color: #1d4ed8;
-  border-color: #93c5fd;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
-  transform: translateY(-1px);
-}
-
-.btn-interview-prep:active,
-.intel-modal-btn:active {
-  transform: translateY(0);
-  background: #eff6ff;
-}
-
-.btn-interview-prep svg {
-  color: #64748b;
-  transition: color 0.18s ease;
-}
-
-.btn-interview-prep:hover svg {
-  color: #2563eb;
-}
-
-/* 2. Direct Apply Button */
+/* 1. Direct Apply Button */
 .direct-apply-btn {
   flex: 1;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -5674,7 +5684,7 @@ button, input, select, textarea {
   background: #2563eb;
   border: 1px solid #1d4ed8;
   border-radius: 8px;
-  padding: 0.52rem 1.1rem;
+  padding: 0.55rem 1.1rem;
   text-decoration: none;
   box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
@@ -5688,10 +5698,10 @@ button, input, select, textarea {
   transform: translateY(-1px);
 }
 
-/* 3. LinkedIn Quick Icon */
+/* 2. LinkedIn Quick Icon */
 .btn-linkedin-icon {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 8px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
@@ -6399,31 +6409,25 @@ button, input, select, textarea {
 /* Action Buttons Grid for Mobile Phones (<= 540px) */
 @media (max-width: 540px) {
   .job-card-actions {
-    display: grid;
-    grid-template-columns: 1fr 42px;
+    display: flex;
+    align-items: center;
     gap: 0.5rem;
+    width: 100%;
   }
   .direct-apply-btn {
-    grid-column: 1 / 2;
-    width: 100%;
+    flex: 1;
+    min-width: 0;
+    width: auto;
     padding: 0.58rem 0.85rem;
     font-size: 0.825rem;
     justify-content: center;
   }
   .btn-linkedin-icon {
-    grid-column: 2 / 3;
-    width: 42px;
-    height: 100%;
+    width: 38px;
+    height: 38px;
     min-height: 38px;
+    flex-shrink: 0;
     border-radius: 8px;
-  }
-  .btn-interview-prep,
-  .intel-modal-btn {
-    grid-column: 1 / -1;
-    width: 100%;
-    padding: 0.55rem 0.85rem;
-    font-size: 0.8125rem;
-    justify-content: center;
   }
 }
 

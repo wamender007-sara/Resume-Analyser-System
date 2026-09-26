@@ -281,7 +281,7 @@ function setupApiKey() {
         return;
       }
       saveApiKey(key);
-      showToast('✅ Personal Precise AI activated! Responses are now powered with maximum precision.', 'success');
+      showToast('Personal Precise activated! Responses are now powered with maximum precision.', 'success');
       apiKeyPanel.classList.add('hidden');
       updateGeminiStatusBadge();
     });
@@ -311,15 +311,15 @@ function updateGeminiStatusBadge() {
   const hasKey = Boolean(getApiKey());
 
   if (badge) {
-    badge.textContent = hasKey ? '✨ Personal Precise (Active)' : '🎯 Personal Precise';
+    badge.textContent = hasKey ? 'Personal Precise (Active)' : 'Personal Precise';
     badge.className = hasKey ? 'gemini-badge gemini-active' : 'gemini-badge gemini-builtin';
     badge.title = hasKey
-      ? 'Personal Precise AI is active — deep, high-precision answers enabled'
-      : 'Click to configure your personal Gemini API key for maximum accuracy & precision';
+      ? 'Personal Precise is active — deep, high-precision answers enabled'
+      : 'Configure your personal Gemini API key for maximum accuracy & precision';
   }
 
   if (chatStatusEl) {
-    chatStatusEl.textContent = hasKey ? 'Powered by Personal Precise AI' : 'Personal Precise Mode';
+    chatStatusEl.textContent = hasKey ? 'Powered by Personal Precise' : 'Personal Precise Mode';
   }
 }
 
