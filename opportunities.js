@@ -773,15 +773,15 @@ function renderResumeMatchBar() {
     bar.innerHTML = `
       <div class="match-bar-empty">
         <div class="empty-badge-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         </div>
         <div class="empty-info">
-          <div class="empty-title">Viewing Verified Campus Drives &amp; Placement Openings</div>
-          <div class="empty-desc">No resume evaluated yet. To unlock personalized match percentages, verified skill checklists, and custom deep search, evaluate your resume in the Candidate Reviewer.</div>
+          <div class="empty-title">Want personalized skill match scores?</div>
+          <div class="empty-desc">Upload your resume in the Candidate Reviewer to automatically calculate your skill match percentage, identify bridgeable gaps, and prepare for interviews.</div>
         </div>
-        <a href="index.html" class="btn btn-primary btn-sm" style="display:inline-flex; align-items:center; gap:6px; flex-shrink:0;">
+        <a href="index.html" class="btn-match-cta">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Evaluate Resume to Unlock Match %
+          <span>Evaluate Resume Now</span>
         </a>
       </div>
     `;
@@ -1126,6 +1126,8 @@ function renderOpportunitiesList() {
            onerror="this.onerror=null; this.src='https://www.google.com/s2/favicons?domain=${job.domain || 'google.com'}&sz=128';" />
     `;
 
+    const cleanBatch = job.batchEligibility ? job.batchEligibility.split('(')[0].trim() : '2025–2026 Batch';
+
     return `
       <div class="opp-job-card" data-job-id="${job.id}">
         <!-- Top Live Status & Recency Header -->
@@ -1134,8 +1136,8 @@ function renderOpportunitiesList() {
             <span class="recency-pulse"></span>
             ${dateBadge.label}
           </span>
-          <span class="job-drive-status">
-            Verified Campus Drive
+          <span class="job-batch-tag">
+            ${escHtml(cleanBatch)}
           </span>
         </div>
 
@@ -1171,12 +1173,12 @@ function renderOpportunitiesList() {
         </div>
 
         <div class="job-card-actions">
-          <button class="btn btn-secondary btn-sm intel-modal-btn" data-job-id="${job.id}">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            Interview Blueprint
+          <button type="button" class="btn-interview-prep intel-modal-btn" data-job-id="${job.id}" title="View round-by-round interview process, coding topics & recruiter tips">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+            <span>Interview Guide</span>
           </button>
           
-          <a href="${job.applyUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm direct-apply-btn" title="Apply on official company portal">
+          <a href="${job.applyUrl}" target="_blank" rel="noopener noreferrer" class="direct-apply-btn" title="Apply on official company portal">
             <span>Apply on Official Portal</span>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </a>
@@ -1234,53 +1236,76 @@ function openRoleIntelligenceModal(jobId) {
   if (company) {
     const logoSrc = COMPANY_LOGOS[job.brandKey] || `https://www.google.com/s2/favicons?domain=${job.domain || 'google.com'}&sz=128`;
     company.innerHTML = `
-      <span style="display:inline-flex; align-items:center; gap:6px;">
-        <img src="${logoSrc}" alt="${escHtml(job.company)} logo" style="width:18px; height:18px; object-fit:contain; border-radius:3px;" />
-        <span><strong>${escHtml(job.company)}</strong> • ${escHtml(job.location)} • ${escHtml(job.package)}</span>
+      <span style="display:inline-flex; align-items:center; gap:8px;">
+        <img src="${logoSrc}" alt="${escHtml(job.company)} logo" style="width:20px; height:20px; object-fit:contain; border-radius:4px;" />
+        <span><strong>${escHtml(job.company)}</strong> &bull; ${escHtml(job.location)} &bull; ${escHtml(job.package)}</span>
       </span>
     `;
   }
-  if (category) category.textContent = `${job.roleCategory} Intelligence`;
+  if (category) category.textContent = `${job.roleCategory} Interview Guide`;
 
-  const processHtml = (job.interviewProcess || []).map(p => `
+  const processHtml = (job.interviewProcess || []).map((p, idx) => `
     <div class="intel-process-step">
-      <div class="process-round-title">${escHtml(p.round)}</div>
-      <div class="process-round-desc">${escHtml(p.desc)}</div>
+      <div class="step-num-badge">${idx + 1}</div>
+      <div class="step-content">
+        <div class="process-round-title">${escHtml(p.round)}</div>
+        <div class="process-round-desc">${escHtml(p.desc)}</div>
+      </div>
     </div>
   `).join('');
 
   const questionsHtml = (job.sampleQuestions || []).map(q => `
-    <li class="intel-question-item">"${escHtml(q)}"</li>
+    <li class="intel-question-item">
+      <span class="quote-icon">“</span>
+      <span>${escHtml(q)}</span>
+    </li>
   `).join('');
 
   const requiredSkillsTags = (job.requiredSkills || []).map(s => `
-    <span class="role-skill-badge match">✓ ${escHtml(s)}</span>
+    <span class="role-skill-badge">${escHtml(s)}</span>
   `).join('');
 
   if (body) {
     body.innerHTML = `
       <div class="intel-section">
-        <h4 class="intel-heading">🎯 Eligibility &amp; Batch Criteria</h4>
-        <p class="intel-text">${escHtml(job.batchEligibility)}</p>
-      </div>
-
-      <div class="intel-section">
-        <h4 class="intel-heading">🛠️ Core Technical Competencies Evaluated</h4>
-        <div class="role-skills-wrap">${requiredSkillsTags}</div>
-      </div>
-
-      <div class="intel-section">
-        <h4 class="intel-heading">📋 Selection Stages &amp; Interview Breakdown</h4>
+        <h4 class="intel-heading">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Selection Process &amp; Interview Rounds
+        </h4>
         <div class="intel-process-list">${processHtml}</div>
       </div>
 
       <div class="intel-section">
-        <h4 class="intel-heading">❓ Top Interview Questions Recently Asked</h4>
+        <h4 class="intel-heading">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Frequently Asked Technical Questions
+        </h4>
         <ul class="intel-questions-list">${questionsHtml}</ul>
       </div>
 
+      <div class="intel-grid-row">
+        <div class="intel-section">
+          <h4 class="intel-heading">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Key Technical Skills Evaluated
+          </h4>
+          <div class="role-skills-wrap">${requiredSkillsTags}</div>
+        </div>
+
+        <div class="intel-section">
+          <h4 class="intel-heading">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            Eligibility &amp; Target Degrees
+          </h4>
+          <p class="intel-text">${escHtml(job.batchEligibility)}</p>
+        </div>
+      </div>
+
       <div class="intel-section highlight-box">
-        <h4 class="intel-heading">💡 ATS Resume Tailoring Checklist</h4>
+        <h4 class="intel-heading">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+          Candidate Advice &amp; Resume Tailoring
+        </h4>
         <p class="intel-text">${escHtml(job.resumeTip)}</p>
       </div>
     `;

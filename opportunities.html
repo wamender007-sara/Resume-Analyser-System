@@ -81,25 +81,30 @@
     <div class="opp-breadcrumb-nav">
       <a href="index.html" class="opp-breadcrumb-link" title="Return to Candidate Resume Analysis">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-        <span>Back to Resume Analysis Report</span>
+        <span>Back to Resume Reviewer</span>
       </a>
       <span class="opp-breadcrumb-divider">/</span>
-      <span class="opp-breadcrumb-current">Matched Opportunities &amp; Verified Drives</span>
+      <span class="opp-breadcrumb-current">Campus Drives &amp; Tech Opportunities</span>
     </div>
 
     <!-- HERO & CANDIDATE MATCH BANNER -->
     <section class="opp-hero-card">
       <div class="opp-hero-content">
         <div class="opp-badge-row">
-          <span class="opp-badge-pill">
+          <span class="opp-badge-pill verified-badge">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            2026 Batch Ready &bull; Fresher &amp; College Internships
+            Verified Campus Drives
           </span>
-          <span class="opp-badge-pill verified-badge">Direct Application Portals</span>
+          <span class="opp-badge-pill">
+            2024, 2025 &amp; 2026 Batch Eligible
+          </span>
+          <span class="opp-badge-pill">
+            Direct Employer Portals
+          </span>
         </div>
-        <h2 class="opp-hero-title">Live Jobs &amp; Placement Opportunity Hub</h2>
+        <h2 class="opp-hero-title">Campus Drives &amp; Student Opportunities</h2>
         <p class="opp-hero-desc">
-          Apply directly to active campus drives, tech internships, and entry-level positions matched against your resume diagnostics. Deep-linked to official portals across LinkedIn, Internshala, Naukri, and verified company career boards.
+          Explore curated campus recruitment drives, fresh graduate openings, and paid engineering internships. Every role includes direct application links to verified employer career portals and round-by-round interview preparation guides.
         </p>
       </div>
 
@@ -111,8 +116,8 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           </div>
           <div class="match-bar-info">
-            <span class="match-bar-title">Scanning candidate resume profile...</span>
-            <span class="match-bar-sub">Analysing your verified technical skills &amp; target seniority</span>
+            <span class="match-bar-title">Checking for evaluated resume profile...</span>
+            <span class="match-bar-sub">Match percentages and skill checklists will be calibrated automatically.</span>
           </div>
         </div>
       </div>
@@ -121,15 +126,15 @@
     <!-- Reserved Ad Slot 1 (Top Opportunities Banner) -->
     <div class="ad-slot-placeholder-wrap ad-slot-opp-top hidden-ad-slot" data-ad-placeholder="ad-opp-top" style="display: none;"></div>
 
-    <!-- 1-CLICK DEEP SEARCH PORTALS (User's Vision: Direct LinkedIn, Internshala, Naukri Apply) -->
+    <!-- 1-CLICK DEEP SEARCH PORTALS -->
     <section class="opp-quick-portals-section">
       <div class="section-title-row">
         <div>
           <h3 class="opp-section-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            1-Click Live Search Portals
+            Search Top Job Networks
           </h3>
-          <p class="opp-section-sub">Instantly launch pre-filtered searches for your matching role &amp; entry-level experience across top job networks:</p>
+          <p class="opp-section-sub">Direct search links pre-filtered for freshers and internships with your target skills:</p>
         </div>
         <div class="active-query-tag" id="activeQueryTag">Target: <strong id="activeRoleName">Frontend Developer</strong></div>
       </div>
@@ -144,7 +149,7 @@
       <div class="opp-search-box">
         <div class="search-input-wrap">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input type="text" id="oppSearchInput" placeholder="Filter by role, company, or skill (e.g., React, Python, Data Analyst, Zoho)..." />
+          <input type="text" id="oppSearchInput" placeholder="Filter by role, company, or tech stack (e.g., React, Python, Data Analyst, Zoho)..." />
           <button id="oppSearchClearBtn" class="clear-search-btn hidden" title="Clear search">&times;</button>
         </div>
         <div class="location-select-wrap">
@@ -166,11 +171,11 @@
       <div class="opp-category-tabs" id="oppCategoryTabs">
         <button class="opp-tab active" data-category="all">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-          All Opportunities (<span id="allCount">0</span>)
+          All Roles (<span id="allCount">0</span>)
         </button>
         <button class="opp-tab" data-category="internship">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-          🎓 College Internships
+          🎓 Paid Internships
         </button>
         <button class="opp-tab" data-category="fresher">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
@@ -178,15 +183,15 @@
         </button>
         <button class="opp-tab" data-category="remote">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          🌐 Remote / WFH
+          🌐 Remote / Hybrid
         </button>
         <button class="opp-tab" data-category="product">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          🚀 Startups &amp; Product MNCs
+          🚀 Product Startups
         </button>
         <button class="opp-tab" data-category="mnc">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          🏢 Mass Recruitment Drives
+          🏢 Enterprise Drives
         </button>
       </div>
     </section>
@@ -198,9 +203,9 @@
         <div class="live-sync-left">
           <span class="live-pulse-dot"></span>
           <span class="live-sync-text">
-            Live Opportunity Stream: <strong>Updated Daily &bull; <span id="syncDateLabel">Today</span></strong>
+            Recruitment Drive Feed: <strong>Updated Weekly &bull; <span id="syncDateLabel">Today</span></strong>
           </span>
-          <span class="live-auto-tag">Weekly &amp; Daily Auto-Sync</span>
+          <span class="live-auto-tag">Verified Direct Openings</span>
         </div>
         <div class="live-sync-right">
           <div class="time-filter-toggle" id="timeFilterToggle">
@@ -210,7 +215,7 @@
           </div>
           <button id="refreshLiveJobsBtn" class="refresh-feed-btn" title="Refresh live openings from active job feeds">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-            <span class="refresh-text">Sync Live Openings</span>
+            <span class="refresh-text">Check for Updates</span>
           </button>
         </div>
       </div>
@@ -222,9 +227,9 @@
         <div class="listings-sort-wrap">
           <label for="oppSortSelect">Sort by:</label>
           <select id="oppSortSelect">
-            <option value="match">Highest Match % to Resume</option>
+            <option value="match">Recommended (Resume Match)</option>
             <option value="stipend">Highest Package / Stipend</option>
-            <option value="recent">Recently Added</option>
+            <option value="recent">Recently Posted</option>
           </select>
         </div>
       </div>
@@ -240,8 +245,8 @@
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         </div>
         <h4 class="opp-empty-title">No matching job openings found</h4>
-        <p class="opp-empty-desc">Try resetting your filters or search keywords, or use the 1-Click Search Portals above to explore live listings directly on LinkedIn.</p>
-        <button class="btn btn-secondary" id="resetFiltersBtn">Reset All Filters</button>
+        <p class="opp-empty-desc">Try resetting your filters or search keywords, or use the job network links above to explore live listings directly on LinkedIn.</p>
+        <button class="btn-reset-filters" id="resetFiltersBtn">Reset All Filters</button>
       </div>
     </section>
 
@@ -255,8 +260,8 @@
     <div class="modal-dialog role-intel-dialog">
       <div class="modal-header">
         <div class="modal-title-wrap">
-          <span class="modal-badge-pill" id="intelRoleCategory">Tech Role Intelligence</span>
-          <h3 class="modal-title" id="intelRoleTitle">Role Breakdown &amp; Interview Blueprint</h3>
+          <span class="modal-badge-pill" id="intelRoleCategory">Candidate Preparation Dossier</span>
+          <h3 class="modal-title" id="intelRoleTitle">Interview Process &amp; Role Guide</h3>
           <span class="modal-subtitle" id="intelCompanyName">Target Company Insights</span>
         </div>
         <button class="modal-close-btn" id="closeIntelModalBtn" title="Close modal">&times;</button>
@@ -267,8 +272,8 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" id="dismissIntelModalBtn">Close</button>
-        <a href="index.html" class="btn btn-primary" id="tailorResumeBtn" title="Open Resume Editor to tailor your resume">
+        <button class="btn-modal-dismiss" id="dismissIntelModalBtn">Close Guide</button>
+        <a href="index.html" class="btn-modal-action" id="tailorResumeBtn" title="Open Resume Reviewer to tailor your resume">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
           Tailor Resume for this Role in Reviewer
         </a>
