@@ -529,6 +529,13 @@ export function renderSuggestedRoles(roles) {
           <div class="role-skills-label">Recommended to Bridge Next Level:</div>
           <div class="role-skills-wrap">${missingBadges}</div>
         </div>
+
+        <div class="role-apply-footer">
+          <a href="opportunities.html?role=${encodeURIComponent(role.title)}" class="role-openings-btn" title="View matching openings on LinkedIn, Internshala & portals">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            Apply to ${escHtml(role.title)} Openings (LinkedIn, Internshala, Naukri) &rarr;
+          </a>
+        </div>
       </div>
     `;
   }).join('');

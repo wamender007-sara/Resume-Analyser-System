@@ -65,6 +65,15 @@
           </svg>
           Placement Staff (Batch 60)
         </a>
+        <a href="opportunities.html" class="portal-nav-btn link-btn"
+          title="Browse matched jobs & internships with direct 1-click apply links">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+          </svg>
+          Jobs &amp; Internships
+          <span class="nav-pill-badge pulse-badge">Live</span>
+        </a>
       </div>
 
       <!-- Gemini API Key Manager -->
@@ -488,15 +497,23 @@
 
         <!-- Suggested Job Roles Based on Resume Profile -->
         <div class="card card-career" id="suggestedRolesCard">
-          <h3 class="card-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-              <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
-            </svg>
-            Recommended Job Roles to Apply For
-          </h3>
-          <p class="roles-intro">Based on your verified skills, experience density, and project portfolio, here are the
-            highest-matching roles you qualify for:</p>
+          <div class="career-header-row">
+            <div>
+              <h3 class="card-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                  <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
+                </svg>
+                Recommended Job Roles to Apply For
+              </h3>
+              <p class="roles-intro">Based on your verified skills, experience density, and project portfolio, here are the
+                highest-matching roles you qualify for:</p>
+            </div>
+            <a href="opportunities.html" class="see-more-jobs-btn" id="seeMoreJobsBtn" title="Explore live jobs and internships matching your analysis">
+              <span>See More Opportunities &amp; Apply</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </a>
+          </div>
           <div class="suggested-roles-grid" id="suggestedRolesGrid"></div>
         </div>
 

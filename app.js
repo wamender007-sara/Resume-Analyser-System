@@ -471,6 +471,35 @@ function renderAnalysis(data) {
 
   // Score Improvement Potential Panel
   renderScorePotential(computeScorePotential(data));
+
+  // Save profile to localStorage for opportunities.html
+  try {
+    const flatSkills = [];
+    if (data.diagnostics && data.diagnostics.categorizedSkills) {
+      Object.values(data.diagnostics.categorizedSkills).forEach(cat => {
+        if (cat && cat.items) {
+          cat.items.forEach(it => {
+            if (it && it.name) flatSkills.push(it.name);
+          });
+        }
+      });
+    } else if (data.skills && Array.isArray(data.skills.technical)) {
+      flatSkills.push(...data.skills.technical);
+    }
+
+    const candidateProfile = {
+      targetRole: (document.getElementById('targetRoleInput')?.value || '').trim(),
+      suggestedRoles: data.suggestedRoles || [],
+      flatSkills: Array.from(new Set(flatSkills)),
+      overallScore: data.overall_score || data.overallScore || (data.scores ? Math.round(Object.values(data.scores).reduce((a,b)=>a+b,0)/Object.keys(data.scores).length) : 80),
+      seniority: data.seniority || 'junior',
+      atsGrade: data.grade || 'B',
+      updatedAt: Date.now()
+    };
+    localStorage.setItem('resumereviewer_candidate_profile', JSON.stringify(candidateProfile));
+  } catch (e) {
+    console.warn('Could not cache candidate profile', e);
+  }
 }
 
 // ─── Chat ─────────────────────────────────────────────────────
