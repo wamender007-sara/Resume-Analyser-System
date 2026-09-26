@@ -1320,6 +1320,30 @@ function openRoleIntelligenceModal(jobId) {
     `;
   }
 
+  // Wire up Tailor Resume action button
+  const tailorBtn = document.getElementById('tailorResumeBtn');
+  if (tailorBtn) {
+    tailorBtn.onclick = (e) => {
+      e.preventDefault();
+      try {
+        const tailorPayload = {
+          jobId: job.id,
+          title: job.title,
+          company: job.company,
+          roleCategory: job.roleCategory,
+          targetRole: `${job.company} — ${job.title}`,
+          requiredSkills: job.requiredSkills || [],
+          jobDescription: `Target Company: ${job.company}\nTarget Role: ${job.title} (${job.roleCategory})\nLocation: ${job.location} | Package: ${job.package}\nBatch Eligibility: ${job.batchEligibility || ''}\n\nRole Overview:\n${job.summary || ''}\n\nRequired Technical Competencies:\n${(job.requiredSkills || []).join(', ')}\n\nInterview Questions & Evaluation Focus:\n${(job.sampleQuestions || []).join('\n')}\n\nRecruiter Resume Tip:\n${job.resumeTip || ''}`,
+          timestamp: Date.now()
+        };
+        localStorage.setItem('resumereviewer_tailor_payload', JSON.stringify(tailorPayload));
+      } catch (err) {
+        console.warn('Could not store tailor payload', err);
+      }
+      window.location.href = 'index.html?tailor=' + encodeURIComponent(job.id);
+    };
+  }
+
   if (modal) modal.classList.remove('hidden');
 }
 

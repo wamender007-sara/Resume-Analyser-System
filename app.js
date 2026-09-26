@@ -59,6 +59,7 @@ function init() {
   setupApiKey();
   updateAllAdSlots();
   updateGeminiStatusBadge();
+  restoreSessionOrTailor();
 }
 
 // ─── AI Resume Editor Trigger Setup ───────────────────────────
@@ -199,6 +200,11 @@ async function handleFile(file) {
     }
 
     currentResumeText = text;
+    try {
+      sessionStorage.setItem('resumereviewer_saved_resume_text', text);
+      sessionStorage.setItem('resumereviewer_saved_filename', file.name);
+    } catch (e) {}
+
     fileInfo.className = 'file-info';
     fileInfo.classList.remove('hidden');
     fileInfo.innerHTML = `
@@ -225,6 +231,9 @@ function setupTextarea() {
     const len = resumeTextarea.value.length;
     charCount.textContent = `${len.toLocaleString()} characters`;
     currentResumeText = resumeTextarea.value;
+    try {
+      sessionStorage.setItem('resumereviewer_saved_resume_text', currentResumeText);
+    } catch (e) {}
     updateAnalyseButton();
   });
 
@@ -232,6 +241,12 @@ function setupTextarea() {
     resumeTextarea.value = '';
     charCount.textContent = '0 characters';
     currentResumeText = '';
+    try {
+      sessionStorage.removeItem('resumereviewer_saved_resume_text');
+      sessionStorage.removeItem('resumereviewer_saved_filename');
+      sessionStorage.removeItem('resumereviewer_saved_analysis');
+    } catch (e) {}
+    resetToEmptyState();
     updateAnalyseButton();
   });
 }
@@ -472,8 +487,17 @@ function renderAnalysis(data) {
   // Score Improvement Potential Panel
   renderScorePotential(computeScorePotential(data));
 
-  // Save profile to localStorage for opportunities.html
+  // Save profile to localStorage for opportunities.html & session cache
   try {
+    sessionStorage.setItem('resumereviewer_saved_analysis', JSON.stringify(data));
+    if (currentResumeText) {
+      sessionStorage.setItem('resumereviewer_saved_resume_text', currentResumeText);
+    }
+    const roleVal = (targetRoleInput?.value || '').trim();
+    if (roleVal) sessionStorage.setItem('resumereviewer_saved_target_role', roleVal);
+    const jdVal = (document.getElementById('jobDescription')?.value || '').trim();
+    if (jdVal) sessionStorage.setItem('resumereviewer_saved_jd', jdVal);
+
     const flatSkills = [];
     if (data.diagnostics && data.diagnostics.categorizedSkills) {
       Object.values(data.diagnostics.categorizedSkills).forEach(cat => {
@@ -488,7 +512,7 @@ function renderAnalysis(data) {
     }
 
     const candidateProfile = {
-      targetRole: (document.getElementById('targetRoleInput')?.value || '').trim(),
+      targetRole: roleVal,
       suggestedRoles: data.suggestedRoles || [],
       flatSkills: Array.from(new Set(flatSkills)),
       overallScore: data.overall_score || data.overallScore || (data.scores ? Math.round(Object.values(data.scores).reduce((a,b)=>a+b,0)/Object.keys(data.scores).length) : 80),
@@ -656,6 +680,105 @@ function sendChatMessageViaBuiltIn(text, chatStatusEl) {
       chatInput.focus();
     }
   }, 450);
+}
+
+// ─── Session State & Tailoring Integration ────────────────────
+function restoreSessionOrTailor() {
+  const tailorRaw = localStorage.getItem('resumereviewer_tailor_payload');
+  const urlParams = new URLSearchParams(window.location.search);
+  const isTailorIntent = Boolean(tailorRaw || urlParams.get('tailor'));
+
+  if (isTailorIntent) {
+    try {
+      let payload = null;
+      if (tailorRaw) {
+        payload = JSON.parse(tailorRaw);
+        localStorage.removeItem('resumereviewer_tailor_payload');
+      }
+
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      if (payload) {
+        if (targetRoleInput) {
+          targetRoleInput.value = payload.targetRole || `${payload.company} — ${payload.title}`;
+        }
+        const jdInput = document.getElementById('jobDescription');
+        if (jdInput && payload.jobDescription) {
+          jdInput.value = payload.jobDescription;
+        }
+
+        const savedResume = sessionStorage.getItem('resumereviewer_saved_resume_text') || localStorage.getItem('resumereviewer_saved_resume_text');
+        if (savedResume && savedResume.trim().length >= 40) {
+          currentResumeText = savedResume.trim();
+          if (resumeTextarea) {
+            resumeTextarea.value = currentResumeText;
+            if (charCount) charCount.textContent = `${currentResumeText.length.toLocaleString()} characters`;
+          }
+
+          // Switch to paste tab so user sees their populated resume
+          const pasteTab = document.querySelector('.tab[data-tab="paste"]');
+          const pasteContent = document.getElementById('tab-paste');
+          const uploadTab = document.querySelector('.tab[data-tab="upload"]');
+          const uploadContent = document.getElementById('tab-upload');
+          if (pasteTab && pasteContent && uploadTab && uploadContent) {
+            uploadTab.classList.remove('active');
+            uploadContent.classList.remove('active');
+            pasteTab.classList.add('active');
+            pasteContent.classList.add('active');
+          }
+          updateAnalyseButton();
+
+          showToast(`Tailoring for ${payload.company}! Recalculating ATS match & keywords...`, 'success');
+          // Automatically run analysis with the tailored parameters!
+          runAnalysis();
+          return;
+        } else {
+          showToast(`Target role pre-filled for ${payload.company}! Upload or paste your resume to tailor.`, 'info');
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('Could not restore tailoring payload', e);
+    }
+  }
+
+  // Normal navigation / returning from Opportunities: restore session analysis if available
+  try {
+    const savedAnalysisRaw = sessionStorage.getItem('resumereviewer_saved_analysis');
+    const savedResumeText = sessionStorage.getItem('resumereviewer_saved_resume_text');
+    if (savedAnalysisRaw && savedResumeText) {
+      currentResumeText = savedResumeText;
+      if (resumeTextarea) {
+        resumeTextarea.value = currentResumeText;
+        if (charCount) charCount.textContent = `${currentResumeText.length.toLocaleString()} characters`;
+      }
+      const savedRole = sessionStorage.getItem('resumereviewer_saved_target_role');
+      if (savedRole && targetRoleInput) targetRoleInput.value = savedRole;
+      const savedJd = sessionStorage.getItem('resumereviewer_saved_jd');
+      const jdInput = document.getElementById('jobDescription');
+      if (savedJd && jdInput) jdInput.value = savedJd;
+
+      const pasteTab = document.querySelector('.tab[data-tab="paste"]');
+      const pasteContent = document.getElementById('tab-paste');
+      const uploadTab = document.querySelector('.tab[data-tab="upload"]');
+      const uploadContent = document.getElementById('tab-upload');
+      if (pasteTab && pasteContent && uploadTab && uploadContent) {
+        uploadTab.classList.remove('active');
+        uploadContent.classList.remove('active');
+        pasteTab.classList.add('active');
+        pasteContent.classList.add('active');
+      }
+      updateAnalyseButton();
+
+      const parsedAnalysis = JSON.parse(savedAnalysisRaw);
+      currentAnalysis = parsedAnalysis;
+      renderAnalysis(parsedAnalysis);
+    }
+  } catch (e) {
+    console.warn('Could not restore previous session analysis', e);
+  }
 }
 
 // ─── Start ────────────────────────────────────────────────────
