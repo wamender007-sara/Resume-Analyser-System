@@ -6,7 +6,15 @@
  */
 globalThis.window = {};
 globalThis.document = { getElementById: () => null };
-globalThis.navigator = { clipboard: { writeText: async () => {} } };
+if (!globalThis.navigator?.clipboard) {
+  try {
+    Object.defineProperty(globalThis, 'navigator', {
+      value: { clipboard: { writeText: async () => {} } },
+      configurable: true,
+      writable: true
+    });
+  } catch (e) {}
+}
 
 import { generateAtsVectorPdf } from './resume-editor.js';
 import { validateResumeDocument, analyseResumeLocally } from './analysis-engine.js';
