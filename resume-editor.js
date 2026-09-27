@@ -680,6 +680,18 @@ function renderEditorInterface(modal, data, original) {
           <span class="editor-ats-pill" style="background:#e8f7ee; color:#15803d; border:1px solid #a3e0b8;">
             🛡️ <strong>100% Authentic Data</strong>
           </span>
+
+          <!-- View Mode Switcher: AI Resume vs Comparison Window -->
+          <div class="editor-view-toggle" id="editorViewToggle">
+            <button class="btn-view-toggle active" id="btnViewEditor" title="AI Edited Resume View">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              AI Edited Resume
+            </button>
+            <button class="btn-view-toggle" id="btnViewCompare" title="Compare Uploaded vs AI Edited Resume">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+              Compare (Before / After)
+            </button>
+          </div>
         </div>
 
         <div class="editor-header-actions">
@@ -728,7 +740,7 @@ function renderEditorInterface(modal, data, original) {
 
       <!-- Main Editor Canvas / Live Document Preview -->
       <div class="editor-body-wrap">
-        <div class="editor-canvas-container">
+        <div class="editor-canvas-container" id="editorCanvasContainer">
           <div class="editor-paper" id="editorResumePaper">
 
             <!-- HEADER -->
@@ -854,6 +866,170 @@ function renderEditorInterface(modal, data, original) {
 
           </div><!-- /editorResumePaper -->
         </div><!-- /editor-canvas-container -->
+
+        <!-- Before & After Comparison Slide Window -->
+        <div class="editor-comparison-container hidden" id="editorComparisonContainer">
+          <div class="comparison-toolbar">
+            <div class="comp-legend">
+              <div class="comp-legend-item">
+                <span class="legend-dot dot-before"></span>
+                <strong>Before:</strong> Uploaded Document (Raw phrasing &amp; casing)
+              </div>
+              <div class="comp-arrow-divider">&rarr;</div>
+              <div class="comp-legend-item">
+                <span class="legend-dot dot-after"></span>
+                <strong>After:</strong> AI-Enhanced ATS Resume (Standardized metrics &amp; verbs)
+              </div>
+            </div>
+            <div class="comp-mode-pills">
+              <button class="comp-mode-pill active" id="compModeSplit">Side-by-Side View</button>
+              <button class="comp-mode-pill" id="compModeBefore">View Original Only</button>
+              <button class="comp-mode-pill" id="compModeAfter">View AI Optimized Only</button>
+            </div>
+          </div>
+
+          <div class="comparison-grid" id="compGrid">
+            <!-- Left Column: Before (Original) -->
+            <div class="comp-pane comp-pane-before" id="compPaneBefore">
+              <div class="comp-pane-header">
+                <div class="comp-pane-title">
+                  <span class="comp-tag raw">Before &bull; Uploaded Resume</span>
+                  <strong>${escHtml(original.name || 'Original Document')}</strong>
+                </div>
+                <span class="comp-status-chip">Raw Document</span>
+              </div>
+              <div class="comp-paper">
+                <div class="comp-section">
+                  <div class="comp-sec-heading">CONTACT INFORMATION</div>
+                  <div class="comp-text">
+                    ${[original.contact?.email, original.contact?.phone, original.contact?.location, original.contact?.linkedin, original.contact?.github].filter(Boolean).map(escHtml).join(' | ') || 'No contact details parsed'}
+                  </div>
+                </div>
+
+                <div class="comp-section">
+                  <div class="comp-sec-heading">PROFESSIONAL SUMMARY</div>
+                  <div class="comp-text comp-text-raw ${!original.summary ? 'comp-empty' : ''}">
+                    ${escHtml(original.summary || 'No professional summary detected in original uploaded resume.')}
+                  </div>
+                </div>
+
+                <div class="comp-section">
+                  <div class="comp-sec-heading">TECHNICAL SKILLS</div>
+                  <div class="comp-text comp-text-raw">
+                    ${(original.skills || []).length > 0 ? (original.skills || []).map(s => `<span class="raw-skill-chip">${escHtml(s)}</span>`).join(' ') : 'No skills detected'}
+                  </div>
+                </div>
+
+                ${(original.experience || []).length > 0 ? `
+                  <div class="comp-section">
+                    <div class="comp-sec-heading">WORK EXPERIENCE</div>
+                    ${original.experience.map(j => `
+                      <div class="comp-item">
+                        <div class="comp-item-title">${escHtml(j.title)} &mdash; <em>${escHtml(j.company)}</em></div>
+                        <ul class="comp-bullets">
+                          ${(j.bullets || []).map(b => `<li class="comp-bullet-raw">${escHtml(b)}</li>`).join('')}
+                        </ul>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : ''}
+
+                ${(original.projects || []).length > 0 ? `
+                  <div class="comp-section">
+                    <div class="comp-sec-heading">PROJECTS &amp; SYSTEMS</div>
+                    ${original.projects.map(p => `
+                      <div class="comp-item">
+                        <div class="comp-item-title">${escHtml(p.name)} ${p.tools ? `[${escHtml(p.tools)}]` : ''}</div>
+                        <ul class="comp-bullets">
+                          ${(p.bullets || []).map(b => `<li class="comp-bullet-raw">${escHtml(b)}</li>`).join('')}
+                        </ul>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : ''}
+
+                ${(original.education || []).length > 0 ? `
+                  <div class="comp-section">
+                    <div class="comp-sec-heading">EDUCATION</div>
+                    ${original.education.map(e => `<div class="comp-text">${escHtml(e)}</div>`).join('')}
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- Right Column: After (AI Enhanced) -->
+            <div class="comp-pane comp-pane-after" id="compPaneAfter">
+              <div class="comp-pane-header">
+                <div class="comp-pane-title">
+                  <span class="comp-tag enhanced">After &bull; AI ATS Enhanced</span>
+                  <strong>${escHtml(data.name || 'AI Optimized Resume')}</strong>
+                </div>
+                <span class="comp-status-chip highlight">✨ ATS Ready</span>
+              </div>
+              <div class="comp-paper">
+                <div class="comp-section">
+                  <div class="comp-sec-heading">CONTACT INFORMATION</div>
+                  <div class="comp-text">
+                    ${[data.contact?.email, data.contact?.phone, data.contact?.location, data.contact?.linkedin, data.contact?.github].filter(Boolean).map(escHtml).join(' | ')}
+                  </div>
+                </div>
+
+                <div class="comp-section">
+                  <div class="comp-sec-heading">PROFESSIONAL SUMMARY</div>
+                  <div class="comp-text comp-text-enhanced">
+                    ${escHtml(data.summary)}
+                    <div class="comp-change-pill">✨ Impactful professional summary tailored for ${escHtml(activeTargetRole)}</div>
+                  </div>
+                </div>
+
+                <div class="comp-section">
+                  <div class="comp-sec-heading">TECHNICAL SKILLS</div>
+                  <div class="comp-text comp-text-enhanced">
+                    ${(data.skills || []).map(s => `<span class="enhanced-skill-chip">${escHtml(s)}</span>`).join(' ')}
+                    <div class="comp-change-pill">✨ Standardized canonical casing &amp; zero hallucinated fake skills</div>
+                  </div>
+                </div>
+
+                ${(data.experience || []).length > 0 ? `
+                  <div class="comp-section">
+                    <div class="comp-sec-heading">WORK EXPERIENCE</div>
+                    ${data.experience.map(j => `
+                      <div class="comp-item">
+                        <div class="comp-item-title">${escHtml(j.title)} &mdash; <em>${escHtml(j.company)}</em></div>
+                        <ul class="comp-bullets">
+                          ${(j.bullets || []).map(b => `<li class="comp-bullet-enhanced">${escHtml(b)}</li>`).join('')}
+                        </ul>
+                      </div>
+                    `).join('')}
+                    <div class="comp-change-pill">✨ Strong action verbs &amp; quantifiable outcome statements</div>
+                  </div>
+                ` : ''}
+
+                ${(data.projects || []).length > 0 ? `
+                  <div class="comp-section">
+                    <div class="comp-sec-heading">PROJECTS &amp; SYSTEMS</div>
+                    ${data.projects.map(p => `
+                      <div class="comp-item">
+                        <div class="comp-item-title">${escHtml(p.name)} ${p.tools ? `[${escHtml(p.tools)}]` : ''}</div>
+                        <ul class="comp-bullets">
+                          ${(p.bullets || []).map(b => `<li class="comp-bullet-enhanced">${escHtml(b)}</li>`).join('')}
+                        </ul>
+                      </div>
+                    `).join('')}
+                    <div class="comp-change-pill">✨ Clear system architecture &amp; technical stack attribution</div>
+                  </div>
+                ` : ''}
+
+                ${(data.education || []).length > 0 ? `
+                  <div class="comp-section">
+                    <div class="comp-sec-heading">EDUCATION</div>
+                    ${data.education.map(e => `<div class="comp-text">${escHtml(e)}</div>`).join('')}
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
       </div><!-- /editor-body-wrap -->
     </div>
   `;
@@ -872,11 +1048,64 @@ function setupEditorEventListeners(modal, data, original) {
     });
   }
 
+  // View Switcher (AI Resume vs Comparison Window)
+  const btnViewEdit = modal.querySelector('#btnViewEditor');
+  const btnViewComp = modal.querySelector('#btnViewCompare');
+  const canvasContainer = modal.querySelector('#editorCanvasContainer');
+  const compContainer = modal.querySelector('#editorComparisonContainer');
+
+  if (btnViewEdit && btnViewComp && canvasContainer && compContainer) {
+    btnViewEdit.addEventListener('click', () => {
+      btnViewEdit.classList.add('active');
+      btnViewComp.classList.remove('active');
+      canvasContainer.classList.remove('hidden');
+      compContainer.classList.add('hidden');
+    });
+
+    btnViewComp.addEventListener('click', () => {
+      btnViewComp.classList.add('active');
+      btnViewEdit.classList.remove('active');
+      canvasContainer.classList.add('hidden');
+      compContainer.classList.remove('hidden');
+    });
+  }
+
+  // Comparison Display Modes (Split vs Before vs After)
+  const btnSplit = modal.querySelector('#compModeSplit');
+  const btnBefore = modal.querySelector('#compModeBefore');
+  const btnAfter = modal.querySelector('#compModeAfter');
+  const paneBefore = modal.querySelector('#compPaneBefore');
+  const paneAfter = modal.querySelector('#compPaneAfter');
+
+  if (btnSplit && btnBefore && btnAfter && paneBefore && paneAfter) {
+    btnSplit.addEventListener('click', () => {
+      btnSplit.classList.add('active');
+      btnBefore.classList.remove('active');
+      btnAfter.classList.remove('active');
+      paneBefore.style.display = '';
+      paneAfter.style.display = '';
+    });
+    btnBefore.addEventListener('click', () => {
+      btnBefore.classList.add('active');
+      btnSplit.classList.remove('active');
+      btnAfter.classList.remove('active');
+      paneBefore.style.display = 'flex';
+      paneAfter.style.display = 'none';
+    });
+    btnAfter.addEventListener('click', () => {
+      btnAfter.classList.add('active');
+      btnSplit.classList.remove('active');
+      btnBefore.classList.remove('active');
+      paneBefore.style.display = 'none';
+      paneAfter.style.display = 'flex';
+    });
+  }
+
   // Download PDF
   const btnPdf = modal.querySelector('#btnDownloadPdf');
   if (btnPdf) {
     btnPdf.addEventListener('click', () => {
-      window.print();
+      exportResumeToPdf(data);
     });
   }
 
@@ -1137,3 +1366,239 @@ function showEditorToast(msg) {
     setTimeout(() => toast.remove(), 400);
   }, 3200);
 }
+
+// ─── 6. High-Fidelity ATS PDF Exporter from Live DOM ────────────
+export function exportResumeToPdf(data) {
+  const container = document.getElementById('pdfReportContainer');
+  if (!container) {
+    showEditorToast('Print container element not found. Please refresh page.');
+    return;
+  }
+
+  // Extract live edited values directly from the editor DOM
+  const name = document.getElementById('editName')?.innerText.trim() || data?.name || 'CANDIDATE';
+  const title = document.getElementById('editTitle')?.innerText.trim() || data?.title || '';
+  const email = document.getElementById('editEmail')?.innerText.trim() || data?.contact?.email || '';
+  const phone = document.getElementById('editPhone')?.innerText.trim() || data?.contact?.phone || '';
+  const loc = document.getElementById('editLocation')?.innerText.trim() || data?.contact?.location || '';
+  const linkedin = document.getElementById('editLinkedin')?.innerText.trim() || data?.contact?.linkedin || '';
+  const github = document.getElementById('editGithub')?.innerText.trim() || data?.contact?.github || '';
+
+  const contactParts = [email, phone, loc, linkedin, github].filter(Boolean);
+
+  const summary = document.getElementById('editSummary')?.innerText.trim() || data?.summary || '';
+  const skills = document.getElementById('editSkills')?.innerText.trim() || (data?.skills || []).join(', ');
+
+  const paper = document.getElementById('editorResumePaper');
+
+  // Work Experience
+  const jobs = [];
+  if (paper) {
+    paper.querySelectorAll('#experienceContainer .resume-job-item').forEach(j => {
+      const jTitle = j.querySelector('.job-title')?.innerText.trim() || '';
+      const jComp = j.querySelector('.job-company')?.innerText.trim() || '';
+      const jPeriod = j.querySelector('.job-period')?.innerText.trim() || '';
+      const bullets = [];
+      j.querySelectorAll('.bullet-item').forEach(b => {
+        const text = b.innerText.trim();
+        if (text) bullets.push(text);
+      });
+      if (jTitle || jComp || bullets.length > 0) {
+        jobs.push({ title: jTitle, company: jComp, period: jPeriod, bullets });
+      }
+    });
+  }
+  if (jobs.length === 0 && data?.experience?.length > 0) {
+    jobs.push(...data.experience);
+  }
+
+  // Key Projects
+  const projs = [];
+  if (paper) {
+    paper.querySelectorAll('#projectsContainer .resume-proj-item').forEach(p => {
+      const pTitle = p.querySelector('.proj-title')?.innerText.trim() || '';
+      const pTools = p.querySelector('.proj-tools')?.innerText.trim() || '';
+      const bullets = [];
+      p.querySelectorAll('.bullet-item').forEach(b => {
+        const text = b.innerText.trim();
+        if (text) bullets.push(text);
+      });
+      if (pTitle || bullets.length > 0) {
+        projs.push({ name: pTitle, tools: pTools.replace(/^[\[\(]|[\)\]]$/g, '').trim(), bullets });
+      }
+    });
+  }
+  if (projs.length === 0 && data?.projects?.length > 0) {
+    projs.push(...data.projects);
+  }
+
+  // Education
+  const eduLines = [];
+  if (paper) {
+    const eduEl = document.getElementById('editEducation');
+    if (eduEl) {
+      Array.from(eduEl.children).forEach(c => {
+        const text = c.innerText.trim();
+        if (text) eduLines.push(text);
+      });
+      if (eduLines.length === 0 && eduEl.innerText.trim()) {
+        eduLines.push(...eduEl.innerText.trim().split('\n').filter(Boolean));
+      }
+    }
+  }
+  if (eduLines.length === 0 && data?.education?.length > 0) {
+    eduLines.push(...data.education);
+  }
+
+  // Certifications
+  const certLines = [];
+  if (paper) {
+    const certEl = document.getElementById('editCertifications');
+    if (certEl) {
+      Array.from(certEl.children).forEach(c => {
+        const text = c.innerText.trim();
+        if (text) certLines.push(text);
+      });
+      if (certLines.length === 0 && certEl.innerText.trim()) {
+        certLines.push(...certEl.innerText.trim().split('\n').filter(Boolean));
+      }
+    }
+  }
+  if (certLines.length === 0 && data?.certifications?.length > 0) {
+    certLines.push(...data.certifications);
+  }
+
+  // Achievements
+  const achLines = [];
+  if (paper) {
+    const achEl = document.getElementById('editAchievements');
+    if (achEl) {
+      Array.from(achEl.children).forEach(c => {
+        const text = c.innerText.trim();
+        if (text) achLines.push(text);
+      });
+      if (achLines.length === 0 && achEl.innerText.trim()) {
+        achLines.push(...achEl.innerText.trim().split('\n').filter(Boolean));
+      }
+    }
+  }
+  if (achLines.length === 0 && data?.achievements?.length > 0) {
+    achLines.push(...data.achievements);
+  }
+
+  // Construct ATS-compliant standard printable HTML
+  const html = `
+    <div class="ats-resume-print-document">
+      <header class="ats-print-header">
+        <h1 class="ats-print-name">${escHtml(name)}</h1>
+        ${title ? `<div class="ats-print-title">${escHtml(title)}</div>` : ''}
+        ${contactParts.length > 0 ? `
+          <div class="ats-print-contact">
+            ${contactParts.map(escHtml).join(' &bull; ')}
+          </div>
+        ` : ''}
+      </header>
+
+      ${summary ? `
+        <section class="ats-print-section">
+          <h2 class="ats-print-sec-title">PROFESSIONAL SUMMARY</h2>
+          <div class="ats-print-divider"></div>
+          <p class="ats-print-paragraph">${escHtml(summary)}</p>
+        </section>
+      ` : ''}
+
+      ${skills ? `
+        <section class="ats-print-section">
+          <h2 class="ats-print-sec-title">TECHNICAL SKILLS</h2>
+          <div class="ats-print-divider"></div>
+          <p class="ats-print-paragraph">${escHtml(skills)}</p>
+        </section>
+      ` : ''}
+
+      ${jobs.length > 0 ? `
+        <section class="ats-print-section">
+          <h2 class="ats-print-sec-title">WORK EXPERIENCE</h2>
+          <div class="ats-print-divider"></div>
+          ${jobs.map(j => `
+            <div class="ats-print-entry">
+              <div class="ats-print-entry-header">
+                <div>
+                  <strong>${escHtml(j.title)}</strong>
+                  ${j.company ? `<span class="ats-print-company"> &mdash; ${escHtml(j.company)}</span>` : ''}
+                </div>
+                ${j.period ? `<span class="ats-print-period">${escHtml(j.period)}</span>` : ''}
+              </div>
+              ${j.bullets && j.bullets.length > 0 ? `
+                <ul class="ats-print-bullets">
+                  ${j.bullets.map(b => `<li>${escHtml(b)}</li>`).join('')}
+                </ul>
+              ` : ''}
+            </div>
+          `).join('')}
+        </section>
+      ` : ''}
+
+      ${projs.length > 0 ? `
+        <section class="ats-print-section">
+          <h2 class="ats-print-sec-title">KEY PROJECTS &amp; TECHNICAL SYSTEMS</h2>
+          <div class="ats-print-divider"></div>
+          ${projs.map(p => `
+            <div class="ats-print-entry">
+              <div class="ats-print-entry-header">
+                <div>
+                  <strong>${escHtml(p.name)}</strong>
+                  ${p.tools ? `<span class="ats-print-tools"> [${escHtml(p.tools)}]</span>` : ''}
+                </div>
+              </div>
+              ${p.bullets && p.bullets.length > 0 ? `
+                <ul class="ats-print-bullets">
+                  ${p.bullets.map(b => `<li>${escHtml(b)}</li>`).join('')}
+                </ul>
+              ` : ''}
+            </div>
+          `).join('')}
+        </section>
+      ` : ''}
+
+      ${eduLines.length > 0 ? `
+        <section class="ats-print-section">
+          <h2 class="ats-print-sec-title">EDUCATION</h2>
+          <div class="ats-print-divider"></div>
+          ${eduLines.map(e => `<div class="ats-print-edu-line">${escHtml(e)}</div>`).join('')}
+        </section>
+      ` : ''}
+
+      ${certLines.length > 0 ? `
+        <section class="ats-print-section">
+          <h2 class="ats-print-sec-title">CERTIFICATIONS</h2>
+          <div class="ats-print-divider"></div>
+          ${certLines.map(c => `<div class="ats-print-edu-line">${escHtml(c)}</div>`).join('')}
+        </section>
+      ` : ''}
+
+      ${achLines.length > 0 ? `
+        <section class="ats-print-section">
+          <h2 class="ats-print-sec-title">HONORS &amp; ACHIEVEMENTS</h2>
+          <div class="ats-print-divider"></div>
+          ${achLines.map(a => `<div class="ats-print-edu-line">${escHtml(a)}</div>`).join('')}
+        </section>
+      ` : ''}
+    </div>
+  `;
+
+  container.innerHTML = html;
+  container.setAttribute('data-ready', 'true');
+  showEditorToast('Preparing ATS print document... 🖨️');
+
+  // Give DOM a microtask to finish rendering before triggering system print
+  setTimeout(() => {
+    window.print();
+  }, 100);
+
+  // Clean up print container after dialog closes
+  window.addEventListener('afterprint', () => {
+    container.innerHTML = '';
+    container.removeAttribute('data-ready');
+  }, { once: true });
+}
+

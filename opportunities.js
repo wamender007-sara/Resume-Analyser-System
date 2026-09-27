@@ -1149,10 +1149,6 @@ function renderOpportunitiesList() {
             <div>
               <div class="job-company">
                 ${escHtml(job.company)} <span class="verified-icon" title="Verified Campus Recruiter">✓</span>
-                <span class="company-guide-badge" title="Interview Guide Available">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-                  Interview Guide
-                </span>
               </div>
               <h4 class="job-title">${escHtml(job.title)}</h4>
             </div>

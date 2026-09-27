@@ -585,6 +585,326 @@ export function renderActionPlan(steps) {
     .join('');
 }
 
+// ─── Role Development & Skill Acquisition Roadmap ─────────────
+export function renderRoleDevelopmentRoadmap(data, targetRole = '', jobDescription = '') {
+  const card = document.getElementById('roleDevCard');
+  const body = document.getElementById('roleDevBody');
+  const sub = document.getElementById('roleDevSubtitle');
+  const badge = document.getElementById('roleDevBadge');
+  if (!card || !body) return;
+
+  const roleTitle = (targetRole || data?.targetRoleFit?.targetRole || 'Software Engineering Role').trim();
+  let companyName = '';
+  let cleanRole = roleTitle;
+  if (roleTitle.includes('—')) {
+    const parts = roleTitle.split('—').map(s => s.trim());
+    companyName = parts[0];
+    cleanRole = parts[1] || roleTitle;
+  } else if (roleTitle.includes('-')) {
+    const parts = roleTitle.split('-').map(s => s.trim());
+    if (parts.length >= 2) {
+      companyName = parts[0];
+      cleanRole = parts.slice(1).join(' ');
+    }
+  }
+
+  if (sub) {
+    sub.textContent = companyName 
+      ? `Custom preparation roadmap & competency bridge for ${companyName} (${cleanRole})`
+      : `Custom preparation roadmap & competency bridge for ${cleanRole}`;
+  }
+  if (badge) {
+    badge.textContent = companyName ? `${companyName} Roadmap` : 'Preparation Roadmap';
+  }
+
+  // Extract missing skills
+  const missingKeywords = (data?.diagnostics?.missingKeywords || data?.recommendedKeywords || []).slice(0, 8);
+
+  // Determine domain suggestions based on role
+  const roleLower = roleTitle.toLowerCase();
+  let domain = 'general';
+  if (roleLower.includes('front') || roleLower.includes('react') || roleLower.includes('web') || roleLower.includes('ui')) domain = 'frontend';
+  else if (roleLower.includes('back') || roleLower.includes('api') || roleLower.includes('node') || roleLower.includes('java') || roleLower.includes('python')) domain = 'backend';
+  else if (roleLower.includes('full') || roleLower.includes('stack')) domain = 'fullstack';
+  else if (roleLower.includes('data') || roleLower.includes('analyst') || roleLower.includes('analytics')) domain = 'data';
+  else if (roleLower.includes('ai') || roleLower.includes('machine') || roleLower.includes('ml')) domain = 'aiml';
+  else if (roleLower.includes('cloud') || roleLower.includes('devops') || roleLower.includes('infra')) domain = 'devops';
+  else if (roleLower.includes('qa') || roleLower.includes('test') || roleLower.includes('automation')) domain = 'qa';
+
+  // Domain bridge projects
+  const bridgeProjects = {
+    frontend: [
+      {
+        title: 'High-Performance E-Commerce Web App with Virtualization & State Cache',
+        tech: 'React / Next.js, TypeScript, Zustand / Redux Toolkit, Tailwind CSS',
+        why: 'Demonstrates component modularity, client-side caching, sub-second TTFB, and mobile touch responsiveness required by top product companies.'
+      },
+      {
+        title: 'Collaborative Real-Time Workspace Canvas / Dashboard',
+        tech: 'WebSockets, React, Canvas/SVG, Web Workers',
+        why: 'Proves capability in handling asynchronous real-time events, optimistic UI updates, and heavy client-side computation.'
+      }
+    ],
+    backend: [
+      {
+        title: 'Distributed Rate-Limited REST & gRPC API Microservice',
+        tech: 'Node.js / Go / Java, Redis Token Bucket, PostgreSQL, Docker',
+        why: 'Demonstrates high-concurrency API gateway patterns, database connection pooling, and sub-10ms response latency.'
+      },
+      {
+        title: 'Event-Driven Asynchronous Order & Payment Processing Pipeline',
+        tech: 'Apache Kafka / RabbitMQ, Redis Cache, SQL Transactions, Docker',
+        why: 'Proves idempotency, distributed transactions, zero-loss queue consumer architecture, and crash recovery.'
+      }
+    ],
+    fullstack: [
+      {
+        title: 'Full-Stack Production SaaS with Role-Based Auth & Real-Time Sync',
+        tech: 'React, Node.js / Express, PostgreSQL, Redis, Webhooks',
+        why: 'Proves full lifecycle competence from DB schema migrations to front-end state management and third-party webhook security.'
+      },
+      {
+        title: 'Automated CI/CD Deployed Multi-Tenant Analytics Portal',
+        tech: 'Next.js, Tailwind, Docker, GitHub Actions, Cloud Hosting',
+        why: 'Shows hiring managers you can deploy, monitor, and scale modern web software independently.'
+      }
+    ],
+    data: [
+      {
+        title: 'End-to-End Automated ETL Pipeline & Interactive Business Dashboard',
+        tech: 'Python, Pandas, SQL (PostgreSQL), Power BI / Tableau, Streamlit',
+        why: 'Demonstrates real-world data cleaning, dimensional modeling (Star Schema), and executive KPI presentation.'
+      },
+      {
+        title: 'Customer Cohort Churn & Revenue Retention Predictor',
+        tech: 'Python, Scikit-learn, Seaborn, SQL Window Functions',
+        why: 'Directly applicable to product analytics and business growth teams at tech firms.'
+      }
+    ],
+    aiml: [
+      {
+        title: 'Production RAG (Retrieval-Augmented Generation) Knowledge Engine',
+        tech: 'Python, LangChain / LlamaIndex, Vector DB (Chroma/FAISS), LLM APIs',
+        why: 'The #1 in-demand enterprise AI skill: building hallucinations-free grounded search over custom PDFs & company data.'
+      },
+      {
+        title: 'Fine-Tuned Text Classifier with Fast Inference API Endpoint',
+        tech: 'PyTorch, Hugging Face Transformers, FastAPI, Docker',
+        why: 'Demonstrates model evaluation, latency optimization, and microservice packaging.'
+      }
+    ],
+    devops: [
+      {
+        title: 'GitOps Infrastructure-as-Code & Kubernetes Cluster Deployment',
+        tech: 'Terraform, Docker, Kubernetes (K8s), ArgoCD, Prometheus & Grafana',
+        why: 'Proves automated cluster provisioning, monitoring alert rules, and zero-downtime rolling updates.'
+      },
+      {
+        title: 'Zero-Trust Secure CI/CD Pipeline with SAST & Container Scanning',
+        tech: 'GitHub Actions, SonarQube, Trivy, Cloud Storage',
+        why: 'Demonstrates automated security scanning and cloud artifact lifecycle management.'
+      }
+    ],
+    qa: [
+      {
+        title: 'End-to-End Multi-Browser Automation Testing Framework',
+        tech: 'Playwright / Selenium, TypeScript / Python, Allure Reports, CI Integration',
+        why: 'Demonstrates Page Object Model (POM), parallel test execution, and automated defect screenshots.'
+      },
+      {
+        title: 'High-Volume API Performance & Stress Testing Suite',
+        tech: 'Postman Collections, Newman, k6 / JMeter, GitHub Actions',
+        why: 'Proves ability to benchmark API throughput, latency SLA compliance, and error boundary behavior.'
+      }
+    ],
+    general: [
+      {
+        title: 'Scalable Full-Stack Engineering Application with Database Indexing',
+        tech: 'Modern Framework (React/Vue), Backend API (Node/Python/Java), SQL, Docker',
+        why: 'Demonstrates clean object-oriented architecture, relational database indexing, and REST API conventions.'
+      },
+      {
+        title: 'Algorithmic Optimization & System Utility Tool',
+        tech: 'C++ / Java / Python / TypeScript, Git, Automated Unit Testing',
+        why: 'Proves mastery of core data structures, time-complexity analysis, and clean maintainable code.'
+      }
+    ]
+  };
+
+  const domainProjects = bridgeProjects[domain] || bridgeProjects.general;
+
+  // Domain interview topics
+  const interviewTopics = {
+    frontend: [
+      'DOM rendering pipeline, Critical Rendering Path & Core Web Vitals (LCP, INP, CLS)',
+      'State management paradigms (Redux, Context, Zustand) and re-render optimization',
+      'JavaScript closures, event loop, microtask queue, and Promise concurrency',
+      'Component lifecycle, custom hooks design, and unit testing with Jest / React Testing Library'
+    ],
+    backend: [
+      'Database normalization vs denormalization, B-Tree indexes, and slow query optimization',
+      'REST vs gRPC vs GraphQL tradeoffs and idempotency in distributed payment/order APIs',
+      'Caching invalidation strategies (Cache-aside, Write-through) using Redis',
+      'Asynchronous task workers, message queues (Kafka/RabbitMQ), and dead-letter handling'
+    ],
+    fullstack: [
+      'End-to-end security: JWT authentication, HTTP-only cookies, CORS, CSRF, and SQL injection prevention',
+      'API schema validation, database migration patterns, and connection pool sizing',
+      'Client-server caching, SSR (Server-Side Rendering) vs CSR (Client-Side Rendering)',
+      'System design basics: Load balancers, reverse proxies (Nginx), and microservices vs monolith'
+    ],
+    data: [
+      'Advanced SQL: Window functions (ROW_NUMBER, RANK, LEAD, LAG), CTEs, and query EXPLAIN plans',
+      'Data modeling: Star Schema, Snowflake Schema, Fact vs Dimension tables',
+      'Data transformation & outlier treatment in Python Pandas / NumPy',
+      'Business metric definitions: LTV, CAC, Retention, Churn rate, and conversion funnels'
+    ],
+    aiml: [
+      'Vector embeddings, cosine similarity search, chunking strategies, and RAG architectures',
+      'Evaluation metrics: Precision, Recall, F1-Score, ROC-AUC, and Confusion Matrix interpretation',
+      'Handling class imbalance, data leakage, and cross-validation techniques',
+      'Model deployment tradeoffs: ONNX runtime, quantisation, and latency batching'
+    ],
+    devops: [
+      'Docker container image optimization (multi-stage builds, non-root users, minimal Alpine base)',
+      'Kubernetes core primitives: Pods, Deployments, Services, Ingress, and PersistentVolumes',
+      'Infrastructure as Code (IaC) principles: state management, drift detection with Terraform',
+      'Observability: Metrics (Prometheus), Logging (ELK/Loki), and Tracing (OpenTelemetry)'
+    ],
+    qa: [
+      'Test automation design patterns: Page Object Model (POM), data-driven testing, and BDD (Cucumber)',
+      'API contract testing, status code assertions, and mock API servers',
+      'Performance testing: Load, stress, soak, and spike testing benchmarks with k6',
+      'Defect lifecycle, bug reporting standards with reproduction steps and logs'
+    ],
+    general: [
+      'Core Data Structures & Algorithms: Binary Search, Two Pointers, Trees, Graphs, Hash Maps, and Dynamic Programming',
+      'Object-Oriented Design (SOLID principles, Factory, Singleton, Observer patterns)',
+      'Database fundamentals: ACID properties, transactions, and indexing',
+      'STAR method behavioral preparation: Leadership, resolving technical conflicts, and deadline delivery'
+    ]
+  };
+
+  const domainTopics = interviewTopics[domain] || interviewTopics.general;
+
+  body.innerHTML = `
+    <!-- Top Focus Banner -->
+    <div class="role-dev-target-banner">
+      <div class="role-dev-banner-left">
+        <span class="role-dev-company-pill">${escHtml(companyName || 'Target Role')}</span>
+        <strong class="role-dev-role-name">${escHtml(cleanRole)}</strong>
+      </div>
+      <span class="role-dev-focus-badge">Tailored Skill Gap &amp; Development Strategy</span>
+    </div>
+
+    <!-- 1. Technical Skills to Acquire & Develop -->
+    <div class="role-dev-section">
+      <h4 class="role-dev-section-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        1. High-Priority Competencies to Develop
+      </h4>
+      <p class="role-dev-section-desc">Based on verified requirements for ${escHtml(cleanRole)}, developing these competencies will directly elevate your interview shortlist rate:</p>
+      
+      <div class="role-dev-skills-grid">
+        ${missingKeywords.length > 0 ? missingKeywords.map(kw => `
+          <div class="role-dev-skill-card">
+            <div class="skill-card-top">
+              <strong class="skill-name">${escHtml(kw)}</strong>
+              <span class="skill-need-tag">Must Learn &amp; Practice</span>
+            </div>
+            <p class="skill-reason">Essential keyword and technical requirement for ${escHtml(cleanRole)}. Add dedicated project proof or coursework demonstrating practical application.</p>
+          </div>
+        `).join('') : `
+          <div class="role-dev-skill-card">
+            <div class="skill-card-top">
+              <strong class="skill-name">System Architecture &amp; Scale</strong>
+              <span class="skill-need-tag">Advanced Focus</span>
+            </div>
+            <p class="skill-reason">Your core keyword match is strong. Focus on scaling, production resilience, and automated testing to stand out among senior candidates.</p>
+          </div>
+        `}
+      </div>
+    </div>
+
+    <!-- 2. Recommended Portfolio Bridge Projects -->
+    <div class="role-dev-section">
+      <h4 class="role-dev-section-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        2. Recommended Portfolio Bridge Projects to Build
+      </h4>
+      <p class="role-dev-section-desc">Add one of these real-world projects to your GitHub &amp; Resume to prove immediate job readiness to ${escHtml(companyName || 'the hiring team')}:</p>
+
+      <div class="role-dev-projects-grid">
+        ${domainProjects.map((p, pIdx) => `
+          <div class="role-dev-project-card">
+            <div class="project-card-num">Project 0${pIdx + 1}</div>
+            <h5 class="project-card-title">${escHtml(p.title)}</h5>
+            <div class="project-card-tech">
+              <span class="tech-label">Recommended Tech Stack:</span>
+              <span class="tech-pills">${escHtml(p.tech)}</span>
+            </div>
+            <p class="project-card-why"><strong>Why recruiters value this:</strong> ${escHtml(p.why)}</p>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- 3. Key Technical Interview Concepts to Master -->
+    <div class="role-dev-section">
+      <h4 class="role-dev-section-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        3. Core Technical &amp; System Concepts to Master
+      </h4>
+      <div class="role-dev-topics-list">
+        ${domainTopics.map(t => `
+          <div class="topic-item">
+            <span class="topic-bullet">&bull;</span>
+            <span class="topic-text">${escHtml(t)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- 4. Step-by-Step 4-Week Action Roadmap -->
+    <div class="role-dev-section">
+      <h4 class="role-dev-section-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        4. Step-by-Step 4-Week Action Roadmap for this Role
+      </h4>
+      <div class="roadmap-timeline">
+        <div class="roadmap-step">
+          <div class="step-badge">Week 1</div>
+          <div class="step-content">
+            <strong class="step-title">Fundamentals &amp; Core Skill Acquisition</strong>
+            <p class="step-desc">Master the syntax and patterns for missing keywords (${missingKeywords.slice(0, 3).join(', ') || 'core role libraries'}). Build small micro-experiments and coding katas.</p>
+          </div>
+        </div>
+        <div class="roadmap-step">
+          <div class="step-badge">Week 2</div>
+          <div class="step-content">
+            <strong class="step-title">Bridge Project Implementation</strong>
+            <p class="step-desc">Build and push one production-grade bridge project to GitHub with comprehensive README, architectural diagram, and unit tests.</p>
+          </div>
+        </div>
+        <div class="roadmap-step">
+          <div class="step-badge">Week 3</div>
+          <div class="step-content">
+            <strong class="step-title">Resume Refinement in AI Editor</strong>
+            <p class="step-desc">Add your newly built project to your resume. Use the AI Resume Editor to formulate action bullets with measurable percentage metrics.</p>
+          </div>
+        </div>
+        <div class="roadmap-step">
+          <div class="step-badge">Week 4</div>
+          <div class="step-content">
+            <strong class="step-title">Mock Technical &amp; Machine Coding Practice</strong>
+            <p class="step-desc">Practice timed coding assessments, system design breakdowns, and behavioral STAR stories for ${escHtml(companyName || 'campus / off-campus')} hiring rounds.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 // ─── Skeleton ────────────────────────────────────────────────
 export function showSkeleton() {
   document.getElementById('emptyState').classList.add('hidden');

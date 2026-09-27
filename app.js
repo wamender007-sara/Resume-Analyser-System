@@ -18,6 +18,7 @@ import {
   updateStreamingBubble,
   updateAllAdSlots,
   renderScorePotential,
+  renderRoleDevelopmentRoadmap,
 } from './ui.js';
 import { openResumeEditor } from './resume-editor.js';
 import { getApiKey, saveApiKey, chatStream } from './gemini.js';
@@ -546,6 +547,11 @@ function renderAnalysis(data) {
 
   // Score Improvement Potential Panel
   renderScorePotential(computeScorePotential(data));
+
+  // Role Development & Preparation Roadmap (What You Need to Develop for this Role)
+  const targetRoleVal = (targetRoleInput?.value || '').trim();
+  const jdVal = (document.getElementById('jobDescription')?.value || '').trim();
+  renderRoleDevelopmentRoadmap(data, targetRoleVal, jdVal);
 
   // Save profile to localStorage for opportunities.html & session cache
   try {
