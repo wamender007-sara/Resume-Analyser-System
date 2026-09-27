@@ -1463,11 +1463,14 @@ async function exportClassAnalysisPdf() {
   const topPerformer = filteredResults[0]?.candidateName || 'N/A';
   const top3 = filteredResults.slice(0, 3);
 
+  const originalScrollY = window.scrollY || window.pageYOffset || 0;
+  window.scrollTo(0, 0);
+
   // Build clean, isolated, zero-offset render container
   const renderWrapper = document.createElement('div');
   renderWrapper.className = 'staff-pdf-render-root';
-  renderWrapper.style.position = 'fixed';
-  renderWrapper.style.left = '-9999px';
+  renderWrapper.style.position = 'absolute';
+  renderWrapper.style.left = '0';
   renderWrapper.style.top = '0';
   renderWrapper.style.width = '1060px';
   renderWrapper.style.background = '#ffffff';
@@ -1476,7 +1479,7 @@ async function exportClassAnalysisPdf() {
   renderWrapper.style.boxSizing = 'border-box';
   renderWrapper.style.padding = '0';
   renderWrapper.style.margin = '0';
-  renderWrapper.style.zIndex = '-99999';
+  renderWrapper.style.zIndex = '999999';
 
   renderWrapper.innerHTML = `
     <!-- PAGE 1: EXECUTIVE PLACEMENT DASHBOARD & LEADERBOARD TABLE -->
@@ -1751,27 +1754,59 @@ async function exportClassAnalysisPdf() {
           logging: false,
           scrollY: 0,
           scrollX: 0,
+          windowWidth: 1060,
           backgroundColor: '#ffffff'
         },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' },
-        pagebreak:    { mode: ['css', 'legacy'] }
+        pagebreak:    { mode: ['css', 'legacy'], avoid: ['.pdf-candidate-card'] }
       };
 
       await window.html2pdf().set(opt).from(renderWrapper).save();
       showToast('Classroom Analysis PDF report downloaded successfully!', 'success');
     } else {
-      window.print();
+      triggerStaffPrintFallback(batchName, renderWrapper.innerHTML);
     }
   } catch (err) {
     console.error('PDF Generation failed, falling back to browser print:', err);
-    window.print();
+    triggerStaffPrintFallback(batchName, renderWrapper.innerHTML);
   } finally {
     renderWrapper.remove();
+    window.scrollTo(0, originalScrollY);
     if (btn) {
       btn.disabled = false;
       btn.innerHTML = originalHtml;
     }
   }
+}
+
+function triggerStaffPrintFallback(batchName, html) {
+  let container = document.getElementById('pdfReportContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'pdfReportContainer';
+    document.body.appendChild(container);
+  }
+  const originalTitle = document.title;
+  document.title = `Class_Placement_Analysis_${batchName.replace(/[^a-zA-Z0-9_-]/g, '_')}_${new Date().toISOString().slice(0,10)}`;
+  container.innerHTML = `
+    <style>
+      @page { size: A4 landscape; margin: 8mm; }
+    </style>
+    ${html}
+  `;
+  container.setAttribute('data-ready', 'true');
+  showToast('Preparing batch print layout... 🖨️', 'info');
+  setTimeout(() => {
+    window.print();
+  }, 150);
+  const cleanup = () => {
+    document.title = originalTitle;
+    container.innerHTML = '';
+    container.removeAttribute('data-ready');
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(cleanup, 60000);
 }
 
 function escHtml(str) {
