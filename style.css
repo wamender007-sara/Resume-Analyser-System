@@ -4209,6 +4209,18 @@ button, input, select, textarea {
 }
 
 /* ─── PDF Export Print Styling ─── */
+body.exporting-staff-pdf .staff-main-container {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+}
+
+body.exporting-staff-pdf .header,
+body.exporting-staff-pdf .staff-batch-uploader-card,
+body.exporting-staff-pdf #batchProgressWrap {
+  display: none !important;
+}
+
 .exporting-pdf {
   background: #ffffff !important;
   color: #0f172a !important;
@@ -4364,10 +4376,9 @@ button, input, select, textarea {
 
 /* Candidate Dossier Print Section */
 .pdf-dossier-wrapper {
-  margin-top: 1.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.95rem;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  display: block !important;
   page-break-before: always;
   break-before: page;
 }
@@ -4380,6 +4391,7 @@ button, input, select, textarea {
   border-left: 5px solid #38bdf8;
   page-break-after: avoid;
   break-after: avoid;
+  margin-bottom: 0.85rem;
 }
 
 .pdf-dossier-main-title {
@@ -4401,9 +4413,10 @@ button, input, select, textarea {
   border-radius: 10px;
   padding: 1rem 1.25rem;
   box-shadow: none;
-  page-break-inside: avoid;
-  break-inside: avoid;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
   margin-bottom: 0.85rem;
+  display: block !important;
 }
 
 .pdf-cand-header {

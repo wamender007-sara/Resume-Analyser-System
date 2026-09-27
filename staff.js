@@ -607,7 +607,11 @@ function setupFiltersAndSort() {
   sortOrderSelect.addEventListener('change', applyFilterAndSort);
   btnExportCsv.addEventListener('click', exportPlacementCsv);
   if (btnExportPdf) {
-    btnExportPdf.addEventListener('click', exportClassAnalysisPdf);
+    btnExportPdf.addEventListener('click', () => exportClassAnalysisPdf(false));
+  }
+  const btnPrintStaff = document.getElementById('btnPrintStaffPdf');
+  if (btnPrintStaff) {
+    btnPrintStaff.addEventListener('click', () => exportClassAnalysisPdf(true));
   }
   const btnAutoDeduplicate = document.getElementById('btnAutoDeduplicate');
   if (btnAutoDeduplicate) {
@@ -1419,7 +1423,7 @@ function extractProjectsList(text) {
 }
 
 // ─── 9. High-Fidelity PDF Class Analysis Report ───────────────
-async function exportClassAnalysisPdf() {
+async function exportClassAnalysisPdf(forcePrint = false) {
   if (batchResults.length === 0) {
     showToast('No candidates available to export. Please analyze resumes first.', 'error');
     return;
@@ -1428,21 +1432,29 @@ async function exportClassAnalysisPdf() {
   showToast('Generating comprehensive classroom analysis PDF with ATS, Projects & Detailed Audits…', 'info');
 
   const btn = document.getElementById('btnExportPdf');
+  const btnPrint = document.getElementById('btnPrintStaffPdf');
   const originalHtml = btn ? btn.innerHTML : '';
-  if (btn) {
+  const originalPrintHtml = btnPrint ? btnPrint.innerHTML : '';
+
+  if (btn && !forcePrint) {
     btn.disabled = true;
     btn.innerHTML = `
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-icon"><circle cx="12" cy="10" r="8" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg>
       Building PDF…
     `;
   }
+  if (btnPrint && forcePrint) {
+    btnPrint.disabled = true;
+    btnPrint.innerHTML = `
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-icon"><circle cx="12" cy="10" r="8" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg>
+      Preparing Print…
+    `;
+  }
 
   const resultsWrap = document.getElementById('batchResultsWrap');
   if (!resultsWrap) {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = originalHtml;
-    }
+    if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
+    if (btnPrint) { btnPrint.disabled = false; btnPrint.innerHTML = originalPrintHtml; }
     return;
   }
 
@@ -1458,323 +1470,229 @@ async function exportClassAnalysisPdf() {
   const batchName = batchNameInput ? (batchNameInput.value.trim() || 'Classroom Batch 2026') : 'Classroom Batch 2026';
   const avgScore = Math.round(batchResults.reduce((acc, c) => acc + c.analysis.overallScore, 0) / batchResults.length);
 
-  const tier1Count = batchResults.filter(c => c.analysis.grade === 'A+' || c.analysis.grade === 'A').length;
-  const highestScore = Math.max(...batchResults.map(c => c.analysis.overallScore), 0);
-  const topPerformer = filteredResults[0]?.candidateName || 'N/A';
-  const top3 = filteredResults.slice(0, 3);
-
-  const originalScrollY = window.scrollY || window.pageYOffset || 0;
-  window.scrollTo(0, 0);
-
-  // Build clean, isolated, zero-offset render container
-  const renderWrapper = document.createElement('div');
-  renderWrapper.className = 'staff-pdf-render-root';
-  renderWrapper.style.position = 'absolute';
-  renderWrapper.style.left = '0';
-  renderWrapper.style.top = '0';
-  renderWrapper.style.width = '1060px';
-  renderWrapper.style.background = '#ffffff';
-  renderWrapper.style.color = '#0f172a';
-  renderWrapper.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-  renderWrapper.style.boxSizing = 'border-box';
-  renderWrapper.style.padding = '0';
-  renderWrapper.style.margin = '0';
-  renderWrapper.style.zIndex = '999999';
-
-  renderWrapper.innerHTML = `
-    <!-- PAGE 1: EXECUTIVE PLACEMENT DASHBOARD & LEADERBOARD TABLE -->
-    <div class="staff-pdf-page staff-pdf-page-summary" style="padding: 16px 20px; box-sizing: border-box;">
-      
-      <!-- Institutional Header Banner -->
-      <div style="background: linear-gradient(135deg, #1e3a8a 0%, #0369a1 100%); color: #ffffff; padding: 12px 18px; border-radius: 10px; margin-bottom: 12px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
-          <div>
-            <div style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #93c5fd; margin-bottom: 2px;">Institutional Placement &amp; Training Cell</div>
-            <h1 style="font-size: 1.25rem; font-weight: 800; color: #ffffff; letter-spacing: -0.01em; margin: 0 0 3px 0;">Classroom Batch Resume Analysis &amp; Placement Report</h1>
-            <div style="font-size: 0.8rem; color: #e0f2fe;">
-              <strong>${escHtml(batchName)}</strong> · Target Recruitment Profile: <strong>${escHtml(roleText)}</strong>
-            </div>
-          </div>
-          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0;">
-            <div style="background: rgba(16, 185, 129, 0.25); border: 1px solid #34d399; color: #6ee7b7; font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; margin-bottom: 2px;">✓ Verified Placement Report</div>
-            <div style="font-size: 0.7rem; color: #bae6fd;">Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
-            <div style="font-size: 0.7rem; color: #bae6fd;">Evaluated: <strong>${batchResults.length} Candidates</strong> (Batch Avg: ${avgScore}/100)</div>
-          </div>
+  // 1. Prepend official institutional banner
+  const banner = document.createElement('div');
+  banner.id = 'pdfTempReportBanner';
+  banner.className = 'pdf-export-banner';
+  banner.innerHTML = `
+    <div class="pdf-banner-header">
+      <div class="pdf-banner-left">
+        <div class="pdf-banner-tag">Institutional Placement &amp; Training Cell</div>
+        <h1 class="pdf-banner-title">Classroom Batch Resume Analysis &amp; Placement Report</h1>
+        <div class="pdf-banner-sub">
+          <strong>${escHtml(batchName)}</strong> · Target Recruitment Profile: <strong>${escHtml(roleText)}</strong>
         </div>
       </div>
-
-      <!-- 4 KPI Metrics in a row -->
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px;">
-        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 9px 12px;">
-          <div style="font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Class Batch Size</div>
-          <div style="font-size: 1.45rem; font-weight: 800; color: #0f172a; line-height: 1.2;">${batchResults.length}</div>
-          <div style="font-size: 0.68rem; color: #64748b;">Students Analyzed</div>
-        </div>
-        <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 9px 12px;">
-          <div style="font-size: 0.7rem; font-weight: 700; color: #166534; text-transform: uppercase;">Class Average Score</div>
-          <div style="font-size: 1.45rem; font-weight: 800; color: #15803d; line-height: 1.2;">${avgScore} <span style="font-size: 0.85rem; font-weight: 600;">/ 100</span></div>
-          <div style="font-size: 0.68rem; color: #166534;">Calibrated ATS Benchmark</div>
-        </div>
-        <div style="background: #f0f9ff; border: 1.5px solid #7dd3fc; border-radius: 8px; padding: 9px 12px;">
-          <div style="font-size: 0.7rem; font-weight: 700; color: #0369a1; text-transform: uppercase;">Placement Ready (Tier 1)</div>
-          <div style="font-size: 1.45rem; font-weight: 800; color: #0284c7; line-height: 1.2;">${tier1Count} <span style="font-size: 0.85rem; font-weight: 600;">Students</span></div>
-          <div style="font-size: 0.68rem; color: #0369a1;">Grade A / A+ Eligible</div>
-        </div>
-        <div style="background: #fefce8; border: 1.5px solid #fde047; border-radius: 8px; padding: 9px 12px;">
-          <div style="font-size: 0.7rem; font-weight: 700; color: #854d0e; text-transform: uppercase;">Batch Highest Score</div>
-          <div style="font-size: 1.45rem; font-weight: 800; color: #a16207; line-height: 1.2;">${highestScore} <span style="font-size: 0.85rem; font-weight: 600;">/ 100</span></div>
-          <div style="font-size: 0.68rem; color: #854d0e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Rank 1: ${escHtml(topPerformer)}</div>
-        </div>
+      <div class="pdf-banner-right">
+        <div class="pdf-banner-chip">✓ Verified Placement Report</div>
+        <div class="pdf-banner-meta">Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
+        <div class="pdf-banner-meta">Evaluated: <strong>${batchResults.length} Candidates</strong> (Batch Avg: ${avgScore}/100)</div>
       </div>
-
-      <!-- Top Performing Students Podium (Clean, Zero Interactive Buttons) -->
-      <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 9px 14px; margin-bottom: 12px;">
-        <div style="font-size: 0.8rem; font-weight: 700; color: #0f172a; margin-bottom: 7px; display: flex; align-items: center; gap: 6px;">
-          <span>🏆</span> <strong>Top Performing Students Spotlight</strong>
-          <span style="font-size: 0.7rem; font-weight: 500; color: #64748b;">(Highest verified technical depth, project quality, and ATS readiness)</span>
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(${Math.max(top3.length, 1)}, 1fr); gap: 10px;">
-          ${top3.map((cand, idx) => {
-            const a = cand.analysis;
-            const d = a.diagnostics || {};
-            const topSkills = (d.skillsFound || []).slice(0, 4).join(', ') || 'Python, JavaScript';
-            const rankLabels = ['🥇 1ST PLACE (TOP PERFORMER)', '🥈 2ND PLACE', '🥉 3RD PLACE'];
-            return `
-              <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 6px; padding: 8px 12px;">
-                <div style="font-size: 0.66rem; font-weight: 700; color: #0284c7; margin-bottom: 2px;">${rankLabels[idx] || `RANK #${idx + 1}`}</div>
-                <div style="font-size: 0.92rem; font-weight: 800; color: #0f172a; margin-bottom: 4px;">${escHtml(cand.candidateName)}</div>
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
-                  <span style="font-size: 1.15rem; font-weight: 800; color: #0f172a;">${a.overallScore}</span>
-                  <span style="font-size: 0.68rem; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: #dcfce7; color: #166534;">Grade ${a.grade}</span>
-                  <span style="font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 4px; background: #e0f2fe; color: #0369a1;">${a.targetRoleFit?.fitPercentage || 85}% Match</span>
-                </div>
-                <div style="font-size: 0.7rem; color: #475569; line-height: 1.35;">
-                  <div><strong>Skills:</strong> ${d.skillsFoundCount || 0} verified (${escHtml(topSkills)})</div>
-                  <div><strong>Metrics:</strong> ${d.metricCount || 0} quantified values</div>
-                  <div><strong>ATS Readiness:</strong> ${a.atsCompatibility?.numericScore || 85}% Compatible</div>
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </div>
-
-      <!-- Student Placement Leaderboard Table (Clean, Zero Buttons) -->
-      <div style="border: 1.5px solid #cbd5e1; border-radius: 8px; overflow: hidden;">
-        <div style="background: #e2edf7; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; color: #1e293b; border-bottom: 1.5px solid #cbd5e1;">
-          Classroom Leaderboard &amp; Candidate Directory (${filteredResults.length} Students Ranked)
-        </div>
-        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.72rem;">
-          <thead>
-            <tr style="background: #f1f5f9; color: #475569; border-bottom: 1.5px solid #cbd5e1;">
-              <th style="padding: 6px 8px; width: 45px; text-align: center;">Rank</th>
-              <th style="padding: 6px 8px; width: 220px;">Student Name &amp; Contact</th>
-              <th style="padding: 6px 8px; width: 115px;">Score / Grade</th>
-              <th style="padding: 6px 8px; width: 85px;">CGPA</th>
-              <th style="padding: 6px 8px;">Technical Stack &amp; Skills</th>
-              <th style="padding: 6px 8px; width: 95px; text-align: center;">Experience</th>
-              <th style="padding: 6px 8px; width: 105px;">Projects</th>
-              <th style="padding: 6px 8px; width: 85px; text-align: center;">ATS Ready</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${filteredResults.map((item, rIdx) => {
-              const a = item.analysis;
-              const d = a.diagnostics || {};
-              const contacts = d.contacts || {};
-              const skillsPreview = (d.skillsFound || []).slice(0, 4).join(', ');
-              const skillsCount = (d.skillsFound || []).length;
-              const projScore = a.sectionScores?.projects || 70;
-              const atsScore = a.atsCompatibility?.numericScore || 85;
-              const atsRating = a.atsCompatibility?.score || 'Good';
-              const bg = rIdx % 2 === 0 ? '#ffffff' : '#f8fafc';
-              return `
-                <tr style="background: ${bg}; border-bottom: 1px solid #e2e8f0;">
-                  <td style="padding: 6px 8px; font-weight: 700; text-align: center; color: #0284c7;">#${item.rank}</td>
-                  <td style="padding: 6px 8px;">
-                    <div style="font-weight: 700; color: #0f172a; font-size: 0.76rem;">${escHtml(item.candidateName)}</div>
-                    <div style="font-size: 0.68rem; color: #64748b;">${escHtml(contacts.email || item.email || '')}</div>
-                  </td>
-                  <td style="padding: 6px 8px;">
-                    <span style="font-weight: 700; color: #0f172a;">${a.overallScore}/100</span>
-                    <span style="font-size: 0.66rem; font-weight: 700; padding: 1px 4px; border-radius: 3px; background: #dcfce7; color: #166534; margin-left: 3px;">${a.grade}</span>
-                    <div style="font-size: 0.66rem; color: #0284c7;">${a.targetRoleFit?.fitPercentage || 85}% Match</div>
-                  </td>
-                  <td style="padding: 6px 8px; color: #334155; font-weight: 600;">${item.academicScore || a.academicScore || 'Verified'}</td>
-                  <td style="padding: 6px 8px;">
-                    <span style="font-size: 0.66rem; font-weight: 700; color: #dc2626; background: #fee2e2; padding: 1px 4px; border-radius: 3px;">${skillsCount} Skills</span>
-                    <span style="font-size: 0.68rem; color: #475569; margin-left: 4px;">${escHtml(skillsPreview)}</span>
-                  </td>
-                  <td style="padding: 6px 8px; text-align: center;">
-                    <span style="font-size: 0.68rem; font-weight: 700; color: #166534; background: #dcfce7; padding: 2px 6px; border-radius: 4px;">✓ Verified</span>
-                  </td>
-                  <td style="padding: 6px 8px;">
-                    <div style="font-weight: 600; color: #0f172a;">Multi (4+)</div>
-                    <div style="font-size: 0.66rem; color: #64748b;">${projScore}% depth</div>
-                  </td>
-                  <td style="padding: 6px 8px; text-align: center;">
-                    <div style="font-weight: 700; color: #166534;">${atsScore}%</div>
-                    <div style="font-size: 0.66rem; color: #64748b;">${atsRating}</div>
-                  </td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- EXACT PAGE BREAK -->
-    <div class="html2pdf__page-break" style="page-break-before: always; break-before: page; height: 0; line-height: 0;"></div>
-
-    <!-- PAGE 2+: CANDIDATE DETAILED PROFILES & DIAGNOSTIC AUDITS -->
-    <div class="staff-pdf-page staff-pdf-page-dossier" style="padding: 16px 20px; box-sizing: border-box;">
-      
-      <!-- Dossier Section Banner: Placed exactly at the top of Page 2 -->
-      <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; padding: 10px 16px; border-radius: 8px; border-left: 5px solid #38bdf8; margin-bottom: 12px;">
-        <h2 style="font-size: 1.15rem; font-weight: 800; color: #ffffff; margin: 0 0 2px 0;">Candidate Detailed Profiles: ATS Compliance, Projects &amp; Diagnostic Audits</h2>
-        <p style="font-size: 0.76rem; color: #94a3b8; margin: 0;">Individual evaluation dossiers covering ATS compatibility diagnostics, verified portfolio projects, and placement audit findings for all students.</p>
-      </div>
-
-      <!-- Candidate Detailed Cards (Compact, 3-column audit grid, page-break-inside avoid) -->
-      ${filteredResults.map((item) => {
-        const a = item.analysis;
-        const d = a.diagnostics || {};
-        const contacts = d.contacts || {};
-        const projScore = a.sectionScores?.projects || 70;
-        const expScore = a.sectionScores?.workExperience || 70;
-        const atsScore = a.atsCompatibility?.numericScore || 85;
-        const atsRating = a.atsCompatibility?.score || 'Good';
-        const projCount = projScore >= 80 ? 'Multi-Project (4+ Projects Verified)' : (projScore >= 60 ? '2-3 Core Production Projects' : '1 Foundational Project');
-        const projectsList = extractProjectsList(item.text);
-
-        const strengths = (a.strengths || []).slice(0, 3);
-        const weaknesses = (a.actionPlan || a.weaknesses?.map(w => w.weakness) || []).slice(0, 2);
-        const targetRoles = (a.suggestedRoles || []).slice(0, 3).map(r => r.title).join(', ') || 'Software Engineer, Full Stack Developer';
-        const topSkills = (d.skillsFound || []).slice(0, 8).join(', ') || 'Python, JavaScript, SQL';
-
-        return `
-          <div class="pdf-candidate-card" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; page-break-inside: avoid; break-inside: avoid; box-sizing: border-box;">
-            
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 8px; border-bottom: 1.5px solid #e2e8f0; margin-bottom: 10px;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 1rem; font-weight: 800; background: #0284c7; color: #ffffff; padding: 2px 8px; border-radius: 6px;">#${item.rank}</span>
-                <div>
-                  <h3 style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 0 0 2px 0;">${escHtml(item.candidateName)}</h3>
-                  <div style="font-size: 0.72rem; color: #64748b;">
-                    ${contacts.email ? `<span>${escHtml(contacts.email)}</span>` : ''}
-                    ${contacts.phone ? `<span> · ${escHtml(contacts.phone)}</span>` : ''}
-                    <span> · Academic CGPA: <strong>${item.academicScore || a.academicScore || 'Verified'}</strong></span>
-                  </div>
-                </div>
-              </div>
-              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px;">
-                <div style="font-size: 0.88rem; font-weight: 800; color: #0369a1; background: #e0f2fe; border: 1px solid #7dd3fc; padding: 2px 8px; border-radius: 6px;">
-                  <strong>${a.overallScore}</strong>/100 · Grade ${a.grade}
-                </div>
-                <div style="font-size: 0.7rem; font-weight: 700; color: #15803d; background: #dcfce7; border: 1px solid #86efac; padding: 1px 6px; border-radius: 4px;">
-                  ${a.targetRoleFit?.fitPercentage || 90}% Match (${(a.targetRoleFit?.priority || 'high').toUpperCase()})
-                </div>
-              </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 10px;">
-              
-              <!-- ATS COMPLIANCE BOX -->
-              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px;">
-                <div style="font-size: 0.76rem; font-weight: 700; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px;">
-                  🎯 ATS Compatibility Audit
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-                  <span style="font-size: 1.15rem; font-weight: 800; color: #0f172a;">${atsScore}%</span>
-                  <span style="font-size: 0.68rem; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: #dcfce7; color: #166534;">${atsRating} Rating</span>
-                </div>
-                <ul style="margin: 0; padding-left: 14px; font-size: 0.7rem; color: #475569; line-height: 1.4;">
-                  <li>✓ Standard ATS headings verified</li>
-                  <li>✓ Chronological structure &amp; clear dates</li>
-                  <li>✓ Contact details &amp; profile links parseable</li>
-                  ${(a.atsCompatibility?.issues || []).slice(0, 2).map(iss => `<li style="color: #64748b;">ℹ ${escHtml(iss)}</li>`).join('')}
-                </ul>
-              </div>
-
-              <!-- PROJECTS & PRACTICAL EXPERIENCE BOX -->
-              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px;">
-                <div style="font-size: 0.76rem; font-weight: 700; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px;">
-                  💼 Projects &amp; Applied Experience
-                </div>
-                <div style="display: flex; gap: 6px; margin-bottom: 6px;">
-                  <span style="font-size: 0.68rem; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: 600;">Projects: <strong>${projScore}/100</strong></span>
-                  <span style="font-size: 0.68rem; background: #f0fdf4; color: #166534; padding: 2px 6px; border-radius: 4px; font-weight: 600;">Exp: <strong>${expScore}/100</strong></span>
-                </div>
-                <div style="font-size: 0.7rem; color: #334155; line-height: 1.35;">
-                  <div style="margin-bottom: 3px;"><strong>Verified Depth:</strong> ${projCount}</div>
-                  ${projectsList.length > 0 
-                    ? projectsList.slice(0, 3).map(p => `<div style="margin-bottom: 2px;">• ${escHtml(p)}</div>`).join('')
-                    : `<div>• Hands-on project portfolio applying: ${escHtml(topSkills)}</div>`
-                  }
-                </div>
-              </div>
-
-              <!-- DETAILED AUDIT DIAGNOSTICS BOX -->
-              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px;">
-                <div style="font-size: 0.76rem; font-weight: 700; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px;">
-                  📋 Detailed Audit &amp; Placement Fit
-                </div>
-                <div style="font-size: 0.7rem; color: #334155; line-height: 1.35;">
-                  <div style="font-weight: 700; color: #1e293b; margin-bottom: 2px;">KEY STRENGTHS:</div>
-                  ${strengths.map(s => `<div style="margin-bottom: 2px;">✓ ${escHtml(s)}</div>`).join('')}
-                  <div style="font-weight: 700; color: #1e293b; margin-top: 4px; margin-bottom: 2px;">RECOMMENDED ROLE MATCHES:</div>
-                  <div style="color: #0369a1; font-weight: 600; margin-bottom: 2px;">${escHtml(targetRoles)}</div>
-                  ${weaknesses.length > 0 ? `
-                    <div style="font-weight: 700; color: #854d0e; margin-top: 4px; margin-bottom: 2px;">PRIORITY IMPROVEMENTS:</div>
-                    <div style="color: #64748b;">${escHtml(weaknesses[0])}</div>
-                  ` : ''}
-                </div>
-              </div>
-
-            </div>
-          </div>
-        `;
-      }).join('')}
-
     </div>
   `;
 
-  document.body.appendChild(renderWrapper);
+  // 2. Append comprehensive student detailed audits, ATS breakdown, and projects dossier
+  const dossierContainer = document.createElement('div');
+  dossierContainer.id = 'pdfTempDossierSection';
+  dossierContainer.className = 'pdf-dossier-wrapper html2pdf__page-break';
+
+  let dossierHtml = `
+    <div class="pdf-dossier-intro-banner">
+      <div class="pdf-dossier-title-wrap">
+        <h2 class="pdf-dossier-main-title">Candidate Detailed Profiles: ATS Compliance, Projects &amp; Diagnostic Audits</h2>
+        <p class="pdf-dossier-main-sub">Individual evaluation dossiers covering ATS compatibility diagnostics, verified portfolio projects, and placement audit findings for all students.</p>
+      </div>
+    </div>
+  `;
+
+  filteredResults.forEach((item) => {
+    if (item.isInvalidDocument) {
+      dossierHtml += `
+        <div class="pdf-candidate-card" style="page-break-inside: avoid; break-inside: avoid; border-color: #fca5a5; background: #fff5f5;">
+          <div class="pdf-cand-header">
+            <div class="pdf-cand-header-left">
+              <span class="pdf-cand-rank" style="background:#ef4444;">—</span>
+              <div class="pdf-cand-name-block">
+                <h3 class="pdf-cand-name">${escHtml(item.candidateName)}</h3>
+                <div class="pdf-cand-contact">
+                  <span>File: ${escHtml(item.filename)}</span>
+                </div>
+              </div>
+            </div>
+            <div class="pdf-cand-header-right">
+              <div class="pdf-cand-score-badge" style="background:#fee2e2; border-color:#fca5a5; color:#991b1b;">
+                Excluded Document
+              </div>
+            </div>
+          </div>
+          <div style="padding: 10px; color: #991b1b; font-size: 0.85rem;">
+            ⚠️ <strong>${escHtml(item.invalidReason)}:</strong> This document does not contain valid resume sections.
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    const a = item.analysis;
+    const d = a.diagnostics || {};
+    const contacts = d.contacts || {};
+    const projScore = a.sectionScores?.projects || 70;
+    const expScore = a.sectionScores?.workExperience || 70;
+    const atsScore = a.atsCompatibility?.numericScore || 85;
+    const atsRating = a.atsCompatibility?.score || 'Good';
+    const projCount = projScore >= 80 ? 'Multi-Project (4+ Projects Verified)' : (projScore >= 60 ? '2-3 Core Production Projects' : '1 Foundational Project');
+    const projectsList = extractProjectsList(item.text);
+
+    const strengths = (a.strengths || []).slice(0, 3);
+    const weaknesses = (a.actionPlan || a.weaknesses?.map(w => w.weakness) || []).slice(0, 2);
+    const targetRoles = (a.suggestedRoles || []).slice(0, 3).map(r => r.title).join(', ') || 'Software Engineer, Full Stack Developer';
+    const topSkills = (d.skillsFound || []).slice(0, 8).join(', ') || 'Python, JavaScript, SQL';
+
+    dossierHtml += `
+      <div class="pdf-candidate-card" style="page-break-inside: avoid; break-inside: avoid;">
+        <div class="pdf-cand-header">
+          <div class="pdf-cand-header-left">
+            <span class="pdf-cand-rank">#${item.rank}</span>
+            <div class="pdf-cand-name-block">
+              <h3 class="pdf-cand-name">${escHtml(item.candidateName)}</h3>
+              <div class="pdf-cand-contact">
+                ${contacts.email ? `<span>${escHtml(contacts.email)}</span>` : ''}
+                ${contacts.phone ? `<span>· ${escHtml(contacts.phone)}</span>` : ''}
+                <span>· Academic CGPA: <strong>${item.academicScore || a.academicScore || 'Verified'}</strong></span>
+              </div>
+            </div>
+          </div>
+          <div class="pdf-cand-header-right">
+            <div class="pdf-cand-score-badge">
+              <strong>${a.overallScore}</strong>/100 · Grade ${a.grade}
+            </div>
+            <div class="pdf-cand-fit-tag">
+              ${a.targetRoleFit?.fitPercentage || 90}% Match (${(a.targetRoleFit?.priority || 'high').toUpperCase()})
+            </div>
+          </div>
+        </div>
+
+        <div class="pdf-cand-grid">
+          <!-- ATS COMPLIANCE BOX -->
+          <div class="pdf-cand-box box-ats">
+            <div class="pdf-box-title">
+              <span class="pdf-box-icon">🎯</span> ATS Compatibility Audit
+            </div>
+            <div class="pdf-ats-score-row">
+              <span class="pdf-ats-num">${atsScore}%</span>
+              <span class="pdf-ats-grade grade-${atsRating.toLowerCase()}">${atsRating} Rating</span>
+            </div>
+            <div class="pdf-box-content">
+              <ul class="pdf-checklist">
+                <li><span class="chk-icon">✓</span> Standard ATS headings verified</li>
+                <li><span class="chk-icon">✓</span> Chronological structure &amp; clear dates</li>
+                <li><span class="chk-icon">✓</span> Contact details &amp; profile links parseable</li>
+                ${(a.atsCompatibility?.issues || []).slice(0, 2).map(iss => `<li class="ats-note"><span class="chk-icon">ℹ</span> ${escHtml(iss)}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
+
+          <!-- PROJECTS & PRACTICAL EXPERIENCE BOX -->
+          <div class="pdf-cand-box box-projects">
+            <div class="pdf-box-title">
+              <span class="pdf-box-icon">💼</span> Projects &amp; Applied Experience
+            </div>
+            <div class="pdf-metric-row">
+              <div class="pdf-metric-pill">Projects Score: <strong>${projScore}/100</strong></div>
+              <div class="pdf-metric-pill">Exp Score: <strong>${expScore}/100</strong></div>
+            </div>
+            <div class="pdf-project-summary">
+              <div class="pdf-proj-count-label">Verified Depth: <strong>${projCount}</strong></div>
+              <div class="pdf-proj-list">
+                ${projectsList.length > 0 
+                  ? projectsList.slice(0, 3).map(p => `<div class="pdf-proj-item">• ${escHtml(p)}</div>`).join('')
+                  : `<div class="pdf-proj-item">• Hands-on technical project portfolio applying: ${escHtml(topSkills)}</div>`
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- DETAILED AUDIT DIAGNOSTICS BOX -->
+          <div class="pdf-cand-box box-audit">
+            <div class="pdf-box-title">
+              <span class="pdf-box-icon">📋</span> Detailed Audit &amp; Placement Fit
+            </div>
+            <div class="pdf-box-content">
+              <div class="pdf-audit-subtitle">Key Strengths:</div>
+              <ul class="pdf-audit-list">
+                ${strengths.map(s => `<li>✓ ${escHtml(s)}</li>`).join('')}
+              </ul>
+              <div class="pdf-audit-subtitle" style="margin-top:6px;">Recommended Role Matches:</div>
+              <div class="pdf-role-matches">${escHtml(targetRoles)}</div>
+              ${weaknesses.length > 0 ? `
+                <div class="pdf-audit-subtitle" style="margin-top:6px;">Priority Improvements:</div>
+                <div class="pdf-audit-note">${escHtml(weaknesses[0])}</div>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  dossierContainer.innerHTML = dossierHtml;
+
+  // Insert banner and dossier, apply zero-offset export classes
+  resultsWrap.insertBefore(banner, resultsWrap.firstChild);
+  resultsWrap.appendChild(dossierContainer);
+  resultsWrap.classList.add('exporting-pdf');
+  document.body.classList.add('exporting-staff-pdf');
+
+  // Preserve scroll position and scroll to top for clean zero-offset capture
+  const prevScrollY = window.scrollY || window.pageYOffset || 0;
+  window.scrollTo(0, 0);
 
   try {
-    if (typeof window.html2pdf !== 'undefined') {
+    if (forcePrint) {
+      triggerStaffPrintFallback(batchName, resultsWrap.innerHTML);
+    } else if (typeof window.html2pdf !== 'undefined') {
       const opt = {
-        margin:       [6, 6, 6, 6],
+        margin:       [8, 8, 8, 8],
         filename:     `Class_Placement_Analysis_${batchName.replace(/[^a-zA-Z0-9_-]/g, '_')}_${new Date().toISOString().slice(0,10)}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  {
-          scale: 1.8,
+          scale: 1.5,
           useCORS: true,
           logging: false,
           scrollY: 0,
           scrollX: 0,
-          windowWidth: 1060,
           backgroundColor: '#ffffff'
         },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' },
-        pagebreak:    { mode: ['css', 'legacy'], avoid: ['.pdf-candidate-card'] }
+        pagebreak:    { mode: ['css', 'legacy'], avoid: ['.pdf-candidate-card', '.podium-card', '.batch-kpi-grid', '.candidate-table tr'] }
       };
 
-      await window.html2pdf().set(opt).from(renderWrapper).save();
+      await window.html2pdf().set(opt).from(resultsWrap).save();
       showToast('Classroom Analysis PDF report downloaded successfully!', 'success');
     } else {
-      triggerStaffPrintFallback(batchName, renderWrapper.innerHTML);
+      triggerStaffPrintFallback(batchName, resultsWrap.innerHTML);
     }
   } catch (err) {
     console.error('PDF Generation failed, falling back to browser print:', err);
-    triggerStaffPrintFallback(batchName, renderWrapper.innerHTML);
+    triggerStaffPrintFallback(batchName, resultsWrap.innerHTML);
   } finally {
-    renderWrapper.remove();
-    window.scrollTo(0, originalScrollY);
+    if (banner && banner.parentNode) {
+      banner.remove();
+    }
+    if (dossierContainer && dossierContainer.parentNode) {
+      dossierContainer.remove();
+    }
+    resultsWrap.classList.remove('exporting-pdf');
+    document.body.classList.remove('exporting-staff-pdf');
+    window.scrollTo(0, prevScrollY);
+
     if (btn) {
       btn.disabled = false;
       btn.innerHTML = originalHtml;
+    }
+    if (btnPrint) {
+      btnPrint.disabled = false;
+      btnPrint.innerHTML = originalPrintHtml;
     }
   }
 }
@@ -1790,19 +1708,39 @@ function triggerStaffPrintFallback(batchName, html) {
   document.title = `Class_Placement_Analysis_${batchName.replace(/[^a-zA-Z0-9_-]/g, '_')}_${new Date().toISOString().slice(0,10)}`;
   container.innerHTML = `
     <style>
-      @page { size: A4 landscape; margin: 8mm; }
+      @page { size: A4 landscape !important; margin: 8mm !important; }
+      #pdfReportContainer {
+        display: block !important;
+        visibility: visible !important;
+        position: static !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+      }
+      #pdfReportContainer .directory-toolbar,
+      #pdfReportContainer .btn-deduplicate,
+      #pdfReportContainer .btn-table-remove,
+      #pdfReportContainer .btn-table-audit,
+      #pdfReportContainer .table-actions-group,
+      #pdfReportContainer .btn-card-remove,
+      #pdfReportContainer .btn-podium-audit,
+      #pdfReportContainer #btnAutoDeduplicate {
+        display: none !important;
+      }
+      #pdfReportContainer .pdf-audit-print-tag {
+        display: block !important;
+      }
     </style>
     ${html}
   `;
-  container.setAttribute('data-ready', 'true');
   showToast('Preparing batch print layout... 🖨️', 'info');
   setTimeout(() => {
     window.print();
-  }, 150);
+  }, 200);
   const cleanup = () => {
     document.title = originalTitle;
     container.innerHTML = '';
-    container.removeAttribute('data-ready');
     window.removeEventListener('afterprint', cleanup);
   };
   window.addEventListener('afterprint', cleanup);
