@@ -59,7 +59,22 @@ function init() {
   setupApiKey();
   updateAllAdSlots();
   updateGeminiStatusBadge();
-  restoreSessionOrTailor();
+
+  // Detect browser page reload / refresh
+  const navEntries = (typeof performance !== 'undefined' && performance.getEntriesByType)
+    ? performance.getEntriesByType('navigation')
+    : [];
+  const isReload = navEntries.length > 0
+    ? navEntries[0].type === 'reload'
+    : (typeof performance !== 'undefined' && performance.navigation && performance.navigation.type === 1);
+
+  if (isReload) {
+    // On explicit page reload/refresh: wipe all session resume history so it never lingers in paste text
+    clearAllResumeSession();
+    resetToEmptyState();
+  } else {
+    restoreSessionOrTailor();
+  }
 }
 
 // ─── AI Resume Editor Trigger Setup ───────────────────────────
@@ -203,18 +218,11 @@ async function handleFile(file) {
     try {
       sessionStorage.setItem('resumereviewer_saved_resume_text', text);
       sessionStorage.setItem('resumereviewer_saved_filename', file.name);
+      sessionStorage.setItem('resumereviewer_saved_filesize', file.size);
+      sessionStorage.setItem('resumereviewer_saved_words', text.split(/\s+/).length);
     } catch (e) {}
 
-    fileInfo.className = 'file-info';
-    fileInfo.classList.remove('hidden');
-    fileInfo.innerHTML = `
-      <div style="display:flex; align-items:center; gap:8px; width:100%; min-width:0;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
-        <span style="min-width:0; flex:1; overflow-wrap:anywhere; word-break:break-word;">
-          <strong>${file.name}</strong> — ${(file.size / 1024).toFixed(0)} KB · ${text.split(/\s+/).length.toLocaleString()} words extracted
-        </span>
-      </div>
-    `;
+    renderUploadedFileInfo(file.name, file.size, text.split(/\s+/).length);
     showToast(`${file.name} verified as Resume. Ready for analysis!`, 'success');
     updateAnalyseButton();
   } catch (err) {
@@ -223,6 +231,65 @@ async function handleFile(file) {
     fileInfo.innerHTML = `<span>⚠️ ${err.message}</span>`;
     showToast(err.message, 'error');
   }
+}
+
+// ─── Render Uploaded File Card with Remove Button ──────────────
+function renderUploadedFileInfo(fileName, fileSize, wordCount) {
+  if (!fileInfo) return;
+  fileInfo.className = 'file-info';
+  fileInfo.classList.remove('hidden');
+  const kb = fileSize ? (fileSize / 1024).toFixed(0) : '—';
+  fileInfo.innerHTML = `
+    <div style="display:flex; align-items:center; gap:8px; width:100%; min-width:0;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span style="min-width:0; flex:1; overflow-wrap:anywhere; word-break:break-word;">
+        <strong>${fileName}</strong> — ${kb} KB · ${Number(wordCount || 0).toLocaleString()} words extracted
+      </span>
+      <button type="button" class="btn-remove-file" id="btnRemoveFile" title="Remove this uploaded resume">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        <span>Remove</span>
+      </button>
+    </div>
+  `;
+
+  const btnRemove = document.getElementById('btnRemoveFile');
+  if (btnRemove) {
+    btnRemove.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearAllResumeSession();
+      resetToEmptyState();
+      showToast('Resume removed.', 'info');
+    });
+  }
+}
+
+// ─── Complete Session & Resume History Purge ──────────────────
+function clearAllResumeSession() {
+  currentResumeText = '';
+  currentAnalysis = null;
+  try {
+    sessionStorage.removeItem('resumereviewer_saved_resume_text');
+    sessionStorage.removeItem('resumereviewer_saved_filename');
+    sessionStorage.removeItem('resumereviewer_saved_filesize');
+    sessionStorage.removeItem('resumereviewer_saved_words');
+    sessionStorage.removeItem('resumereviewer_saved_analysis');
+    sessionStorage.removeItem('resumereviewer_saved_target_role');
+    sessionStorage.removeItem('resumereviewer_saved_jd');
+    localStorage.removeItem('resumereviewer_tailor_payload');
+    localStorage.removeItem('resumereviewer_saved_resume_text');
+    localStorage.removeItem('resumereviewer_candidate_profile');
+  } catch (e) {}
+
+  if (resumeTextarea) resumeTextarea.value = '';
+  if (charCount) charCount.textContent = '0 characters';
+  if (fileInfo) {
+    fileInfo.innerHTML = '';
+    fileInfo.className = 'file-info hidden';
+  }
+  const fileInput = document.getElementById('fileInput');
+  if (fileInput) fileInput.value = '';
+  updateAnalyseButton();
 }
 
 // ─── Textarea ─────────────────────────────────────────────────
@@ -238,16 +305,9 @@ function setupTextarea() {
   });
 
   clearTextBtn.addEventListener('click', () => {
-    resumeTextarea.value = '';
-    charCount.textContent = '0 characters';
-    currentResumeText = '';
-    try {
-      sessionStorage.removeItem('resumereviewer_saved_resume_text');
-      sessionStorage.removeItem('resumereviewer_saved_filename');
-      sessionStorage.removeItem('resumereviewer_saved_analysis');
-    } catch (e) {}
+    clearAllResumeSession();
     resetToEmptyState();
-    updateAnalyseButton();
+    showToast('Resume text cleared.', 'info');
   });
 }
 
@@ -709,33 +769,53 @@ function restoreSessionOrTailor() {
           jdInput.value = payload.jobDescription;
         }
 
-        const savedResume = sessionStorage.getItem('resumereviewer_saved_resume_text') || localStorage.getItem('resumereviewer_saved_resume_text');
+        const savedResume = sessionStorage.getItem('resumereviewer_saved_resume_text');
+        const savedFileName = sessionStorage.getItem('resumereviewer_saved_filename');
+        const savedFileSize = sessionStorage.getItem('resumereviewer_saved_filesize') || 102400;
+        const savedWords = sessionStorage.getItem('resumereviewer_saved_words') || (savedResume ? savedResume.split(/\s+/).length : 0);
+
         if (savedResume && savedResume.trim().length >= 40) {
           currentResumeText = savedResume.trim();
-          if (resumeTextarea) {
-            resumeTextarea.value = currentResumeText;
-            if (charCount) charCount.textContent = `${currentResumeText.length.toLocaleString()} characters`;
+
+          if (savedFileName) {
+            // Keep Upload File tab active — analyze by uploaded resume without dumping text into paste box
+            const uploadTab = document.querySelector('.tab[data-tab="upload"]');
+            const uploadContent = document.getElementById('tab-upload');
+            const pasteTab = document.querySelector('.tab[data-tab="paste"]');
+            const pasteContent = document.getElementById('tab-paste');
+            if (uploadTab && uploadContent && pasteTab && pasteContent) {
+              pasteTab.classList.remove('active');
+              pasteContent.classList.remove('active');
+              uploadTab.classList.add('active');
+              uploadContent.classList.add('active');
+            }
+            if (resumeTextarea) resumeTextarea.value = '';
+            renderUploadedFileInfo(savedFileName, savedFileSize, savedWords);
+          } else {
+            // User originally pasted text
+            const pasteTab = document.querySelector('.tab[data-tab="paste"]');
+            const pasteContent = document.getElementById('tab-paste');
+            const uploadTab = document.querySelector('.tab[data-tab="upload"]');
+            const uploadContent = document.getElementById('tab-upload');
+            if (pasteTab && pasteContent && uploadTab && uploadContent) {
+              uploadTab.classList.remove('active');
+              uploadContent.classList.remove('active');
+              pasteTab.classList.add('active');
+              pasteContent.classList.add('active');
+            }
+            if (resumeTextarea) {
+              resumeTextarea.value = currentResumeText;
+              if (charCount) charCount.textContent = `${currentResumeText.length.toLocaleString()} characters`;
+            }
           }
 
-          // Switch to paste tab so user sees their populated resume
-          const pasteTab = document.querySelector('.tab[data-tab="paste"]');
-          const pasteContent = document.getElementById('tab-paste');
-          const uploadTab = document.querySelector('.tab[data-tab="upload"]');
-          const uploadContent = document.getElementById('tab-upload');
-          if (pasteTab && pasteContent && uploadTab && uploadContent) {
-            uploadTab.classList.remove('active');
-            uploadContent.classList.remove('active');
-            pasteTab.classList.add('active');
-            pasteContent.classList.add('active');
-          }
           updateAnalyseButton();
-
           showToast(`Tailoring for ${payload.company}! Recalculating ATS match & keywords...`, 'success');
-          // Automatically run analysis with the tailored parameters!
+          // Automatically run analysis with the tailored parameters on the uploaded resume!
           runAnalysis();
           return;
         } else {
-          showToast(`Target role pre-filled for ${payload.company}! Upload or paste your resume to tailor.`, 'info');
+          showToast(`Target role pre-filled for ${payload.company}! Upload your resume to tailor.`, 'info');
           return;
         }
       }
@@ -748,28 +828,50 @@ function restoreSessionOrTailor() {
   try {
     const savedAnalysisRaw = sessionStorage.getItem('resumereviewer_saved_analysis');
     const savedResumeText = sessionStorage.getItem('resumereviewer_saved_resume_text');
+    const savedFileName = sessionStorage.getItem('resumereviewer_saved_filename');
+    const savedFileSize = sessionStorage.getItem('resumereviewer_saved_filesize') || 102400;
+    const savedWords = sessionStorage.getItem('resumereviewer_saved_words') || (savedResumeText ? savedResumeText.split(/\s+/).length : 0);
+
     if (savedAnalysisRaw && savedResumeText) {
       currentResumeText = savedResumeText;
-      if (resumeTextarea) {
-        resumeTextarea.value = currentResumeText;
-        if (charCount) charCount.textContent = `${currentResumeText.length.toLocaleString()} characters`;
+
+      if (savedFileName) {
+        // Keep in Upload File tab!
+        const uploadTab = document.querySelector('.tab[data-tab="upload"]');
+        const uploadContent = document.getElementById('tab-upload');
+        const pasteTab = document.querySelector('.tab[data-tab="paste"]');
+        const pasteContent = document.getElementById('tab-paste');
+        if (uploadTab && uploadContent && pasteTab && pasteContent) {
+          pasteTab.classList.remove('active');
+          pasteContent.classList.remove('active');
+          uploadTab.classList.add('active');
+          uploadContent.classList.add('active');
+        }
+        if (resumeTextarea) resumeTextarea.value = '';
+        renderUploadedFileInfo(savedFileName, savedFileSize, savedWords);
+      } else {
+        const pasteTab = document.querySelector('.tab[data-tab="paste"]');
+        const pasteContent = document.getElementById('tab-paste');
+        const uploadTab = document.querySelector('.tab[data-tab="upload"]');
+        const uploadContent = document.getElementById('tab-upload');
+        if (pasteTab && pasteContent && uploadTab && uploadContent) {
+          uploadTab.classList.remove('active');
+          uploadContent.classList.remove('active');
+          pasteTab.classList.add('active');
+          pasteContent.classList.add('active');
+        }
+        if (resumeTextarea) {
+          resumeTextarea.value = currentResumeText;
+          if (charCount) charCount.textContent = `${currentResumeText.length.toLocaleString()} characters`;
+        }
       }
+
       const savedRole = sessionStorage.getItem('resumereviewer_saved_target_role');
       if (savedRole && targetRoleInput) targetRoleInput.value = savedRole;
       const savedJd = sessionStorage.getItem('resumereviewer_saved_jd');
       const jdInput = document.getElementById('jobDescription');
       if (savedJd && jdInput) jdInput.value = savedJd;
 
-      const pasteTab = document.querySelector('.tab[data-tab="paste"]');
-      const pasteContent = document.getElementById('tab-paste');
-      const uploadTab = document.querySelector('.tab[data-tab="upload"]');
-      const uploadContent = document.getElementById('tab-upload');
-      if (pasteTab && pasteContent && uploadTab && uploadContent) {
-        uploadTab.classList.remove('active');
-        uploadContent.classList.remove('active');
-        pasteTab.classList.add('active');
-        pasteContent.classList.add('active');
-      }
       updateAnalyseButton();
 
       const parsedAnalysis = JSON.parse(savedAnalysisRaw);

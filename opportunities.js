@@ -854,10 +854,10 @@ function initPortalDeepLinks() {
       color: '#0d9488'
     },
     {
-      name: 'Google Jobs Aggregator',
+      name: 'Google for Jobs',
       sub: 'Real-Time Aggregator across Company Career Boards',
       iconSvg: `<svg width="22" height="22" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.54 0 2.94.53 4.05 1.59l3.04-3.04C17.24 1.77 14.81 1 12 1 7.42 1 3.52 3.61 1.63 7.37l3.65 2.83C6.18 7.36 8.87 5 12 5z"/><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58l3.71 2.88c2.16-1.99 3.71-4.92 3.71-8.7z"/><path fill="#FBBC05" d="M5.28 14.8c-.24-.72-.38-1.49-.38-2.3s.14-1.58.38-2.3L1.63 7.37C.59 9.47 0 11.67 0 14s.59 4.53 1.63 6.63l3.65-2.83z"/><path fill="#34A853" d="M12 23c3.24 0 5.95-1.08 7.93-2.91l-3.71-2.88c-1.08.72-2.45 1.16-4.22 1.16-3.13 0-5.82-2.36-6.72-5.2l-3.65 2.83C3.52 20.39 7.42 23 12 23z"/></svg>`,
-      url: `https://www.google.com/search?q=${encodeURIComponent(queryRole + ' fresher jobs internships ' + locationParam)}&ibp=htl;jobs`,
+      url: `https://www.google.com/search?q=${encodeURIComponent(queryRole + ' jobs in ' + locationParam)}&ibp=htl;jobs#htivrt=jobs`,
       actionText: 'View on Google Jobs →',
       badge: 'Aggregator',
       color: '#ea4335'
