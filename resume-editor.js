@@ -714,9 +714,14 @@ function renderEditorInterface(modal, data, original) {
             Download TXT
           </button>
 
-          <button class="btn-editor-action btn-download-pdf" id="btnDownloadPdf" title="Print / Save ATS-Formatted PDF">
+          <button class="btn-editor-action btn-download-pdf" id="btnDownloadPdf" title="Download ATS Vector PDF (100% Text Parsable by ATS & PDF.js)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download ATS PDF
+          </button>
+
+          <button class="btn-editor-action btn-print-pdf" id="btnPrintPdf" title="Print ATS Resume via Browser Print Dialog">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-            Download PDF
+            Print
           </button>
 
           <button class="btn-close-editor" id="btnCloseEditor" title="Close editor">✕</button>
@@ -1101,11 +1106,19 @@ function setupEditorEventListeners(modal, data, original) {
     });
   }
 
-  // Download PDF
+  // Download ATS Vector PDF
   const btnPdf = modal.querySelector('#btnDownloadPdf');
   if (btnPdf) {
     btnPdf.addEventListener('click', () => {
       exportResumeToPdf(data);
+    });
+  }
+
+  // Print ATS Resume
+  const btnPrint = modal.querySelector('#btnPrintPdf');
+  if (btnPrint) {
+    btnPrint.addEventListener('click', () => {
+      printResumeFromDom(data);
     });
   }
 
@@ -1589,50 +1602,249 @@ export async function exportResumeToPdf(data) {
   const cleanName = (name || 'Candidate').replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_') || 'Candidate';
   const pdfFilename = `${cleanName}_Resume.pdf`;
 
-  if (typeof window.html2pdf !== 'undefined') {
-    showEditorToast(`Downloading ${pdfFilename}... 📄`);
+  try {
+    showEditorToast(`Compiling ATS Vector PDF (${pdfFilename})... 📄`);
 
-    // Create an off-screen render wrapper for high-fidelity conversion
-    const renderWrapper = document.createElement('div');
-    renderWrapper.className = 'ats-pdf-render-canvas';
-    renderWrapper.style.position = 'fixed';
-    renderWrapper.style.left = '-9999px';
-    renderWrapper.style.top = '0';
-    renderWrapper.style.width = '800px';
-    renderWrapper.style.background = '#ffffff';
-    renderWrapper.style.padding = '36px 40px';
-    renderWrapper.style.color = '#111827';
-    renderWrapper.style.fontFamily = "'Calibri', 'Arial', 'Helvetica Neue', sans-serif";
-    renderWrapper.style.zIndex = '-99999';
-    renderWrapper.innerHTML = html;
-    document.body.appendChild(renderWrapper);
-
-    const opt = {
-      margin:       [10, 10, 10, 10],
-      filename:     pdfFilename,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
-      },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak:    { mode: ['css', 'legacy'], avoid: ['.ats-print-section', '.ats-print-entry'] }
+    const resumePayload = {
+      name,
+      title,
+      contact: contactParts.join(' | '),
+      summary,
+      skills,
+      experience: jobs,
+      projects: projs,
+      education: eduLines,
+      certifications: certLines,
+      achievements: achLines
     };
 
-    try {
-      await window.html2pdf().set(opt).from(renderWrapper.firstElementChild || renderWrapper).save();
-      showEditorToast(`Downloaded ${pdfFilename} successfully! 🎉`);
-    } catch (err) {
-      console.warn('html2pdf download failed, falling back to window.print():', err);
-      triggerPrintFallback(cleanName, html, container);
-    } finally {
-      renderWrapper.remove();
-    }
-  } else {
+    const pdfBytes = generateAtsVectorPdf(resumePayload);
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const blobUrl = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = pdfFilename;
+    document.body.appendChild(link);
+    link.click();
+
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    }, 2500);
+
+    showEditorToast(`Downloaded ${pdfFilename} (100% ATS Readable Vector PDF) 🎉`);
+  } catch (err) {
+    console.warn('Vector PDF generation error, falling back to print dialog:', err);
     triggerPrintFallback(cleanName, html, container);
   }
+}
+
+/**
+ * Print ATS-formatted resume via browser print dialog.
+ */
+export function printResumeFromDom(data) {
+  const container = document.getElementById('pdfReportContainer');
+  if (!container) {
+    showEditorToast('Print container element not found. Please refresh page.');
+    return;
+  }
+
+  const name = document.getElementById('editName')?.innerText.trim() || data?.name || 'CANDIDATE';
+  const cleanName = (name || 'Candidate').replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_') || 'Candidate';
+
+  // Construct HTML using the same live DOM extraction
+  const title = document.getElementById('editTitle')?.innerText.trim() || data?.title || '';
+  const email = document.getElementById('editEmail')?.innerText.trim() || data?.contact?.email || '';
+  const phone = document.getElementById('editPhone')?.innerText.trim() || data?.contact?.phone || '';
+  const loc = document.getElementById('editLocation')?.innerText.trim() || data?.contact?.location || '';
+  const linkedin = document.getElementById('editLinkedin')?.innerText.trim() || data?.contact?.linkedin || '';
+  const github = document.getElementById('editGithub')?.innerText.trim() || data?.contact?.github || '';
+  const contactParts = [email, phone, loc, linkedin, github].filter(Boolean);
+  const summary = document.getElementById('editSummary')?.innerText.trim() || data?.summary || '';
+  const skills = document.getElementById('editSkills')?.innerText.trim() || (data?.skills || []).join(', ');
+
+  const paper = document.getElementById('editorResumePaper');
+  const jobs = [];
+  if (paper) {
+    paper.querySelectorAll('#experienceContainer .resume-job-item').forEach(j => {
+      const jTitle = j.querySelector('.job-title')?.innerText.trim() || '';
+      const jComp = j.querySelector('.job-company')?.innerText.trim() || '';
+      const jPeriod = j.querySelector('.job-period')?.innerText.trim() || '';
+      const bullets = [];
+      j.querySelectorAll('.bullet-item').forEach(b => {
+        const text = b.innerText.trim();
+        if (text) bullets.push(text);
+      });
+      if (jTitle || jComp || bullets.length > 0) {
+        jobs.push({ title: jTitle, company: jComp, period: jPeriod, bullets });
+      }
+    });
+  }
+  if (jobs.length === 0 && data?.experience?.length > 0) jobs.push(...data.experience);
+
+  const projs = [];
+  if (paper) {
+    paper.querySelectorAll('#projectsContainer .resume-proj-item').forEach(p => {
+      const pTitle = p.querySelector('.proj-title')?.innerText.trim() || '';
+      const pTools = p.querySelector('.proj-tools')?.innerText.trim() || '';
+      const bullets = [];
+      p.querySelectorAll('.bullet-item').forEach(b => {
+        const text = b.innerText.trim();
+        if (text) bullets.push(text);
+      });
+      if (pTitle || bullets.length > 0) {
+        projs.push({ name: pTitle, tools: pTools.replace(/^[\[\(]|[\)\]]$/g, '').trim(), bullets });
+      }
+    });
+  }
+  if (projs.length === 0 && data?.projects?.length > 0) projs.push(...data.projects);
+
+  const eduLines = [];
+  if (paper) {
+    const eduEl = document.getElementById('editEducation');
+    if (eduEl) {
+      Array.from(eduEl.children).forEach(c => {
+        const text = c.innerText.trim();
+        if (text) eduLines.push(text);
+      });
+      if (eduLines.length === 0 && eduEl.innerText.trim()) {
+        eduLines.push(...eduEl.innerText.trim().split('\n').filter(Boolean));
+      }
+    }
+  }
+  if (eduLines.length === 0 && data?.education?.length > 0) eduLines.push(...data.education);
+
+  const certLines = [];
+  if (paper) {
+    const certEl = document.getElementById('editCertifications');
+    if (certEl) {
+      Array.from(certEl.children).forEach(c => {
+        const text = c.innerText.trim();
+        if (text) certLines.push(text);
+      });
+      if (certLines.length === 0 && certEl.innerText.trim()) {
+        certLines.push(...certEl.innerText.trim().split('\n').filter(Boolean));
+      }
+    }
+  }
+  if (certLines.length === 0 && data?.certifications?.length > 0) certLines.push(...data.certifications);
+
+  const achLines = [];
+  if (paper) {
+    const achEl = document.getElementById('editAchievements');
+    if (achEl) {
+      Array.from(achEl.children).forEach(c => {
+        const text = c.innerText.trim();
+        if (text) achLines.push(text);
+      });
+      if (achLines.length === 0 && achEl.innerText.trim()) {
+        achLines.push(...achEl.innerText.trim().split('\n').filter(Boolean));
+      }
+    }
+  }
+  if (achLines.length === 0 && data?.achievements?.length > 0) achLines.push(...data.achievements);
+
+  const html = `
+    <div class="ats-resume-print-document">
+      <header class="ats-print-header">
+        <h1 class="ats-print-name">${escHtml(name)}</h1>
+        ${title ? `<div class="ats-print-title">${escHtml(title)}</div>` : ''}
+        ${contactParts.length > 0 ? `
+          <div class="ats-print-contact">
+            ${contactParts.map(escHtml).join(' &bull; ')}
+          </div>
+        ` : ''}
+      </header>
+
+      ${summary ? `
+        <section class="ats-print-section">
+          <h2 class="ats-print-sec-title">PROFESSIONAL SUMMARY</h2>
+          <div class="ats-print-divider"></div>
+          <p class="ats-print-paragraph">${escHtml(summary)}</p>
+        </section>
+      ` : ''}
+
+      ${skills ? `
+        <section class="ats-print-section">
+          <h2 class="ats-print-sec-title">TECHNICAL SKILLS</h2>
+          <div class="ats-print-divider"></div>
+          <p class="ats-print-paragraph">${escHtml(skills)}</p>
+        </section>
+      ` : ''}
+
+      ${jobs.length > 0 ? `
+        <section class="ats-print-section">
+          <h2 class="ats-print-sec-title">WORK EXPERIENCE</h2>
+          <div class="ats-print-divider"></div>
+          ${jobs.map(j => `
+            <div class="ats-print-entry">
+              <div class="ats-print-entry-header">
+                <div>
+                  <strong>${escHtml(j.title)}</strong>
+                  ${j.company ? `<span class="ats-print-company"> &mdash; ${escHtml(j.company)}</span>` : ''}
+                </div>
+                ${j.period ? `<span class="ats-print-period">${escHtml(j.period)}</span>` : ''}
+              </div>
+              ${j.bullets && j.bullets.length > 0 ? `
+                <ul class="ats-print-bullets">
+                  ${j.bullets.map(b => `<li>${escHtml(b)}</li>`).join('')}
+                </ul>
+              ` : ''}
+            </div>
+          `).join('')}
+        </section>
+      ` : ''}
+
+      ${projs.length > 0 ? `
+        <section class="ats-print-section">
+          <h2 class="ats-print-sec-title">KEY PROJECTS &amp; TECHNICAL SYSTEMS</h2>
+          <div class="ats-print-divider"></div>
+          ${projs.map(p => `
+            <div class="ats-print-entry">
+              <div class="ats-print-entry-header">
+                <div>
+                  <strong>${escHtml(p.name)}</strong>
+                  ${p.tools ? `<span class="ats-print-tools"> [${escHtml(p.tools)}]</span>` : ''}
+                </div>
+              </div>
+              ${p.bullets && p.bullets.length > 0 ? `
+                <ul class="ats-print-bullets">
+                  ${p.bullets.map(b => `<li>${escHtml(b)}</li>`).join('')}
+                </ul>
+              ` : ''}
+            </div>
+          `).join('')}
+        </section>
+      ` : ''}
+
+      ${eduLines.length > 0 ? `
+        <section class="ats-print-section">
+          <h2 class="ats-print-sec-title">EDUCATION</h2>
+          <div class="ats-print-divider"></div>
+          ${eduLines.map(e => `<div class="ats-print-edu-line">${escHtml(e)}</div>`).join('')}
+        </section>
+      ` : ''}
+
+      ${certLines.length > 0 ? `
+        <section class="ats-print-section">
+          <h2 class="ats-print-sec-title">CERTIFICATIONS</h2>
+          <div class="ats-print-divider"></div>
+          ${certLines.map(c => `<div class="ats-print-edu-line">${escHtml(c)}</div>`).join('')}
+        </section>
+      ` : ''}
+
+      ${achLines.length > 0 ? `
+        <section class="ats-print-section">
+          <h2 class="ats-print-sec-title">HONORS &amp; ACHIEVEMENTS</h2>
+          <div class="ats-print-divider"></div>
+          ${achLines.map(a => `<div class="ats-print-edu-line">${escHtml(a)}</div>`).join('')}
+        </section>
+      ` : ''}
+    </div>
+  `;
+
+  triggerPrintFallback(cleanName, html, container);
 }
 
 function triggerPrintFallback(cleanName, html, container) {
@@ -1655,5 +1867,334 @@ function triggerPrintFallback(cleanName, html, container) {
   };
   window.addEventListener('afterprint', cleanup);
   setTimeout(cleanup, 60000);
+}
+
+/**
+ * Generates a pure PDF-1.4 binary file with Type 1 standard vector fonts.
+ * Guaranteed 100% extractable and searchable by PDF.js and ATS parsers.
+ */
+export function generateAtsVectorPdf(resumeData) {
+  const sanitize = (str) => {
+    if (!str) return '';
+    return String(str)
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/[\u2013\u2014]/g, '-')
+      .replace(/[\u2022\u25CF\u00B7]/g, '-')
+      .replace(/\u00A0/g, ' ')
+      .replace(/[^\x20-\x7E\t]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  const escapePdf = (str) => {
+    return sanitize(str)
+      .replace(/\\/g, '\\\\')
+      .replace(/\(/g, '\\(')
+      .replace(/\)/g, '\\)');
+  };
+
+  const PAGE_WIDTH = 595.28;  // A4 width in pt
+  const PAGE_HEIGHT = 841.89; // A4 height in pt
+  const MARGIN_LEFT = 40;
+  const MARGIN_RIGHT = 40;
+  const MARGIN_TOP = 40;
+  const MARGIN_BOTTOM = 40;
+  const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT;
+
+  const wrapText = (text, fontSize, maxWidth) => {
+    const words = sanitize(text).split(' ');
+    const lines = [];
+    let currentLine = '';
+    const maxChars = Math.floor(maxWidth / (fontSize * 0.50));
+
+    for (const w of words) {
+      if (!currentLine) {
+        currentLine = w;
+      } else if ((currentLine + ' ' + w).length <= maxChars) {
+        currentLine += ' ' + w;
+      } else {
+        lines.push(currentLine);
+        currentLine = w;
+      }
+    }
+    if (currentLine) lines.push(currentLine);
+    return lines;
+  };
+
+  const pages = [];
+  let currentCommands = [];
+  let currentY = PAGE_HEIGHT - MARGIN_TOP;
+
+  const startNewPage = () => {
+    if (currentCommands.length > 0) {
+      pages.push(currentCommands.join('\n'));
+    }
+    currentCommands = [];
+    currentY = PAGE_HEIGHT - MARGIN_TOP;
+  };
+
+  const checkSpace = (neededPt) => {
+    if (currentY - neededPt < MARGIN_BOTTOM) {
+      startNewPage();
+    }
+  };
+
+  const addText = (text, x, y, font = 'F2', size = 9.5, color = '0 0 0') => {
+    const escaped = escapePdf(text);
+    if (!escaped) return;
+    currentCommands.push(`BT /${font} ${size} Tf ${color} rg 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${escaped}) Tj ET`);
+  };
+
+  const addLine = (x1, y1, x2, y2, color = '0.7 0.7 0.7', lineWidth = 0.5) => {
+    currentCommands.push(`${lineWidth} w ${color} RG ${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S`);
+  };
+
+  const name = sanitize(resumeData.name || 'CANDIDATE').toUpperCase();
+  const title = sanitize(resumeData.title || '');
+  const contact = sanitize(resumeData.contact || '');
+  const summary = sanitize(resumeData.summary || '');
+  const skills = sanitize(resumeData.skills || '');
+  const experience = resumeData.experience || [];
+  const projects = resumeData.projects || [];
+  const education = resumeData.education || [];
+  const certifications = resumeData.certifications || [];
+  const achievements = resumeData.achievements || [];
+
+  // 1. Header (Centered Name, Title, Contact)
+  checkSpace(65);
+  const nameSize = 16;
+  const nameWidth = name.length * nameSize * 0.55;
+  const nameX = Math.max(MARGIN_LEFT, (PAGE_WIDTH - nameWidth) / 2);
+  addText(name, nameX, currentY, 'F1', nameSize, '0.06 0.1 0.2');
+  currentY -= 18;
+
+  if (title) {
+    const titleSize = 10;
+    const titleWidth = title.length * titleSize * 0.50;
+    const titleX = Math.max(MARGIN_LEFT, (PAGE_WIDTH - titleWidth) / 2);
+    addText(title, titleX, currentY, 'F2', titleSize, '0.25 0.3 0.38');
+    currentY -= 15;
+  }
+
+  if (contact) {
+    const contactSize = 8.5;
+    const contactWidth = contact.length * contactSize * 0.48;
+    const contactX = Math.max(MARGIN_LEFT, (PAGE_WIDTH - contactWidth) / 2);
+    addText(contact, contactX, currentY, 'F2', contactSize, '0.35 0.38 0.42');
+    currentY -= 14;
+  }
+  currentY -= 6;
+
+  // Section Header helper
+  const renderSectionHeader = (heading) => {
+    checkSpace(38);
+    currentY -= 6;
+    addText(heading, MARGIN_LEFT, currentY, 'F1', 10, '0.06 0.15 0.35');
+    currentY -= 4;
+    addLine(MARGIN_LEFT, currentY, PAGE_WIDTH - MARGIN_RIGHT, currentY, '0.78 0.82 0.88', 0.75);
+    currentY -= 12;
+  };
+
+  // 2. Professional Summary
+  if (summary) {
+    renderSectionHeader('PROFESSIONAL SUMMARY:');
+    const lines = wrapText(summary, 9.5, CONTENT_WIDTH);
+    for (const line of lines) {
+      checkSpace(13);
+      addText(line, MARGIN_LEFT, currentY, 'F2', 9.5, '0.12 0.12 0.12');
+      currentY -= 12.5;
+    }
+    currentY -= 4;
+  }
+
+  // 3. Technical Skills
+  if (skills) {
+    renderSectionHeader('TECHNICAL SKILLS:');
+    const lines = wrapText(skills, 9.5, CONTENT_WIDTH);
+    for (const line of lines) {
+      checkSpace(13);
+      addText(line, MARGIN_LEFT, currentY, 'F2', 9.5, '0.12 0.12 0.12');
+      currentY -= 12.5;
+    }
+    currentY -= 4;
+  }
+
+  // 4. Work Experience
+  if (experience.length > 0) {
+    renderSectionHeader('WORK EXPERIENCE:');
+    for (const job of experience) {
+      checkSpace(26);
+      const jTitle = sanitize(job.title || 'Role');
+      const jComp = sanitize(job.company || '');
+      const jPeriod = sanitize(job.period || '');
+
+      addText(jTitle, MARGIN_LEFT, currentY, 'F1', 9.5, '0.08 0.1 0.15');
+      let offset = jTitle.length * 9.5 * 0.52 + 5;
+      if (jComp) {
+        addText(`- ${jComp}`, MARGIN_LEFT + offset, currentY, 'F2', 9.5, '0.25 0.25 0.25');
+      }
+      if (jPeriod) {
+        const periodWidth = jPeriod.length * 9.0 * 0.50;
+        const periodX = PAGE_WIDTH - MARGIN_RIGHT - periodWidth;
+        addText(jPeriod, Math.max(MARGIN_LEFT + offset + 40, periodX), currentY, 'F3', 9.0, '0.35 0.4 0.45');
+      }
+      currentY -= 13;
+
+      if (job.bullets && job.bullets.length > 0) {
+        for (const b of job.bullets) {
+          const bulletLines = wrapText(b, 9.0, CONTENT_WIDTH - 15);
+          for (let li = 0; li < bulletLines.length; li++) {
+            checkSpace(12);
+            if (li === 0) {
+              addText('-', MARGIN_LEFT + 2, currentY, 'F1', 9.0, '0.3 0.35 0.4');
+            }
+            addText(bulletLines[li], MARGIN_LEFT + 12, currentY, 'F2', 9.0, '0.15 0.15 0.15');
+            currentY -= 11.5;
+          }
+        }
+      }
+      currentY -= 4;
+    }
+  }
+
+  // 5. Key Projects
+  if (projects.length > 0) {
+    renderSectionHeader('KEY PROJECTS & TECHNICAL SYSTEMS:');
+    for (const proj of projects) {
+      checkSpace(26);
+      const pName = sanitize(proj.name || 'Project');
+      const pTools = sanitize(proj.tools || '');
+
+      addText(pName, MARGIN_LEFT, currentY, 'F1', 9.5, '0.08 0.1 0.15');
+      if (pTools) {
+        const offset = pName.length * 9.5 * 0.52 + 6;
+        addText(`[${pTools}]`, MARGIN_LEFT + offset, currentY, 'F3', 8.5, '0.3 0.4 0.5');
+      }
+      currentY -= 13;
+
+      if (proj.bullets && proj.bullets.length > 0) {
+        for (const b of proj.bullets) {
+          const bulletLines = wrapText(b, 9.0, CONTENT_WIDTH - 15);
+          for (let li = 0; li < bulletLines.length; li++) {
+            checkSpace(12);
+            if (li === 0) {
+              addText('-', MARGIN_LEFT + 2, currentY, 'F1', 9.0, '0.3 0.35 0.4');
+            }
+            addText(bulletLines[li], MARGIN_LEFT + 12, currentY, 'F2', 9.0, '0.15 0.15 0.15');
+            currentY -= 11.5;
+          }
+        }
+      }
+      currentY -= 4;
+    }
+  }
+
+  // 6. Education
+  if (education.length > 0) {
+    renderSectionHeader('EDUCATION:');
+    for (const edu of education) {
+      const eduText = typeof edu === 'string' ? edu : `${edu.degree || ''} ${edu.institution || ''} ${edu.year || ''}`;
+      const lines = wrapText(eduText, 9.0, CONTENT_WIDTH);
+      for (const line of lines) {
+        checkSpace(12);
+        addText(line, MARGIN_LEFT, currentY, 'F2', 9.0, '0.15 0.15 0.15');
+        currentY -= 12;
+      }
+    }
+    currentY -= 4;
+  }
+
+  // 7. Certifications
+  if (certifications.length > 0) {
+    renderSectionHeader('CERTIFICATIONS:');
+    for (const cert of certifications) {
+      const certText = typeof cert === 'string' ? cert : `${cert.name || ''} ${cert.issuer || ''}`;
+      const lines = wrapText(certText, 9.0, CONTENT_WIDTH);
+      for (const line of lines) {
+        checkSpace(12);
+        addText(line, MARGIN_LEFT, currentY, 'F2', 9.0, '0.15 0.15 0.15');
+        currentY -= 12;
+      }
+    }
+    currentY -= 4;
+  }
+
+  // 8. Achievements
+  if (achievements.length > 0) {
+    renderSectionHeader('HONORS & ACHIEVEMENTS:');
+    for (const ach of achievements) {
+      const achText = typeof ach === 'string' ? ach : (ach.title || '');
+      const lines = wrapText(achText, 9.0, CONTENT_WIDTH);
+      for (const line of lines) {
+        checkSpace(12);
+        addText(line, MARGIN_LEFT, currentY, 'F2', 9.0, '0.15 0.15 0.15');
+        currentY -= 12;
+      }
+    }
+    currentY -= 4;
+  }
+
+  if (currentCommands.length > 0) {
+    pages.push(currentCommands.join('\n'));
+  }
+
+  const numPages = pages.length;
+  const objects = [];
+
+  const fontF1Id = 3;
+  const fontF2Id = 4;
+  const fontF3Id = 5;
+
+  const pageObjIds = [];
+  const contentObjIds = [];
+
+  for (let i = 0; i < numPages; i++) {
+    pageObjIds.push(6 + i * 2);
+    contentObjIds.push(7 + i * 2);
+  }
+
+  objects[1] = `<< /Type /Catalog /Pages 2 0 R >>`;
+  const kidsStr = pageObjIds.map(id => `${id} 0 R`).join(' ');
+  objects[2] = `<< /Type /Pages /Kids [${kidsStr}] /Count ${numPages} >>`;
+
+  objects[3] = `<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>`;
+  objects[4] = `<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>`;
+  objects[5] = `<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>`;
+
+  for (let i = 0; i < numPages; i++) {
+    const pageId = pageObjIds[i];
+    const contentId = contentObjIds[i];
+    const streamContent = pages[i];
+    const streamLen = streamContent.length;
+
+    objects[pageId] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_WIDTH} ${PAGE_HEIGHT}] /Contents ${contentId} 0 R /Resources << /Font << /F1 ${fontF1Id} 0 R /F2 ${fontF2Id} 0 R /F3 ${fontF3Id} 0 R >> >> >>`;
+    objects[contentId] = `<< /Length ${streamLen} >>\nstream\n${streamContent}\nendstream`;
+  }
+
+  let pdfStr = `%PDF-1.4\n%\xE2\xE3\xCF\xD3\n`;
+  const offsets = [];
+
+  for (let id = 1; id < objects.length; id++) {
+    offsets[id] = pdfStr.length;
+    pdfStr += `${id} 0 obj\n${objects[id]}\nendobj\n`;
+  }
+
+  const xrefOffset = pdfStr.length;
+  pdfStr += `xref\n0 ${objects.length}\n`;
+  pdfStr += `0000000000 65535 f\r\n`;
+
+  for (let id = 1; id < objects.length; id++) {
+    const offStr = String(offsets[id]).padStart(10, '0');
+    pdfStr += `${offStr} 00000 n\r\n`;
+  }
+
+  pdfStr += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+
+  const bytes = new Uint8Array(pdfStr.length);
+  for (let i = 0; i < pdfStr.length; i++) {
+    bytes[i] = pdfStr.charCodeAt(i) & 0xff;
+  }
+  return bytes;
 }
 

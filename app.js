@@ -191,7 +191,7 @@ async function handleFile(file) {
   try {
     const text = await extractTextFromFile(file);
     if (!text || text.length < 30) {
-      throw new Error('The file appears to be empty or has no readable text.');
+      throw new Error('The file appears to be empty or has no readable text. If this is a scanned or image-based PDF, please upload a document with selectable text, or use our Resume Editor to export a 100% ATS-readable vector PDF.');
     }
 
     const validation = validateResumeDocument(text, file.name);
