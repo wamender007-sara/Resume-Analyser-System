@@ -1622,7 +1622,7 @@ async function exportClassAnalysisPdf() {
           backgroundColor: '#ffffff'
         },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' },
-        pagebreak:    { mode: ['css', 'legacy'], before: ['.pdf-dossier-intro-banner', '.pdf-candidate-card'] }
+        pagebreak:    { mode: ['css', 'legacy'], avoid: ['.pdf-candidate-card', '.podium-card', '.batch-kpi-grid', '.candidate-table tr'] }
       };
 
       await window.html2pdf().set(opt).from(resultsWrap).save();

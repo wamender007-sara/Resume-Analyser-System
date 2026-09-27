@@ -1368,7 +1368,7 @@ function showEditorToast(msg) {
 }
 
 // ─── 6. High-Fidelity ATS PDF Exporter from Live DOM ────────────
-export function exportResumeToPdf(data) {
+export async function exportResumeToPdf(data) {
   const container = document.getElementById('pdfReportContainer');
   if (!container) {
     showEditorToast('Print container element not found. Please refresh page.');
@@ -1586,19 +1586,74 @@ export function exportResumeToPdf(data) {
     </div>
   `;
 
+  const cleanName = (name || 'Candidate').replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_') || 'Candidate';
+  const pdfFilename = `${cleanName}_Resume.pdf`;
+
+  if (typeof window.html2pdf !== 'undefined') {
+    showEditorToast(`Downloading ${pdfFilename}... 📄`);
+
+    // Create an off-screen render wrapper for high-fidelity conversion
+    const renderWrapper = document.createElement('div');
+    renderWrapper.className = 'ats-pdf-render-canvas';
+    renderWrapper.style.position = 'fixed';
+    renderWrapper.style.left = '-9999px';
+    renderWrapper.style.top = '0';
+    renderWrapper.style.width = '800px';
+    renderWrapper.style.background = '#ffffff';
+    renderWrapper.style.padding = '36px 40px';
+    renderWrapper.style.color = '#111827';
+    renderWrapper.style.fontFamily = "'Calibri', 'Arial', 'Helvetica Neue', sans-serif";
+    renderWrapper.style.zIndex = '-99999';
+    renderWrapper.innerHTML = html;
+    document.body.appendChild(renderWrapper);
+
+    const opt = {
+      margin:       [10, 10, 10, 10],
+      filename:     pdfFilename,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak:    { mode: ['css', 'legacy'], avoid: ['.ats-print-section', '.ats-print-entry'] }
+    };
+
+    try {
+      await window.html2pdf().set(opt).from(renderWrapper.firstElementChild || renderWrapper).save();
+      showEditorToast(`Downloaded ${pdfFilename} successfully! 🎉`);
+    } catch (err) {
+      console.warn('html2pdf download failed, falling back to window.print():', err);
+      triggerPrintFallback(cleanName, html, container);
+    } finally {
+      renderWrapper.remove();
+    }
+  } else {
+    triggerPrintFallback(cleanName, html, container);
+  }
+}
+
+function triggerPrintFallback(cleanName, html, container) {
+  const originalTitle = document.title;
+  document.title = `${cleanName}_Resume`;
+
   container.innerHTML = html;
   container.setAttribute('data-ready', 'true');
   showEditorToast('Preparing ATS print document... 🖨️');
 
-  // Give DOM a microtask to finish rendering before triggering system print
   setTimeout(() => {
     window.print();
-  }, 100);
+  }, 120);
 
-  // Clean up print container after dialog closes
-  window.addEventListener('afterprint', () => {
+  const cleanup = () => {
+    document.title = originalTitle;
     container.innerHTML = '';
     container.removeAttribute('data-ready');
-  }, { once: true });
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(cleanup, 60000);
 }
 

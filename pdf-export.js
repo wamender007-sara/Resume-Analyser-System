@@ -423,7 +423,12 @@ export function generatePdfReport(analysis, showToast) {
     return;
   }
 
+  const candidateName = analysis?.diagnostics?.candidateName || analysis?.candidateName || 'Candidate';
+  const cleanName = candidateName.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_') || 'Candidate';
+  const originalTitle = document.title;
+
   try {
+    document.title = `${cleanName}_Resume_Analysis_Report`;
     container.innerHTML = buildReportHtml(analysis);
     container.setAttribute('data-ready', 'true');
     window.print();
@@ -432,8 +437,8 @@ export function generatePdfReport(analysis, showToast) {
     if (showToast) showToast(`PDF export failed: ${err.message}. Please try again.`, 'error');
   } finally {
     // Clean up after print dialog closes (or is cancelled)
-    // Small delay ensures the print dialog has had time to read the DOM
     setTimeout(() => {
+      document.title = originalTitle;
       container.innerHTML = '';
       container.removeAttribute('data-ready');
     }, 1000);
