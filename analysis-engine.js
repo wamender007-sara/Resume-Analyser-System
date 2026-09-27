@@ -36,7 +36,8 @@ export const TECH_TAXONOMY = {
     'esp32', 'esp8266', 'arduino', 'raspberry pi', 'embedded systems', 'iot', 'robotics', 'microcontroller',
     'sensors', 'cad', 'solidworks', 'catia', 'ansys', 'powertrain', 'bms', 'can bus', 'ecu',
     'computer vision', 'deep learning', 'machine learning', 'nlp', 'llm', 'system design', 'microservices',
-    'distributed systems', 'unit testing', 'jest', 'cypress', 'agile', 'scrum', 'jira'
+    'distributed systems', 'unit testing', 'jest', 'cypress', 'agile', 'scrum', 'jira',
+    'oop', 'oops', 'data structures', 'algorithms', 'problem solving', 'clean code', 'cnn'
   ]
 };
 
@@ -805,8 +806,32 @@ export function auditKeywordMatch(clean, jobDescription, targetRole, uniqueSkill
 
   // Fallback: match against target role profile if JD is not provided
   const matchingProfile = findMatchingRoleProfile(targetRole || 'Software Engineer') || ROLE_PROFILES[0];
+  
+  const SKILL_KEYWORD_ALIASES = {
+    'rest api': ['rest api', 'rest apis', 'restful', 'fastapi', 'flask', 'api integration', 'apis', 'rest endpoints', 'endpoints'],
+    'oop': ['oop', 'oops', 'object-oriented', 'object oriented', 'classes', 'polymorphism', 'inheritance', 'encapsulation'],
+    'system design': ['system design', 'system architecture', 'software architecture', 'modular design', 'database design', 'architecture', 'scalability'],
+    'problem solving': ['problem solving', 'data structures', 'algorithms', 'dsa', 'analytical skills', 'algorithmic', 'optimization'],
+    'git': ['git', 'version control', 'github', 'gitlab'],
+    'github': ['github', 'gitlab', 'git repository', 'public repository', 'bitbucket'],
+    'sql': ['sql', 'mysql', 'postgresql', 'sqlite', 'oracle', 'relational database', 'database query'],
+    'docker': ['docker', 'container', 'containers', 'containerization', 'kubernetes', 'docker compose'],
+    'python': ['python', 'py'],
+    'javascript': ['javascript', 'js', 'es6'],
+    'c++': ['c++', 'cpp']
+  };
+
+  const matchesSkill = (skill) => {
+    if (lower.includes(skill) || uniqueSkills.includes(skill)) return true;
+    const aliases = SKILL_KEYWORD_ALIASES[skill];
+    if (aliases) {
+      return aliases.some(a => lower.includes(a) || uniqueSkills.includes(a));
+    }
+    return false;
+  };
+
   matchingProfile.skills.forEach(s => {
-    if (lower.includes(s) || uniqueSkills.includes(s)) {
+    if (matchesSkill(s)) {
       matched_keywords.push(s);
     } else {
       missing_keywords.push(s);
@@ -2006,7 +2031,8 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
       metricCount,
       extractedMetrics: extractedMetrics.slice(0, 6),
       skillsFoundCount: uniqueSkills.length,
-      skillsFound: uniqueSkills.slice(0, 15),
+      skillsFound: uniqueSkills,
+      uniqueSkills: uniqueSkills,
       categorizedSkills,
       strongVerbsFound: foundStrongVerbs.slice(0, 6),
       weakVerbsFound: foundWeakVerbs.slice(0, 4),

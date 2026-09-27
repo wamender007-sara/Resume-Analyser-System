@@ -93,7 +93,39 @@ const CANONICAL_TECH_CASING = {
   'redis': 'Redis',
   'power bi': 'Power BI',
   'tableau': 'Tableau',
-  'excel': 'Microsoft Excel'
+  'excel': 'Microsoft Excel',
+  'opencv': 'OpenCV',
+  'sqlite': 'SQLite',
+  'sqlite3': 'SQLite',
+  'cnn': 'CNN (Convolutional Neural Networks)',
+  'deep learning': 'Deep Learning',
+  'machine learning': 'Machine Learning',
+  'computer vision': 'Computer Vision',
+  'nlp': 'NLP',
+  'llm': 'LLM',
+  'oop': 'Object-Oriented Programming (OOP)',
+  'oops': 'Object-Oriented Programming (OOP)',
+  'object-oriented': 'Object-Oriented Programming (OOP)',
+  'object oriented': 'Object-Oriented Programming (OOP)',
+  'object-oriented programming': 'Object-Oriented Programming (OOP)',
+  'object oriented programming': 'Object-Oriented Programming (OOP)',
+  'system design': 'System Design',
+  'system architecture': 'System Architecture',
+  'data structures': 'Data Structures & Algorithms',
+  'data structures & algorithms': 'Data Structures & Algorithms',
+  'data structures and algorithms': 'Data Structures & Algorithms',
+  'dsa': 'Data Structures & Algorithms (DSA)',
+  'problem solving': 'Problem Solving',
+  'clean code': 'Clean Code Principles',
+  'unit testing': 'Unit Testing',
+  'agile': 'Agile / Scrum',
+  'scrum': 'Scrum',
+  'microservices': 'Microservices',
+  'iot': 'IoT (Internet of Things)',
+  'embedded systems': 'Embedded Systems',
+  'rest': 'REST APIs',
+  'fastapi': 'FastAPI',
+  'nosql': 'NoSQL'
 };
 
 export function canonicalizeSkill(skill) {
@@ -217,23 +249,72 @@ export function parseResumeIntoSections(text, analysis = null) {
     sections.summary = buffers.summary.join(' ');
   }
 
-  // 4. Process Skills (ONLY from uploaded resume data)
+  // 4. Process Skills (Fetch and format authentic skills from uploaded resume data)
   const collectedSkills = new Set();
 
+  // A. Process Skills buffer with category prefix stripping
   if (buffers.skills.length > 0) {
-    const raw = buffers.skills.join(', ');
-    raw
-      .split(/[,|•·\n\t\/]/)
-      .map(s => s.trim())
-      .filter(s => s.length > 1 && s.length < 35 && !/^(?:technical\s+skills|skills|tools|competencies|technologies)$/i.test(s))
-      .forEach(s => collectedSkills.add(canonicalizeSkill(s)));
+    buffers.skills.forEach(line => {
+      let cleanLine = line
+        .replace(/^(?:programming\s+languages?|languages?|web\s+technologies?|technologies?|frameworks?(?:\s*(?:&|and)\s*libraries)?|libraries?|databases?(?:\s*(?:&|and)\s*tools)?|tools(?:\s*(?:&|and)\s*(?:technologies|platforms|frameworks))?|platforms?|developer\s+tools|core\s+competencies|competencies|methodologies|concepts|skills?)\s*[:\-–]\s*/i, '')
+        .trim();
+
+      const colonIdx = cleanLine.indexOf(':');
+      if (colonIdx > 0 && colonIdx < 35 && !/^https?:/i.test(cleanLine)) {
+        cleanLine = cleanLine.slice(colonIdx + 1).trim();
+      }
+
+      cleanLine
+        .split(/[,;•●·|\n\t/]/)
+        .map(s => s.trim().replace(/^[-*•●·]\s*/, ''))
+        .filter(s => s.length > 1 && s.length < 45 && !/^(?:technical\s+skills|skills|tools|competencies|technologies|proficiencies)$/i.test(s))
+        .forEach(s => {
+          const canon = canonicalizeSkill(s);
+          if (canon) collectedSkills.add(canon);
+        });
+    });
   }
 
-  // Also include any verified skills found directly within the resume text by the analysis engine
-  if (analysis?.diagnostics?.uniqueSkills && Array.isArray(analysis.diagnostics.uniqueSkills)) {
-    analysis.diagnostics.uniqueSkills.forEach(s => {
-      if (s && s.length > 1 && s.length < 35) {
-        collectedSkills.add(canonicalizeSkill(s));
+  // B. Include verified skills from analysis engine diagnostics
+  const addFromList = (list) => {
+    if (Array.isArray(list)) {
+      list.forEach(s => {
+        if (typeof s === 'string' && s.trim().length > 1 && s.trim().length < 45) {
+          const canon = canonicalizeSkill(s.trim());
+          if (canon) collectedSkills.add(canon);
+        }
+      });
+    }
+  };
+
+  addFromList(analysis?.diagnostics?.uniqueSkills);
+  addFromList(analysis?.diagnostics?.skillsFound);
+  if (analysis?.diagnostics?.categorizedSkills) {
+    Object.values(analysis.diagnostics.categorizedSkills).forEach(catList => addFromList(catList));
+  }
+  addFromList(analysis?.keyword_analysis?.matched_keywords);
+
+  // C. Process Projects and collect tools
+  if (buffers.projects.length > 0) {
+    sections.projects = parseProjectsBuffer(buffers.projects);
+    sections.projects.forEach(p => {
+      if (p.tools) {
+        p.tools.split(/[,;•●·|\/]/).map(t => t.trim()).forEach(t => {
+          const canon = canonicalizeSkill(t);
+          if (canon) collectedSkills.add(canon);
+        });
+      }
+    });
+  }
+
+  // D. Scan raw text of the uploaded resume for any genuine skills and keywords mentioned anywhere in the document
+  if (text) {
+    const rawLower = text.toLowerCase();
+    Object.entries(CANONICAL_TECH_CASING).forEach(([keyword, canonical]) => {
+      // Require word boundary for clean matching
+      const esc = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      if (new RegExp(`(?:^|[^a-zA-Z0-9_])${esc}(?:$|[^a-zA-Z0-9_])`, 'i').test(rawLower)) {
+        collectedSkills.add(canonical);
       }
     });
   }
@@ -248,8 +329,8 @@ export function parseResumeIntoSections(text, analysis = null) {
   }
 
   // 6. Process Projects
-  if (buffers.projects.length > 0) {
-    sections.projects = parseProjectsBuffer(buffers.projects);
+  if (!sections.projects) {
+    sections.projects = buffers.projects.length > 0 ? parseProjectsBuffer(buffers.projects) : [];
   }
 
   // 7. Process Education (Derived strictly from uploaded resume text)
@@ -352,13 +433,21 @@ function parseProjectsBuffer(lines) {
       if (currentProj && (currentProj.bullets.length > 0 || currentProj.tools)) {
         projects.push(currentProj);
       }
-      // Extract tools in brackets if any: Project Title [React, Node.js]
+      // Extract tools in brackets if any: Project Title [React, Node.js] or Project Title | Flask, SQLite
       let pName = clean;
       let pTools = '';
-      const toolMatch = clean.match(/\[(.*?)\]|\((.*?)\)/);
-      if (toolMatch) {
-        pTools = toolMatch[1] || toolMatch[2] || '';
-        pName = clean.replace(toolMatch[0], '').trim();
+      const bracketMatch = clean.match(/\[(.*?)\]|\((.*?)\)/);
+      if (bracketMatch) {
+        pTools = bracketMatch[1] || bracketMatch[2] || '';
+        pName = clean.replace(bracketMatch[0], '').trim();
+      } else if (clean.includes('|')) {
+        const parts = clean.split('|');
+        pName = parts[0].trim();
+        pTools = parts.slice(1).join(' ').trim();
+      } else if (clean.includes(' - ') && !/\d{4}/.test(clean)) {
+        const parts = clean.split(' - ');
+        pName = parts[0].trim();
+        pTools = parts.slice(1).join(' ').trim();
       }
       currentProj = { name: pName, tools: pTools, bullets: [] };
     } else {
@@ -1950,11 +2039,21 @@ export function generateAtsVectorPdf(resumeData) {
     currentCommands.push(`${lineWidth} w ${color} RG ${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S`);
   };
 
-  const name = sanitize(resumeData.name || 'CANDIDATE').toUpperCase();
+  const name = sanitize(resumeData.name || resumeData.contact?.name || 'CANDIDATE').toUpperCase();
   const title = sanitize(resumeData.title || '');
-  const contact = sanitize(resumeData.contact || '');
+  const contact = sanitize(
+    typeof resumeData.contact === 'string'
+      ? resumeData.contact
+      : [
+          resumeData.contact?.email,
+          resumeData.contact?.phone,
+          resumeData.contact?.location,
+          resumeData.contact?.linkedin,
+          resumeData.contact?.github
+        ].filter(Boolean).join(' | ')
+  );
   const summary = sanitize(resumeData.summary || '');
-  const skills = sanitize(resumeData.skills || '');
+  const skills = sanitize(Array.isArray(resumeData.skills) ? resumeData.skills.join(', ') : (resumeData.skills || ''));
   const experience = resumeData.experience || [];
   const projects = resumeData.projects || [];
   const education = resumeData.education || [];
