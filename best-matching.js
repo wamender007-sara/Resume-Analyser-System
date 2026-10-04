@@ -366,7 +366,26 @@ function renderBestMatchingJobs() {
     `;
   }).join('');
 
-  // Attach modal trigger listeners
+  // Attach card-wide touch triggers (touch anywhere in job box opens detailed description)
+  document.querySelectorAll('.opp-job-card.best-match-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      // Allow direct external links (Apply on Official Portal, LinkedIn) without opening modal
+      if (e.target.closest('a') && !e.target.closest('.intel-modal-btn')) {
+        return;
+      }
+      const jobId = card.dataset.jobId;
+      openRoleIntelligenceModal(jobId);
+    });
+  });
+
+  // Explicit stopPropagation on external apply & linkedin action links
+  document.querySelectorAll('.direct-apply-btn, .btn-linkedin-icon').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  });
+
+  // Attach modal trigger listeners on Interview Guide buttons
   document.querySelectorAll('.intel-modal-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -456,50 +475,106 @@ function openRoleIntelligenceModal(jobId) {
 
   if (title) title.textContent = job.title;
   if (company) {
-    const logoSrc = COMPANY_LOGOS[job.brandKey] || `assets/companies/${job.brandKey}.svg`;
+    const logoSrc = COMPANY_LOGOS[job.brandKey] || `https://www.google.com/s2/favicons?domain=${job.domain || 'google.com'}&sz=128`;
     company.innerHTML = `
       <span style="display:inline-flex; align-items:center; gap:8px;">
-        <img src="${logoSrc}" alt="${escHtml(job.company)} logo" style="width:20px; height:20px; object-fit:contain; border-radius:4px;" onerror="this.style.display='none'"/>
+        <img src="${logoSrc}" alt="${escHtml(job.company)} logo" style="width:20px; height:20px; object-fit:contain; border-radius:4px;" />
         <span><strong>${escHtml(job.company)}</strong> &bull; ${escHtml(job.location)} &bull; ${escHtml(job.package)}</span>
       </span>
     `;
   }
   if (category) category.textContent = `${job.roleCategory} Interview Guide`;
 
-  if (body) {
-    const roundsHtml = (job.interviewProcess || []).map(r => `
-      <div class="intel-round-card">
-        <div class="round-name">${escHtml(r.round)}</div>
-        <div class="round-desc">${escHtml(r.desc)}</div>
+  const processHtml = (job.interviewProcess || []).map((p, idx) => `
+    <div class="intel-process-step">
+      <div class="step-num-badge">${idx + 1}</div>
+      <div class="step-content">
+        <div class="process-round-title">${escHtml(p.round)}</div>
+        <div class="process-round-desc">${escHtml(p.desc)}</div>
       </div>
-    `).join('');
+    </div>
+  `).join('');
 
-    const questionsHtml = (job.sampleQuestions || []).map(q => `
-      <li class="sample-q-item">"${escHtml(q)}"</li>
-    `).join('');
+  const questionsHtml = (job.sampleQuestions || []).map(q => `
+    <li class="intel-question-item">
+      <span class="quote-icon">“</span>
+      <span>${escHtml(q)}</span>
+    </li>
+  `).join('');
 
+  const requiredSkillsTags = (job.requiredSkills || []).map(s => `
+    <span class="role-skill-badge">${escHtml(s)}</span>
+  `).join('');
+
+  if (body) {
     body.innerHTML = `
       <div class="intel-section">
-        <h4 class="intel-sec-title">Interview Stages &amp; Hiring Rounds:</h4>
-        <div class="intel-rounds-wrap">
-          ${roundsHtml || '<p>Standard technical and managerial interview rounds.</p>'}
-        </div>
+        <h4 class="intel-heading">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Selection Process &amp; Interview Rounds
+        </h4>
+        <div class="intel-process-list">${processHtml}</div>
       </div>
 
       <div class="intel-section">
-        <h4 class="intel-sec-title">Sample Technical Coding &amp; Interview Questions:</h4>
-        <ul class="sample-q-list">
-          ${questionsHtml || '<li>Explain past projects and key technical challenges solved.</li>'}
-        </ul>
+        <h4 class="intel-heading">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Frequently Asked Technical Questions
+        </h4>
+        <ul class="intel-questions-list">${questionsHtml}</ul>
       </div>
 
-      <div class="intel-section">
-        <h4 class="intel-sec-title">Recruiter Resume Advice for ${escHtml(job.company)}:</h4>
-        <div class="intel-resume-tip">
-          💡 ${escHtml(job.resumeTip || 'Highlight modular code, metrics, and data structure proficiency on your resume.')}
+      <div class="intel-grid-row">
+        <div class="intel-section">
+          <h4 class="intel-heading">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Key Technical Skills Evaluated
+          </h4>
+          <div class="role-skills-wrap">${requiredSkillsTags}</div>
         </div>
+
+        <div class="intel-section">
+          <h4 class="intel-heading">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            Eligibility &amp; Target Degrees
+          </h4>
+          <p class="intel-text">${escHtml(job.batchEligibility || '2025 & 2026 Graduates')}</p>
+        </div>
+      </div>
+
+      <div class="intel-section highlight-box">
+        <h4 class="intel-heading">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+          Candidate Advice &amp; Resume Tailoring
+        </h4>
+        <p class="intel-text">${escHtml(job.resumeTip || 'Highlight foundational data structures, clean code, and relevant projects.')}</p>
       </div>
     `;
+  }
+
+  // Wire up Tailor Resume action button (same tab redirect)
+  const tailorBtn = document.getElementById('tailorResumeBtn');
+  if (tailorBtn) {
+    tailorBtn.onclick = (e) => {
+      e.preventDefault();
+      try {
+        const tailorPayload = {
+          jobId: job.id,
+          title: job.title,
+          company: job.company,
+          roleCategory: job.roleCategory,
+          targetRole: `${job.company} — ${job.title}`,
+          requiredSkills: job.requiredSkills || [],
+          jobDescription: `Target Company: ${job.company}\nTarget Role: ${job.title} (${job.roleCategory})\nLocation: ${job.location} | Package: ${job.package}\nBatch Eligibility: ${job.batchEligibility || ''}\n\nRole Overview:\n${job.summary || ''}\n\nRequired Technical Competencies:\n${(job.requiredSkills || []).join(', ')}\n\nInterview Questions & Evaluation Focus:\n${(job.sampleQuestions || []).join('\n')}\n\nRecruiter Resume Tip:\n${job.resumeTip || ''}`,
+          timestamp: Date.now()
+        };
+        localStorage.setItem('resumereviewer_tailor_payload', JSON.stringify(tailorPayload));
+      } catch (err) {
+        console.warn('Could not store tailor payload', err);
+      }
+      // Navigate in SAME tab!
+      window.location.href = 'index.html?tailor=' + encodeURIComponent(job.id);
+    };
   }
 
   if (modal) modal.classList.remove('hidden');

@@ -554,8 +554,8 @@ function renderAnalysis(data) {
   const jdVal = (document.getElementById('jobDescription')?.value || '').trim();
   renderRoleDevelopmentRoadmap(data, targetRoleVal, jdVal);
 
-  // Best Matching Section (Top matching jobs based on resume)
-  renderBestMatchingSection(data);
+  // Best Matching Section (Top matching jobs based on resume with 1-click tailoring)
+  renderBestMatchingSection(data, () => runAnalysis());
 
   // Save profile to localStorage for opportunities.html & session cache
   try {

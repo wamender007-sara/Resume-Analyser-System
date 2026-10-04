@@ -186,22 +186,28 @@
 
   </main>
 
-  <!-- ROLE INTELLIGENCE & INTERVIEW BLUEPRINT MODAL -->
-  <div class="role-intelligence-modal hidden" id="roleIntelligenceModal">
-    <div class="role-intel-dialog">
-      <div class="role-intel-header">
-        <div>
-          <span class="intel-tag" id="intelRoleCategory">Interview Guide</span>
-          <h3 class="intel-title" id="intelRoleTitle">Role Preparation Guide</h3>
-          <div class="intel-company-sub" id="intelCompanyName">Company Details</div>
+  <!-- ROLE INTELLIGENCE & INTERVIEW PREP MODAL -->
+  <div class="modal-backdrop hidden" id="roleIntelligenceModal">
+    <div class="modal-dialog role-intel-dialog">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-badge-pill" id="intelRoleCategory">Candidate Preparation Dossier</span>
+          <h3 class="modal-title" id="intelRoleTitle">Interview Process &amp; Role Guide</h3>
+          <span class="modal-subtitle" id="intelCompanyName">Target Company Insights</span>
         </div>
-        <button class="close-intel-btn" id="closeIntelModalBtn" title="Close modal">&times;</button>
+        <button class="modal-close-btn" id="closeIntelModalBtn" title="Close modal">&times;</button>
       </div>
-      <div class="role-intel-body" id="intelModalBody">
-        <!-- Dynamically injected interview blueprint -->
+
+      <div class="modal-body role-intel-body" id="intelModalBody">
+        <!-- Dynamic content injected by best-matching.js -->
       </div>
-      <div class="role-intel-footer">
-        <button class="btn-dismiss-intel" id="dismissIntelModalBtn">Close Guide</button>
+
+      <div class="modal-footer">
+        <button class="btn-modal-dismiss" id="dismissIntelModalBtn">Close Guide</button>
+        <button class="btn-modal-action" id="tailorResumeBtn" title="Tailor your resume for this role">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Tailor Resume for this Role in Reviewer
+        </button>
       </div>
     </div>
   </div>
