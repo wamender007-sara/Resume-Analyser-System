@@ -1374,3 +1374,6 @@ function escHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+export { COMPANY_LOGOS, OPPORTUNITIES_DATA, escHtml };
+

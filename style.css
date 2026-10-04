@@ -7633,5 +7633,199 @@ body.exporting-staff-pdf #batchProgressWrap {
   }
 }
 
+/* ─── BEST MATCHING CARD AT BOTTOM OF ANALYSIS TAB ─── */
+.card-best-matching {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.05) 0%, rgba(99, 102, 241, 0.07) 100%);
+  border: 1.5px solid rgba(2, 132, 199, 0.35);
+  border-radius: var(--radius-md, 12px);
+  padding: 1.4rem 1.5rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 18px -2px rgba(2, 132, 199, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-best-matching::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5px;
+  background: linear-gradient(90deg, #0284c7, #6366f1, #10b981);
+}
+
+.best-matching-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.best-matching-title-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex: 1;
+  min-width: 280px;
+}
+
+.best-matching-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0284c7, #4f46e5);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+}
+
+.best-matching-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #0284c7;
+  margin-bottom: 0.25rem;
+}
+
+.best-matching-badge {
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 0.65rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 800;
+}
+
+.best-matching-main-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+  margin: 0 0 0.35rem 0;
+  letter-spacing: -0.02em;
+}
+
+.best-matching-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #475569);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.best-matching-cta-wrap {
+  flex-shrink: 0;
+}
+
+.best-matching-cta-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.6rem;
+  background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+  color: #ffffff !important;
+  text-decoration: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  border: none;
+  text-align: center;
+}
+
+.best-matching-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45);
+  background: linear-gradient(135deg, #0369a1 0%, #4338ca 100%);
+  color: #ffffff !important;
+}
+
+.best-matching-btn-label {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.best-matching-btn-sub {
+  font-size: 0.72rem;
+  opacity: 0.92;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.best-matching-roles-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.15rem;
+  padding-top: 1rem;
+  border-top: 1px dashed rgba(2, 132, 199, 0.22);
+}
+
+.best-matching-role-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ffffff;
+  border: 1px solid #bae6fd;
+  border-radius: 20px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.78rem;
+  color: #0f172a;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.best-matching-role-chip .match-score {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+}
+
+/* ─── BEST MATCHING PAGE SPECIFIC ENHANCEMENTS ─── */
+.best-match-rationale-box {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  margin: 0.75rem 0 1rem;
+  font-size: 0.82rem;
+  color: #166534;
+  line-height: 1.45;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.best-match-rationale-box svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.best-match-card-top-pill {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
 
 

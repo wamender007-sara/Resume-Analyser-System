@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#ebf4fc" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Best Matching Jobs Based on Your Resume — ResumeReviewer</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="alternate icon" type="image/png" href="assets/logo.png" />
+  <link rel="stylesheet" href="style.css" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@600;700;800&family=Outfit:wght@600;700;800&display=swap"
+    rel="stylesheet" />
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="logo-icon" title="ResumeReviewer">
+        <img src="assets/logo.svg" alt="ResumeReviewer Logo" width="44" height="44" class="brand-logo-img" />
+      </div>
+      <div>
+        <h1 class="brand-name">ResumeReviewer<span class="portal-tag" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd;">Best Matching</span></h1>
+        <span class="brand-tag">Top-Fit Jobs &amp; Detailed Opportunities</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <!-- Back to Reviewer / Previous Page Button -->
+      <a href="index.html" class="portal-nav-btn back-to-reviewer-btn" id="headerBackToReviewerBtn" title="Back to Resume Reviewer &amp; Analysis Report">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span class="btn-text-full">Back to Reviewer</span>
+        <span class="btn-text-mobile">Back</span>
+      </a>
+
+      <!-- Platform Switcher Navigation -->
+      <div class="portal-nav-switcher">
+        <a href="index.html" class="portal-nav-btn link-btn" title="Switch to Student Individual Resume Reviewer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+          <span class="nav-text-full">Candidate Reviewer</span>
+          <span class="nav-text-mobile">Candidate</span>
+        </a>
+        <a href="staff.html" class="portal-nav-btn link-btn"
+          title="Switch to Placement Staff Classroom Batch Evaluation (60+ Resumes)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+          <span class="nav-text-full">Placement Staff</span>
+          <span class="nav-text-mobile">Staff</span>
+        </a>
+        <a href="opportunities.html" class="portal-nav-btn link-btn" title="Explore All Opportunities & Placement Drives">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+          </svg>
+          <span class="nav-text-full">All Opportunities</span>
+          <span class="nav-text-mobile">All Jobs</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="opp-main-container">
+
+    <!-- BREADCRUMB & RETURN LINK -->
+    <div class="opp-breadcrumb-nav">
+      <a href="index.html" class="opp-breadcrumb-link" title="Return to Candidate Resume Analysis">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        <span>Back to Resume Reviewer</span>
+      </a>
+      <span class="opp-breadcrumb-divider">/</span>
+      <span class="opp-breadcrumb-current">Best Matching Jobs (Based on Your Resume)</span>
+    </div>
+
+    <!-- CANDIDATE PROFILE HERO BANNER -->
+    <section class="opp-hero-card">
+      <div class="opp-hero-content">
+        <div class="opp-hero-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          <span>AI-MATCHED JOBS RADAR</span>
+        </div>
+        <h2 class="opp-hero-title">Best Matching Job Roles for Your Resume</h2>
+        <p class="opp-hero-desc">
+          Below are the highest-compatibility opportunities ranked strictly by how closely your verified technical skills, project portfolio, and qualifications match employer job requirements.
+        </p>
+
+        <!-- Candidate Resume Match Details Container -->
+        <div class="opp-match-bar" id="bestMatchHeroBar">
+          <!-- Dynamically populated by best-matching.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- SEARCH, FILTER & SORT BAR -->
+    <section class="opp-controls-card">
+      <div class="opp-controls-top">
+        <div class="opp-search-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="bestMatchSearchInput" class="opp-search-input" placeholder="Search by role title, company, or technology (e.g. Python, Zoho, React)..." />
+        </div>
+
+        <div class="opp-sort-wrap">
+          <label for="bestMatchSortSelect" class="sort-label">Sort by:</label>
+          <select id="bestMatchSortSelect" class="opp-sort-select">
+            <option value="match" selected>Highest Match % First</option>
+            <option value="stipend">Highest CTC / Package</option>
+            <option value="recent">Most Recently Updated</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Category Filter Tabs -->
+      <div class="opp-tabs-row" id="bestMatchCategoryTabs">
+        <button class="opp-tab active" data-category="all">
+          <span>All Top Matches</span>
+          <span class="tab-count" id="allCount">16</span>
+        </button>
+        <button class="opp-tab" data-category="product">
+          <span>Product Firms</span>
+        </button>
+        <button class="opp-tab" data-category="fresher">
+          <span>Freshers (0-1 Yrs)</span>
+        </button>
+        <button class="opp-tab" data-category="internship">
+          <span>Internships</span>
+        </button>
+        <button class="opp-tab" data-category="high-package">
+          <span>High Package (₹7+ LPA)</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- RESULTS HEADER & METRICS -->
+    <div class="opp-feed-header">
+      <div class="feed-title-wrap">
+        <h3 class="feed-title">
+          <span id="bestMatchFilterLabel">All Top Matches</span>
+          <span class="feed-counter">(<span id="visibleJobsCount">0</span> jobs)</span>
+        </h3>
+        <span class="feed-badge-pulse" id="feedSyncLabel">Ranked by Resume Compatibility</span>
+      </div>
+    </div>
+
+    <!-- BEST MATCHING JOBS GRID -->
+    <div class="opp-jobs-grid" id="bestMatchJobsGrid">
+      <!-- Dynamically populated with detailed job cards by best-matching.js -->
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div class="opp-empty-state hidden" id="bestMatchEmptyState">
+      <div class="empty-icon-wrap">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
+      <h3 class="empty-title">No matching jobs found</h3>
+      <p class="empty-desc">Try clearing your search query or selecting "All Top Matches" to view all available roles.</p>
+      <button class="empty-reset-btn" id="resetBestMatchFiltersBtn">Reset Filters</button>
+    </div>
+
+  </main>
+
+  <!-- ROLE INTELLIGENCE & INTERVIEW BLUEPRINT MODAL -->
+  <div class="role-intelligence-modal hidden" id="roleIntelligenceModal">
+    <div class="role-intel-dialog">
+      <div class="role-intel-header">
+        <div>
+          <span class="intel-tag" id="intelRoleCategory">Interview Guide</span>
+          <h3 class="intel-title" id="intelRoleTitle">Role Preparation Guide</h3>
+          <div class="intel-company-sub" id="intelCompanyName">Company Details</div>
+        </div>
+        <button class="close-intel-btn" id="closeIntelModalBtn" title="Close modal">&times;</button>
+      </div>
+      <div class="role-intel-body" id="intelModalBody">
+        <!-- Dynamically injected interview blueprint -->
+      </div>
+      <div class="role-intel-footer">
+        <button class="btn-dismiss-intel" id="dismissIntelModalBtn">Close Guide</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- MOBILE BOTTOM NAVIGATION -->
+  <nav class="mobile-bottom-nav">
+    <a href="index.html" class="mobile-nav-item">
+      <div class="mobile-nav-icon-wrap">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+      </div>
+      <span class="mobile-nav-label">Reviewer</span>
+    </a>
+
+    <a href="best-matching.html" class="mobile-nav-item active">
+      <div class="mobile-nav-icon-wrap">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+        </svg>
+        <span class="mobile-nav-dot"></span>
+      </div>
+      <span class="mobile-nav-label">Best Match</span>
+    </a>
+
+    <a href="opportunities.html" class="mobile-nav-item">
+      <div class="mobile-nav-icon-wrap">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+        </svg>
+      </div>
+      <span class="mobile-nav-label">All Jobs</span>
+    </a>
+
+    <a href="staff.html" class="mobile-nav-item">
+      <div class="mobile-nav-icon-wrap">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      </div>
+      <span class="mobile-nav-label">Staff</span>
+    </a>
+  </nav>
+
+  <!-- SCRIPT -->
+  <script type="module" src="best-matching.js"></script>
+</body>
+
+</html>

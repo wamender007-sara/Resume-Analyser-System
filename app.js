@@ -19,6 +19,7 @@ import {
   updateAllAdSlots,
   renderScorePotential,
   renderRoleDevelopmentRoadmap,
+  renderBestMatchingSection,
 } from './ui.js';
 import { openResumeEditor } from './resume-editor.js';
 import { getApiKey, saveApiKey, chatStream } from './gemini.js';
@@ -553,6 +554,9 @@ function renderAnalysis(data) {
   const jdVal = (document.getElementById('jobDescription')?.value || '').trim();
   renderRoleDevelopmentRoadmap(data, targetRoleVal, jdVal);
 
+  // Best Matching Section (Top matching jobs based on resume)
+  renderBestMatchingSection(data);
+
   // Save profile to localStorage for opportunities.html & session cache
   try {
     sessionStorage.setItem('resumereviewer_saved_analysis', JSON.stringify(data));
@@ -576,14 +580,19 @@ function renderAnalysis(data) {
     } else if (data.skills && Array.isArray(data.skills.technical)) {
       flatSkills.push(...data.skills.technical);
     }
+    if (data.diagnostics && Array.isArray(data.diagnostics.uniqueSkills)) {
+      data.diagnostics.uniqueSkills.forEach(s => flatSkills.push(s));
+    }
 
     const candidateProfile = {
-      targetRole: roleVal,
+      candidateName: data.contact?.name || data.candidateName || 'Candidate',
+      targetRole: roleVal || data.targetRoleFit?.targetRole || (data.suggestedRoles && data.suggestedRoles[0]?.title) || 'Software Engineer',
       suggestedRoles: data.suggestedRoles || [],
       flatSkills: Array.from(new Set(flatSkills)),
       overallScore: data.overall_score || data.overallScore || (data.scores ? Math.round(Object.values(data.scores).reduce((a,b)=>a+b,0)/Object.keys(data.scores).length) : 80),
       seniority: data.seniority || 'junior',
       atsGrade: data.grade || 'B',
+      targetRoleFit: data.targetRoleFit || null,
       updatedAt: Date.now()
     };
     localStorage.setItem('resumereviewer_candidate_profile', JSON.stringify(candidateProfile));

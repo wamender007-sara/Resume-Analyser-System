@@ -1076,6 +1076,37 @@ export function renderScorePotential(potential) {
     <div class="sp-items-list">${itemsHtml}</div>`;
 }
 
+// ─── Best Matching Section at Bottom of Analysis Tab ──────────
+export function renderBestMatchingSection(data) {
+  const preview = document.getElementById('bestMatchingRolesPreview');
+  const card = document.getElementById('bestMatchingCard');
+  if (!card) return;
+
+  const roles = data?.suggestedRoles || [];
+  if (!preview) return;
+
+  if (roles.length === 0) {
+    preview.innerHTML = `
+      <div class="best-matching-role-chip">
+        <span>⭐ Software Engineer</span>
+        <span class="match-score">85% Match</span>
+      </div>
+    `;
+    return;
+  }
+
+  const topRoles = roles.slice(0, 4);
+  preview.innerHTML = topRoles.map((role, idx) => {
+    const star = idx === 0 ? '⭐ ' : '';
+    const badgeColor = role.matchScore >= 70 ? '#10b981' : (role.matchScore >= 45 ? '#0284c7' : '#64748b');
+    return `
+      <div class="best-matching-role-chip" title="Direct match for ${escHtml(role.title)}">
+        <span>${star}${escHtml(role.title)}</span>
+        <span class="match-score" style="color:${badgeColor}; border:1px solid ${badgeColor}40;">${role.matchScore}% Match</span>
+      </div>
+    `;
+  }).join('');
+}
 
 // ─── Utilities ───────────────────────────────────────────────
 function escHtml(str) {
