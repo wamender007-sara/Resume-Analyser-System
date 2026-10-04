@@ -106,26 +106,28 @@
         </p>
 
         <!-- Candidate Resume Match Details Container -->
-        <div class="opp-match-bar" id="bestMatchHeroBar">
+        <div class="opp-resume-match-bar" id="bestMatchHeroBar">
           <!-- Dynamically populated by best-matching.js -->
         </div>
       </div>
     </section>
 
     <!-- SEARCH, FILTER & SORT BAR -->
-    <section class="opp-controls-card">
-      <div class="opp-controls-top">
-        <div class="opp-search-wrap">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+    <section class="opp-filter-section">
+      <div class="opp-search-box">
+        <div class="search-input-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input type="text" id="bestMatchSearchInput" class="opp-search-input" placeholder="Search by role title, company, or technology (e.g. Python, Zoho, React)..." />
+          <input type="text" id="bestMatchSearchInput" placeholder="Filter by role, company, or tech stack (e.g. Python, Zoho, React)..." />
         </div>
 
-        <div class="opp-sort-wrap">
-          <label for="bestMatchSortSelect" class="sort-label">Sort by:</label>
-          <select id="bestMatchSortSelect" class="opp-sort-select">
+        <div class="location-select-wrap">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M7 12h10M10 18h4"></path>
+          </svg>
+          <select id="bestMatchSortSelect" aria-label="Sort matching opportunities">
             <option value="match" selected>Highest Match % First</option>
             <option value="stipend">Highest CTC / Package</option>
             <option value="recent">Most Recently Updated</option>
@@ -134,7 +136,7 @@
       </div>
 
       <!-- Category Filter Tabs -->
-      <div class="opp-tabs-row" id="bestMatchCategoryTabs">
+      <div class="opp-category-tabs" id="bestMatchCategoryTabs">
         <button class="opp-tab active" data-category="all">
           <span>All Top Matches</span>
           <span class="tab-count" id="allCount">16</span>
@@ -154,15 +156,14 @@
       </div>
     </section>
 
-    <!-- RESULTS HEADER & METRICS -->
-    <div class="opp-feed-header">
-      <div class="feed-title-wrap">
-        <h3 class="feed-title">
-          <span id="bestMatchFilterLabel">All Top Matches</span>
-          <span class="feed-counter">(<span id="visibleJobsCount">0</span> jobs)</span>
-        </h3>
-        <span class="feed-badge-pulse" id="feedSyncLabel">Ranked by Resume Compatibility</span>
-      </div>
+    <!-- Listings Summary Bar -->
+    <div class="listings-header-row">
+      <span class="listings-stat-label">
+        Showing <strong id="visibleJobsCount" class="filter-highlight">0</strong> jobs &bull; <span id="bestMatchFilterLabel">All Top Matches for Your Resume</span>
+      </span>
+      <span class="active-query-tag" style="background:#ecfdf5; color:#065f46; border-color:#a7f3d0; font-weight:600;">
+        Ranked by Resume Compatibility
+      </span>
     </div>
 
     <!-- BEST MATCHING JOBS GRID -->

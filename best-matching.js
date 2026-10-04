@@ -242,16 +242,37 @@ function renderBestMatchingJobs() {
 
   // Render cards
   grid.innerHTML = filtered.map((job, idx) => {
-    const brandSvg = COMPANY_LOGOS[job.brandKey];
-    let logoContent = '';
-    if (brandSvg) {
-      logoContent = `<img src="${brandSvg}" alt="${escHtml(job.company)} logo" class="brand-vector-logo" onerror="this.parentElement.innerHTML='<span class=\\'brand-text-avatar\\'>${job.companyLogo || job.company.charAt(0)}</span>'"/>`;
-    } else {
-      logoContent = `<span class="brand-text-avatar">${job.companyLogo || job.company.charAt(0)}</span>`;
-    }
+    // Official Logo rendering with fallbacks
+    const logoSrc = COMPANY_LOGOS[job.brandKey] || `https://www.google.com/s2/favicons?domain=${job.domain || 'google.com'}&sz=128`;
+    const logoContent = `
+      <img src="${logoSrc}" 
+           alt="${escHtml(job.company)} logo" class="company-logo-img" loading="eager" 
+           onerror="this.onerror=null; this.src='https://www.google.com/s2/favicons?domain=${job.domain || 'google.com'}&sz=128';" />
+    `;
 
     const matchBadgeColor = job.matchPercentage >= 85 ? '#10b981' : (job.matchPercentage >= 70 ? '#0284c7' : '#f59e0b');
-    const rankStar = idx === 0 ? '🏆 #1 TOP MATCH' : (idx < 3 ? `⭐ #${idx + 1} BEST MATCH` : `${job.matchPercentage}% Match`);
+
+    // Rank Pill configuration
+    let rankLabel = '';
+    let rankClass = 'top-general';
+    let rankIcon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+
+    if (idx === 0) {
+      rankLabel = '#1 TOP MATCH';
+      rankClass = 'top-1';
+    } else if (idx === 1) {
+      rankLabel = '#2 TOP MATCH';
+      rankClass = 'top-2';
+    } else if (idx === 2) {
+      rankLabel = '#3 TOP MATCH';
+      rankClass = 'top-3';
+    } else {
+      rankLabel = 'HIGH ALIGNMENT';
+      rankClass = 'top-general';
+      rankIcon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+    }
+
+    const cleanBatch = job.batchEligibility ? job.batchEligibility.split('(')[0].trim() : '2025–2026 Batch';
 
     const skillsSectionHtml = `
       <div class="skills-label-line">
@@ -267,35 +288,35 @@ function renderBestMatchingJobs() {
     const typeBadgeClass = job.type === 'internship' ? 'type-internship' : 'type-fresher';
 
     return `
-      <div class="job-card best-match-card" data-job-id="${job.id}">
+      <div class="opp-job-card best-match-card" data-job-id="${job.id}">
         <!-- Top Header Pill: Rank & Eligibility -->
         <div class="job-card-top-bar">
-          <span class="best-match-card-top-pill">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            ${rankStar}
+          <span class="best-match-card-top-pill ${rankClass}">
+            ${rankIcon}
+            <span>${rankLabel}</span>
           </span>
-          <span class="batch-eligibility-pill">
+          <span class="batch-eligibility-pill" title="${escHtml(job.batchEligibility || '2025 & 2026 Batch')}">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            ${escHtml(job.batchEligibility || '2025 & 2026 Batch')}
+            <span>${escHtml(cleanBatch)}</span>
           </span>
         </div>
 
         <!-- Company & Role Title -->
         <div class="job-card-header">
-          <div class="company-badge-wrap intel-modal-btn" data-job-id="${job.id}" role="button" tabindex="0" title="Click to view ${escHtml(job.company)} Interview Guide & Hiring Rounds">
+          <div class="company-badge-wrap intel-modal-btn" data-job-id="${job.id}" role="button" tabindex="0">
             <div class="company-avatar" title="${escHtml(job.company)}">
               ${logoContent}
             </div>
-            <div>
+            <div class="company-info-wrap">
               <div class="job-company">
-                ${escHtml(job.company)} <span class="verified-icon" title="Verified Recruiter">✓</span>
+                ${escHtml(job.company)} <span class="verified-icon" title="Verified Campus Recruiter">✓</span>
               </div>
               <h4 class="job-title">${escHtml(job.title)}</h4>
             </div>
           </div>
-          <div class="job-match-badge" style="background:${matchBadgeColor}18; color:${matchBadgeColor}; border:1px solid ${matchBadgeColor}50;">
-            <div class="match-score-num">${job.matchPercentage}%</div>
-            <div class="match-score-label">Resume Fit</div>
+          <div class="job-match-badge" style="background:${matchBadgeColor}15; color:${matchBadgeColor}; border:1px solid ${matchBadgeColor}44;" title="${job.matchPercentage}% skills match based on your evaluated resume">
+            <span class="match-num">${job.matchPercentage}%</span>
+            <span class="match-text">Match</span>
           </div>
         </div>
 
@@ -304,7 +325,7 @@ function renderBestMatchingJobs() {
           <span class="job-type-pill ${typeBadgeClass}">${job.typeLabel}</span>
           <span class="job-meta-item">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            ${escHtml(job.location)} (${escHtml(job.workMode)})
+            ${escHtml(job.location)}
           </span>
           <span class="job-meta-item package-pill">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
@@ -318,7 +339,7 @@ function renderBestMatchingJobs() {
         <!-- Why This Matches Your Resume Box -->
         <div class="best-match-rationale-box">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          <div>${job.rationale}</div>
+          <div class="rationale-text">${job.rationale}</div>
         </div>
 
         <!-- Skills Breakdown -->
@@ -333,7 +354,7 @@ function renderBestMatchingJobs() {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </a>
 
-          <button class="role-openings-btn intel-modal-btn" data-job-id="${job.id}" style="width:auto; padding:0.5rem 0.85rem;" title="View Interview Blueprint & Hiring Rounds">
+          <button class="role-openings-btn intel-modal-btn" data-job-id="${job.id}" style="width:auto; padding:0.55rem 0.85rem;" title="View Interview Blueprint & Hiring Rounds">
             <span>Interview Guide</span>
           </button>
 
