@@ -1167,13 +1167,20 @@ export function renderBestMatchingSection(data, onTailor) {
     };
   });
 
-  // 4. Initialize in-page controls once
+  // 4. Update button count
+  const btnSub = document.getElementById('bestMatchingBtnSub');
+  const expandable = document.getElementById('bestMatchingExpandableContent');
+  if (btnSub && (!expandable || expandable.classList.contains('hidden'))) {
+    btnSub.innerHTML = `Open Matching Jobs (${inpageScoredJobs.length}) &darr;`;
+  }
+
+  // 5. Initialize in-page controls once
   if (!inpageControlsInitialized) {
     initInpageControls();
     inpageControlsInitialized = true;
   }
 
-  // 5. Render in-page jobs grid
+  // 6. Render in-page jobs grid
   renderInpageJobsGrid();
 }
 
@@ -1495,10 +1502,52 @@ function initInpageControls() {
   const searchInput = document.getElementById('inpageBestMatchSearchInput');
   const sortSelect = document.getElementById('inpageBestMatchSortSelect');
   const tabs = document.querySelectorAll('#inpageBestMatchCategoryTabs .opp-tab');
-  const scrollBtn = document.getElementById('bestMatchingScrollBtn');
+  const toggleBtn = document.getElementById('bestMatchingToggleBtn') || document.getElementById('bestMatchingScrollBtn');
+  const expandable = document.getElementById('bestMatchingExpandableContent');
+  const btnSub = document.getElementById('bestMatchingBtnSub');
+  const collapseBtn = document.getElementById('inpageCollapseBtn');
   const modal = document.getElementById('roleIntelligenceModal');
   const closeBtn = document.getElementById('closeIntelModalBtn');
   const dismissBtn = document.getElementById('dismissIntelModalBtn');
+
+  function toggleExpanded(shouldOpen) {
+    if (!expandable) return;
+    const isCurrentlyHidden = expandable.classList.contains('hidden');
+    const targetOpen = (typeof shouldOpen === 'boolean') ? shouldOpen : isCurrentlyHidden;
+
+    if (targetOpen) {
+      expandable.classList.remove('hidden');
+      if (toggleBtn) toggleBtn.classList.add('active');
+      if (btnSub) btnSub.innerHTML = 'Hide Matching Roles &uarr;';
+      renderInpageJobsGrid();
+      setTimeout(() => {
+        expandable.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    } else {
+      expandable.classList.add('hidden');
+      if (toggleBtn) toggleBtn.classList.remove('active');
+      const count = (inpageScoredJobs && inpageScoredJobs.length) ? inpageScoredJobs.length : 16;
+      if (btnSub) btnSub.innerHTML = `Open Matching Jobs (${count}) &darr;`;
+      const card = document.getElementById('bestMatchingCard');
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  }
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleExpanded();
+    });
+  }
+
+  if (collapseBtn) {
+    collapseBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleExpanded(false);
+    });
+  }
 
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
@@ -1522,16 +1571,6 @@ function initInpageControls() {
       renderInpageJobsGrid();
     });
   });
-
-  if (scrollBtn) {
-    scrollBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const target = document.getElementById('inpageBestMatchingJobsGrid');
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
-  }
 
   if (closeBtn) closeBtn.addEventListener('click', closeInpageModal);
   if (dismissBtn) dismissBtn.addEventListener('click', closeInpageModal);

@@ -573,71 +573,82 @@
                   <span>AI Career Alignment</span>
                 </div>
                 <h3 class="card-title best-matching-main-title">BEST MATCHING: Highest-Fit Job Roles &amp; Openings</h3>
-                <p class="best-matching-desc">Based on your verified skills, experience density, and project portfolio, explore the top industry job opportunities with complete role descriptions tailored specifically to your resume. Click anywhere on a job card to view its full interview guide and tailor your resume with 1-click.</p>
+                <p class="best-matching-desc">Based on your verified skills, experience density, and project portfolio, explore top industry job opportunities with complete role descriptions tailored specifically to your resume. Touch the button to open full matching opportunities.</p>
               </div>
             </div>
             <div class="best-matching-cta-wrap">
-              <button type="button" class="best-matching-cta-btn" id="bestMatchingScrollBtn" title="Explore Matching Jobs below">
+              <button type="button" class="best-matching-cta-btn" id="bestMatchingToggleBtn" title="Touch to open all matching job roles">
                 <span class="best-matching-btn-label">BEST MATCHING</span>
-                <span class="best-matching-btn-sub">View All 16 Roles &darr;</span>
+                <span class="best-matching-btn-sub" id="bestMatchingBtnSub">Open Matching Jobs (16) &darr;</span>
               </button>
             </div>
           </div>
 
-          <!-- Preview row of top matching roles with scores -->
-          <div class="best-matching-roles-preview" id="bestMatchingRolesPreview">
-            <!-- Dynamically populated with top matched roles -->
-          </div>
+          <!-- Collapsible/Expandable Content: Hidden by default, opens only after touching BEST MATCHING button -->
+          <div class="best-matching-collapsible-body hidden" id="bestMatchingExpandableContent">
+            <!-- Preview row of top matching roles with scores -->
+            <div class="best-matching-roles-preview" id="bestMatchingRolesPreview">
+              <!-- Dynamically populated with top matched roles -->
+            </div>
 
-          <!-- Integrated Search & Filter Controls -->
-          <div class="opp-filter-section" style="margin-top: 1.25rem;">
-            <div class="opp-search-box">
-              <div class="search-input-wrap">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <input type="text" id="inpageBestMatchSearchInput" placeholder="Filter by role, company, or tech stack (e.g. Python, Zoho, React)..." />
+            <!-- Integrated Search & Filter Controls -->
+            <div class="opp-filter-section" style="margin-top: 1.25rem;">
+              <div class="opp-search-box">
+                <div class="search-input-wrap">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <input type="text" id="inpageBestMatchSearchInput" placeholder="Filter by role, company, or tech stack (e.g. Python, Zoho, React)..." />
+                </div>
+
+                <div class="location-select-wrap">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M7 12h10M10 18h4"></path>
+                  </svg>
+                  <select id="inpageBestMatchSortSelect" aria-label="Sort matching opportunities">
+                    <option value="match" selected>Highest Match % First</option>
+                    <option value="stipend">Highest CTC / Package</option>
+                    <option value="recent">Most Recently Updated</option>
+                  </select>
+                </div>
               </div>
 
-              <div class="location-select-wrap">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M3 6h18M7 12h10M10 18h4"></path>
-                </svg>
-                <select id="inpageBestMatchSortSelect" aria-label="Sort matching opportunities">
-                  <option value="match" selected>Highest Match % First</option>
-                  <option value="stipend">Highest CTC / Package</option>
-                  <option value="recent">Most Recently Updated</option>
-                </select>
+              <!-- Category Filter Tabs -->
+              <div class="opp-category-tabs" id="inpageBestMatchCategoryTabs">
+                <button class="opp-tab active" data-category="all">
+                  <span>All Top Matches</span>
+                  <span class="tab-count" id="inpageAllCount">16</span>
+                </button>
+                <button class="opp-tab" data-category="product"><span>Product Firms</span></button>
+                <button class="opp-tab" data-category="fresher"><span>Freshers (0-1 Yrs)</span></button>
+                <button class="opp-tab" data-category="internship"><span>Internships</span></button>
+                <button class="opp-tab" data-category="high-package"><span>High Package (₹7+ LPA)</span></button>
               </div>
             </div>
 
-            <!-- Category Filter Tabs -->
-            <div class="opp-category-tabs" id="inpageBestMatchCategoryTabs">
-              <button class="opp-tab active" data-category="all">
-                <span>All Top Matches</span>
-                <span class="tab-count" id="inpageAllCount">16</span>
+            <!-- Listings Summary Bar -->
+            <div class="listings-header-row" style="margin-top: 0.85rem;">
+              <span class="listings-stat-label">
+                Showing <strong id="inpageVisibleJobsCount" class="filter-highlight">0</strong> jobs &bull; <span id="inpageFilterLabel">All Top Matches for Your Resume</span>
+              </span>
+              <span class="active-query-tag" style="background:#ecfdf5; color:#065f46; border-color:#a7f3d0; font-weight:600;">
+                Ranked by Resume Compatibility
+              </span>
+            </div>
+
+            <!-- Matching Jobs Grid Inside the Analysis Tab -->
+            <div class="opp-jobs-grid" id="inpageBestMatchingJobsGrid" style="margin-top: 1rem;">
+              <!-- Dynamically populated with interactive matching job cards -->
+            </div>
+
+            <!-- Bottom Collapse Action -->
+            <div class="best-matching-collapse-footer" style="text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed rgba(2, 132, 199, 0.25);">
+              <button type="button" class="btn-collapse-matching" id="inpageCollapseBtn" title="Close matching opportunities">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                <span>Collapse Matching Roles</span>
               </button>
-              <button class="opp-tab" data-category="product"><span>Product Firms</span></button>
-              <button class="opp-tab" data-category="fresher"><span>Freshers (0-1 Yrs)</span></button>
-              <button class="opp-tab" data-category="internship"><span>Internships</span></button>
-              <button class="opp-tab" data-category="high-package"><span>High Package (₹7+ LPA)</span></button>
             </div>
-          </div>
-
-          <!-- Listings Summary Bar -->
-          <div class="listings-header-row" style="margin-top: 0.85rem;">
-            <span class="listings-stat-label">
-              Showing <strong id="inpageVisibleJobsCount" class="filter-highlight">0</strong> jobs &bull; <span id="inpageFilterLabel">All Top Matches for Your Resume</span>
-            </span>
-            <span class="active-query-tag" style="background:#ecfdf5; color:#065f46; border-color:#a7f3d0; font-weight:600;">
-              Ranked by Resume Compatibility
-            </span>
-          </div>
-
-          <!-- Matching Jobs Grid Inside the Analysis Tab -->
-          <div class="opp-jobs-grid" id="inpageBestMatchingJobsGrid" style="margin-top: 1rem;">
-            <!-- Dynamically populated with interactive matching job cards -->
           </div>
         </div>
 

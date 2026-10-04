@@ -7997,6 +7997,46 @@ body.exporting-staff-pdf #batchProgressWrap {
   width: 100%;
 }
 
+/* ─── BEST MATCHING ACCORDION / COLLAPSIBLE EXPANSION ─── */
+.best-matching-collapsible-body {
+  margin-top: 1.25rem;
+  transition: opacity 0.28s ease, transform 0.28s ease;
+  transform-origin: top center;
+}
 
+.best-matching-collapsible-body.hidden {
+  display: none !important;
+}
 
+.best-matching-cta-btn.active {
+  background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.4);
+}
 
+.best-matching-cta-btn.active:hover {
+  background: linear-gradient(135deg, #047857 0%, #0f766e 100%);
+}
+
+.btn-collapse-matching {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.5rem;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  color: #334155;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.btn-collapse-matching:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
