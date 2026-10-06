@@ -30,6 +30,7 @@ import { computeScorePotential } from './score-potential.js';
 let currentResumeText = '';
 let currentAnalysis = null;
 let isChatting = false;
+let isTailoredAnalysis = false;
 /** @type {Array<{role:'user'|'assistant', content:string}>} */
 let chatHistory = [];
 
@@ -270,6 +271,9 @@ function renderUploadedFileInfo(fileName, fileSize, wordCount) {
 function clearAllResumeSession() {
   currentResumeText = '';
   currentAnalysis = null;
+  isTailoredAnalysis = false;
+  const roleDevCard = document.getElementById('roleDevCard');
+  if (roleDevCard) roleDevCard.style.display = 'none';
   try {
     sessionStorage.removeItem('resumereviewer_saved_resume_text');
     sessionStorage.removeItem('resumereviewer_saved_filename');
@@ -550,12 +554,14 @@ function renderAnalysis(data) {
   renderScorePotential(computeScorePotential(data));
 
   // Role Development & Preparation Roadmap (What You Need to Develop for this Role)
+  // ONLY displayed after tailor resume analysis, NOT for normal analysis!
   const targetRoleVal = (targetRoleInput?.value || '').trim();
   const jdVal = (document.getElementById('jobDescription')?.value || '').trim();
-  renderRoleDevelopmentRoadmap(data, targetRoleVal, jdVal);
+  const isTailored = Boolean(isTailoredAnalysis || (targetRoleVal && jdVal && jdVal.length > 20));
+  renderRoleDevelopmentRoadmap(data, targetRoleVal, jdVal, isTailored);
 
-  // Best Matching Section (Top matching jobs based on resume with 1-click tailoring)
-  renderBestMatchingSection(data, () => runAnalysis());
+  // Best Matching Section (Top matching jobs preview linking to dedicated best-matching.html page)
+  renderBestMatchingSection(data);
 
   // Save profile to localStorage for opportunities.html & session cache
   try {
@@ -764,6 +770,7 @@ function restoreSessionOrTailor() {
   const isTailorIntent = Boolean(tailorRaw || urlParams.get('tailor'));
 
   if (isTailorIntent) {
+    isTailoredAnalysis = true;
     try {
       let payload = null;
       if (tailorRaw) {

@@ -12,6 +12,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="alternate icon" type="image/png" href="assets/logo.png" />
   <link rel="stylesheet" href="style.css" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8290314052095151" crossorigin="anonymous"></script>
   <!-- PDF.js CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <!-- Mammoth.js for Word (.docx) documents -->
@@ -539,8 +540,8 @@
           <ol class="action-list" id="actionList"></ol>
         </div>
 
-        <!-- Target Role Preparation: What You Need to Develop -->
-        <div class="card card-role-dev" id="roleDevCard">
+        <!-- Target Role Preparation: What You Need to Develop (Only displayed after tailored analysis) -->
+        <div class="card card-role-dev" id="roleDevCard" style="display: none;">
           <div class="role-dev-header">
             <div class="role-dev-title-wrap">
               <div class="role-dev-icon">
@@ -573,82 +574,20 @@
                   <span>AI Career Alignment</span>
                 </div>
                 <h3 class="card-title best-matching-main-title">BEST MATCHING: Highest-Fit Job Roles &amp; Openings</h3>
-                <p class="best-matching-desc">Based on your verified skills, experience density, and project portfolio, explore top industry job opportunities with complete role descriptions tailored specifically to your resume. Touch the button to open full matching opportunities.</p>
+                <p class="best-matching-desc">Based on your verified skills, experience density, and project portfolio, explore the top industry job opportunities with complete role descriptions tailored specifically to your resume.</p>
               </div>
             </div>
             <div class="best-matching-cta-wrap">
-              <button type="button" class="best-matching-cta-btn" id="bestMatchingToggleBtn" title="Touch to open all matching job roles">
+              <a href="best-matching.html" class="best-matching-cta-btn" id="bestMatchingBtn" title="Explore Best Matching Jobs on dedicated page">
                 <span class="best-matching-btn-label">BEST MATCHING</span>
-                <span class="best-matching-btn-sub" id="bestMatchingBtnSub">Open Matching Jobs (16) &darr;</span>
-              </button>
+                <span class="best-matching-btn-sub">View Best Matching Jobs &rarr;</span>
+              </a>
             </div>
           </div>
 
-          <!-- Collapsible/Expandable Content: Hidden by default, opens only after touching BEST MATCHING button -->
-          <div class="best-matching-collapsible-body hidden" id="bestMatchingExpandableContent">
-            <!-- Preview row of top matching roles with scores -->
-            <div class="best-matching-roles-preview" id="bestMatchingRolesPreview">
-              <!-- Dynamically populated with top matched roles -->
-            </div>
-
-            <!-- Integrated Search & Filter Controls -->
-            <div class="opp-filter-section" style="margin-top: 1.25rem;">
-              <div class="opp-search-box">
-                <div class="search-input-wrap">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                  </svg>
-                  <input type="text" id="inpageBestMatchSearchInput" placeholder="Filter by role, company, or tech stack (e.g. Python, Zoho, React)..." />
-                </div>
-
-                <div class="location-select-wrap">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 6h18M7 12h10M10 18h4"></path>
-                  </svg>
-                  <select id="inpageBestMatchSortSelect" aria-label="Sort matching opportunities">
-                    <option value="match" selected>Highest Match % First</option>
-                    <option value="stipend">Highest CTC / Package</option>
-                    <option value="recent">Most Recently Updated</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Category Filter Tabs -->
-              <div class="opp-category-tabs" id="inpageBestMatchCategoryTabs">
-                <button class="opp-tab active" data-category="all">
-                  <span>All Top Matches</span>
-                  <span class="tab-count" id="inpageAllCount">16</span>
-                </button>
-                <button class="opp-tab" data-category="product"><span>Product Firms</span></button>
-                <button class="opp-tab" data-category="fresher"><span>Freshers (0-1 Yrs)</span></button>
-                <button class="opp-tab" data-category="internship"><span>Internships</span></button>
-                <button class="opp-tab" data-category="high-package"><span>High Package (₹7+ LPA)</span></button>
-              </div>
-            </div>
-
-            <!-- Listings Summary Bar -->
-            <div class="listings-header-row" style="margin-top: 0.85rem;">
-              <span class="listings-stat-label">
-                Showing <strong id="inpageVisibleJobsCount" class="filter-highlight">0</strong> jobs &bull; <span id="inpageFilterLabel">All Top Matches for Your Resume</span>
-              </span>
-              <span class="active-query-tag" style="background:#ecfdf5; color:#065f46; border-color:#a7f3d0; font-weight:600;">
-                Ranked by Resume Compatibility
-              </span>
-            </div>
-
-            <!-- Matching Jobs Grid Inside the Analysis Tab -->
-            <div class="opp-jobs-grid" id="inpageBestMatchingJobsGrid" style="margin-top: 1rem;">
-              <!-- Dynamically populated with interactive matching job cards -->
-            </div>
-
-            <!-- Bottom Collapse Action -->
-            <div class="best-matching-collapse-footer" style="text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed rgba(2, 132, 199, 0.25);">
-              <button type="button" class="btn-collapse-matching" id="inpageCollapseBtn" title="Close matching opportunities">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
-                <span>Collapse Matching Roles</span>
-              </button>
-            </div>
+          <!-- Preview row of top matching roles with scores -->
+          <div class="best-matching-roles-preview" id="bestMatchingRolesPreview">
+            <!-- Dynamically populated with top matched roles -->
           </div>
         </div>
 
@@ -720,6 +659,19 @@
     </section>
 
   </main><!-- /main-grid -->
+
+  <!-- FOOTER NAVIGATION -->
+  <footer class="site-footer" style="max-width: 1400px; margin: 40px auto 20px; padding: 24px 20px; border-top: 1px solid var(--border, #e2e8f0); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; font-size: 0.9rem; color: #64748b;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span>&copy; 2026 <strong>ResumeReviewer</strong> &bull; Free In-Browser ATS Optimization</span>
+    </div>
+    <nav style="display: flex; gap: 20px; flex-wrap: wrap; align-items: center;" aria-label="Site Navigation">
+      <a href="about.html" style="color: #475569; text-decoration: none; font-weight: 500;">About</a>
+      <a href="resume-tips.html" style="color: #475569; text-decoration: none; font-weight: 500;">10 ATS Resume Tips</a>
+      <a href="contact.html" style="color: #475569; text-decoration: none; font-weight: 500;">Contact</a>
+      <a href="privacy.html" style="color: #475569; text-decoration: none; font-weight: 500;">Privacy Policy</a>
+    </nav>
+  </footer>
 
   <!-- ROLE INTELLIGENCE & INTERVIEW PREP MODAL -->
   <div class="modal-backdrop hidden" id="roleIntelligenceModal">

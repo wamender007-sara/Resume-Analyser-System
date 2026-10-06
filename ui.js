@@ -586,12 +586,21 @@ export function renderActionPlan(steps) {
 }
 
 // ─── Role Development & Skill Acquisition Roadmap ─────────────
-export function renderRoleDevelopmentRoadmap(data, targetRole = '', jobDescription = '') {
+export function renderRoleDevelopmentRoadmap(data, targetRole = '', jobDescription = '', isTailored = false) {
   const card = document.getElementById('roleDevCard');
+  if (!card) return;
+
+  // ONLY display this card when specifically running a tailored resume analysis
+  if (!isTailored) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+
   const body = document.getElementById('roleDevBody');
   const sub = document.getElementById('roleDevSubtitle');
   const badge = document.getElementById('roleDevBadge');
-  if (!card || !body) return;
+  if (!body) return;
 
   const roleTitle = (targetRole || data?.targetRoleFit?.targetRole || 'Software Engineering Role').trim();
   let companyName = '';
@@ -1077,33 +1086,21 @@ export function renderScorePotential(potential) {
 }
 
 // ─── Best Matching Section at Bottom of Analysis Tab ──────────
-import { COMPANY_LOGOS, OPPORTUNITIES_DATA } from './opportunities.js';
-
-let inpageCurrentFilter = 'all';
-let inpageCurrentSearch = '';
-let inpageCurrentSort = 'match';
-let inpageActiveData = null;
-let inpageTailorCallback = null;
-let inpageScoredJobs = [];
-let inpageControlsInitialized = false;
-
-export function renderBestMatchingSection(data, onTailor) {
+export function renderBestMatchingSection(data) {
   const card = document.getElementById('bestMatchingCard');
   if (!card) return;
 
-  inpageActiveData = data;
-  if (onTailor) inpageTailorCallback = onTailor;
-
-  // 1. Populate top preview chips
-  const preview = document.getElementById('bestMatchingRolesPreview');
   const suggestedRoles = data?.suggestedRoles || [];
+
+  // 1. Populate top preview chips as links to best-matching.html
+  const preview = document.getElementById('bestMatchingRolesPreview');
   if (preview) {
     if (suggestedRoles.length === 0) {
       preview.innerHTML = `
-        <div class="best-matching-role-chip">
+        <a href="best-matching.html" class="best-matching-role-chip" title="Explore Best Matching Jobs on dedicated page">
           <span>⭐ Software Engineer</span>
           <span class="match-score">85% Match</span>
-        </div>
+        </a>
       `;
     } else {
       const topRoles = suggestedRoles.slice(0, 4);
@@ -1111,10 +1108,10 @@ export function renderBestMatchingSection(data, onTailor) {
         const star = idx === 0 ? '⭐ ' : '';
         const badgeColor = role.matchScore >= 70 ? '#10b981' : (role.matchScore >= 45 ? '#0284c7' : '#64748b');
         return `
-          <div class="best-matching-role-chip" title="Direct match for ${escHtml(role.title)}">
+          <a href="best-matching.html" class="best-matching-role-chip" title="Direct match for ${escHtml(role.title)} — View all matching jobs">
             <span>${star}${escHtml(role.title)}</span>
             <span class="match-score" style="color:${badgeColor}; border:1px solid ${badgeColor}40;">${role.matchScore}% Match</span>
-          </div>
+          </a>
         `;
       }).join('');
     }
@@ -1135,53 +1132,18 @@ export function renderBestMatchingSection(data, onTailor) {
   }
   const candidateSkills = Array.from(new Set(flatSkills.map(s => s.toLowerCase())));
 
-  // 3. Compute personalized match score & rationale for all jobs
-  inpageScoredJobs = (OPPORTUNITIES_DATA || []).map(job => {
-    const matched = [];
-    const missing = [];
-    (job.requiredSkills || []).forEach(req => {
-      const isFound = candidateSkills.some(cs => cs.includes(req.toLowerCase()) || req.toLowerCase().includes(cs));
-      if (isFound) matched.push(req);
-      else missing.push(req);
-    });
-
-    const ratio = (job.requiredSkills && job.requiredSkills.length > 0) ? (matched.length / job.requiredSkills.length) : 0.6;
-    const candidateBase = data?.overall_score ? data.overall_score / 100 : (data?.overallScore ? data.overallScore / 100 : 0.85);
-    const matchPercentage = Math.min(98, Math.max(35, Math.round(((ratio * 0.7) + (candidateBase * 0.3)) * 100)));
-
-    let rationale = '';
-    if (matched.length >= 3) {
-      rationale = `Strong direct fit: Your verified proficiencies in <strong>${escHtml(matched.slice(0, 3).join(', '))}</strong> directly fulfill this role's core engineering stack.`;
-    } else if (matched.length >= 1) {
-      rationale = `Solid foundation: You meet core requirements in <strong>${escHtml(matched.join(', '))}</strong>. Adding <strong>${escHtml(missing.slice(0, 2).join(', '))}</strong> will position you as a top candidate.`;
-    } else {
-      rationale = `High-potential growth role: Focuses on foundational problem solving and <strong>${escHtml((job.requiredSkills || []).slice(0, 2).join(', '))}</strong>.`;
-    }
-
-    return {
-      ...job,
-      matchPercentage,
-      matchedSkills: matched,
-      missingSkills: missing,
-      rationale
+  // 3. Save Candidate Profile for best-matching.html & opportunities.html
+  try {
+    const candidateProfile = {
+      candidateName: data?.contact?.name || data?.candidateName || 'Candidate',
+      targetRole: data?.targetRoleFit?.targetRole || (suggestedRoles[0]?.title) || 'Software Engineer',
+      suggestedRoles: suggestedRoles,
+      flatSkills: Array.from(new Set(flatSkills)),
+      overallScore: data?.overall_score || data?.overallScore || 85,
+      atsGrade: data?.grade || 'A'
     };
-  });
-
-  // 4. Update button count
-  const btnSub = document.getElementById('bestMatchingBtnSub');
-  const expandable = document.getElementById('bestMatchingExpandableContent');
-  if (btnSub && (!expandable || expandable.classList.contains('hidden'))) {
-    btnSub.innerHTML = `Open Matching Jobs (${inpageScoredJobs.length}) &darr;`;
-  }
-
-  // 5. Initialize in-page controls once
-  if (!inpageControlsInitialized) {
-    initInpageControls();
-    inpageControlsInitialized = true;
-  }
-
-  // 6. Render in-page jobs grid
-  renderInpageJobsGrid();
+    localStorage.setItem('resumereviewer_candidate_profile', JSON.stringify(candidateProfile));
+  } catch (e) {}
 }
 
 function renderInpageJobsGrid() {
