@@ -967,6 +967,11 @@ button, input, select, textarea {
 }
 
 /* ─── 6. CENTER RESULTS DASHBOARD (Eye-Care Light Blue, Pink & Green Cards) ─── */
+.panel-center:has(#results:not(.hidden)) #emptyState,
+.panel-center:has(#skeletonWrap:not(.hidden)) #emptyState {
+  display: none !important;
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;

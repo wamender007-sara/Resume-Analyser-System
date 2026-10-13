@@ -482,8 +482,12 @@ async function runAnalysis() {
 }
 
 function renderAnalysis(data) {
+  document.getElementById('emptyState')?.classList.add('hidden');
   hideSkeleton();
   showResults();
+
+  const resultsPanel = document.getElementById('resultsPanel');
+  if (resultsPanel) resultsPanel.scrollTop = 0;
 
   // Score ring & Verdict
   const { gradeEl, summaryEl } = renderScoreRing(data.overall_score || data.overallScore || 0);

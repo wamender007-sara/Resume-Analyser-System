@@ -927,7 +927,9 @@ export function hideSkeleton() {
 }
 
 export function showResults() {
-  document.getElementById('results').classList.remove('hidden');
+  document.getElementById('emptyState')?.classList.add('hidden');
+  document.getElementById('skeletonWrap')?.classList.add('hidden');
+  document.getElementById('results')?.classList.remove('hidden');
   updateAllAdSlots();
 }
 
