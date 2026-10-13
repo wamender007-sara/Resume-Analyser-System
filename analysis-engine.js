@@ -109,7 +109,7 @@ function estimateExperienceYears(text) {
 export const ROLE_PROFILES = [
   {
     title: 'Software Engineer',
-    aliases: ['software engineer', 'software developer', 'sde', 'swe', 'programmer', 'core engineer'],
+    aliases: ['software engineer', 'software developer', 'sde', 'swe', 'programmer', 'core engineer', 'systems engineer', 'system engineer', 'systems', 'prime systems engineer'],
     level: 'Entry / Mid / Senior',
     skills: ['python', 'java', 'c++', 'javascript', 'sql', 'git', 'github', 'rest api', 'system design', 'oop', 'docker', 'problem solving'],
     desc: 'Engineer core software systems, object-oriented services, algorithmic solutions, and production APIs.'
@@ -181,13 +181,16 @@ export const ROLE_PROFILES = [
 
 export function findMatchingRoleProfile(targetRole) {
   if (!targetRole || typeof targetRole !== 'string') return null;
-  const tr = targetRole.toLowerCase().trim();
+  // Clean company prefix like "Tata Consultancy Services — TCS Digital / Prime Systems Engineer"
+  const cleanedRole = targetRole.replace(/^[^—–-]+[—–-]\s*/, '').trim() || targetRole;
+  const tr = cleanedRole.toLowerCase().trim();
+  const rawTr = targetRole.toLowerCase().trim();
 
   // 1. Alias matching
   for (const profile of ROLE_PROFILES) {
     if (profile.aliases) {
       for (const alias of profile.aliases) {
-        if (tr.includes(alias) || alias.includes(tr)) {
+        if (tr.includes(alias) || alias.includes(tr) || rawTr.includes(alias)) {
           return profile;
         }
       }
@@ -197,7 +200,7 @@ export function findMatchingRoleProfile(targetRole) {
   // 2. Exact or substring match on Title
   for (const profile of ROLE_PROFILES) {
     const pTitle = profile.title.toLowerCase();
-    if (tr.includes(pTitle) || pTitle.includes(tr)) {
+    if (tr.includes(pTitle) || pTitle.includes(tr) || rawTr.includes(pTitle)) {
       return profile;
     }
   }
@@ -216,11 +219,11 @@ export function findMatchingRoleProfile(targetRole) {
 
   // Fallback to first profile with custom label
   return {
-    title: targetRole,
+    title: cleanedRole || targetRole,
     aliases: [tr],
     level: 'General Entry / Mid',
     skills: ['python', 'javascript', 'sql', 'git', 'problem solving', 'communication'],
-    desc: `Custom benchmark for ${targetRole}.`
+    desc: `Custom benchmark for ${cleanedRole || targetRole}.`
   };
 }
 
@@ -731,6 +734,145 @@ export function auditQuantifiableImpact(text) {
 }
 
 // ─── 10. MULTI-TIER KEYWORD & SKILL MATCH AUDITOR ───
+export const SKILL_KEYWORD_ALIASES = {
+  'rest api': ['rest api', 'rest apis', 'restful', 'fastapi', 'flask', 'api integration', 'apis', 'rest endpoints', 'endpoints'],
+  'restful api': ['rest api', 'rest apis', 'restful', 'fastapi', 'flask', 'api integration', 'apis', 'rest endpoints', 'endpoints'],
+  'oop': ['oop', 'oops', 'object-oriented', 'object oriented', 'classes', 'polymorphism', 'inheritance', 'encapsulation'],
+  'system design': ['system design', 'system architecture', 'software architecture', 'modular design', 'database design', 'architecture', 'scalability'],
+  'problem solving': ['problem solving', 'data structures', 'algorithms', 'dsa', 'analytical skills', 'algorithmic', 'optimization', 'problem-solving'],
+  'git': ['git', 'version control', 'github', 'gitlab', 'git repository'],
+  'github': ['github', 'gitlab', 'git repository', 'public repository', 'bitbucket', 'git'],
+  'sql': ['sql', 'mysql', 'postgresql', 'sqlite', 'oracle', 'relational database', 'database query', 'queries'],
+  'docker': ['docker', 'container', 'containers', 'containerization', 'kubernetes', 'docker compose'],
+  'python': ['python', 'py'],
+  'javascript': ['javascript', 'js', 'es6'],
+  'typescript': ['typescript', 'ts'],
+  'c++': ['c++', 'cpp'],
+  'cloud fundamentals': ['cloud', 'aws', 'azure', 'gcp', 'cloud computing', 'cloud fundamentals', 'docker', 'devops'],
+  'cloud': ['cloud', 'aws', 'azure', 'gcp', 'cloud computing', 'docker', 'devops'],
+  'enterprise cloud': ['cloud', 'aws', 'azure', 'gcp', 'cloud computing', 'enterprise cloud'],
+  'data science': ['data science', 'pandas', 'numpy', 'python', 'scikit-learn', 'machine learning', 'analytics', 'data analysis'],
+  'machine learning': ['machine learning', 'ml', 'deep learning', 'scikit-learn', 'tensorflow', 'pytorch', 'ai', 'artificial intelligence'],
+  'deep learning': ['deep learning', 'neural networks', 'cnn', 'rnn', 'tensorflow', 'pytorch', 'keras', 'machine learning'],
+  'full stack': ['full stack', 'frontend', 'backend', 'react', 'node', 'fullstack'],
+  'full stack engineer': ['full stack', 'frontend', 'backend', 'react', 'node', 'fullstack', 'software engineer'],
+  'web development': ['html', 'css', 'javascript', 'react', 'frontend', 'backend', 'web development'],
+  'big data': ['big data', 'hadoop', 'spark', 'data engineering', 'sql', 'nosql', 'kafka']
+};
+
+export function matchesSkillOrKeyword(skill, resumeLower, uniqueSkills = []) {
+  if (!skill) return false;
+  const sLower = skill.toLowerCase().trim();
+  if (resumeLower.includes(sLower)) return true;
+  if (uniqueSkills.some(us => {
+    const uLower = us.toLowerCase().trim();
+    return uLower === sLower || uLower.includes(sLower) || sLower.includes(uLower);
+  })) {
+    return true;
+  }
+
+  const aliases = SKILL_KEYWORD_ALIASES[sLower];
+  if (aliases) {
+    for (const a of aliases) {
+      if (resumeLower.includes(a) || uniqueSkills.some(us => us.toLowerCase().includes(a))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+export function extractJdSkillsAndKeywords(jobDescription, targetRole = '') {
+  if (!jobDescription || typeof jobDescription !== 'string' || jobDescription.trim().length < 15) {
+    return { explicitSkills: [], scannedSkills: [], allSkills: [], cleanTokens: [] };
+  }
+
+  const jdText = jobDescription;
+  const jdLower = jdText.toLowerCase();
+
+  // 1. Check for explicit competency sections
+  const explicitSkills = [];
+  const compPatterns = [
+    /required\s+technical\s+competencies:\s*([^\n\r]+(?:\n(?![a-z\s]+:)[^\n\r]+)*)/i,
+    /required\s+skills:\s*([^\n\r]+(?:\n(?![a-z\s]+:)[^\n\r]+)*)/i,
+    /key\s+skills:\s*([^\n\r]+(?:\n(?![a-z\s]+:)[^\n\r]+)*)/i,
+    /technical\s+skills:\s*([^\n\r]+(?:\n(?![a-z\s]+:)[^\n\r]+)*)/i,
+    /technical\s+competencies:\s*([^\n\r]+(?:\n(?![a-z\s]+:)[^\n\r]+)*)/i,
+    /requirements:\s*([^\n\r]+(?:\n(?![a-z\s]+:)[^\n\r]+)*)/i
+  ];
+
+  for (const pat of compPatterns) {
+    const match = jdText.match(pat);
+    if (match && match[1]) {
+      const items = match[1]
+        .split(/[,;\n\u2022\u25cf\u25aa|]+/)
+        .map(s => s.trim().replace(/^[-*•]\s*/, '').toLowerCase())
+        .filter(s => s.length >= 2 && !['and', 'or', 'etc', 'other'].includes(s));
+      items.forEach(item => {
+        if (!explicitSkills.includes(item)) explicitSkills.push(item);
+      });
+      if (explicitSkills.length >= 2) break;
+    }
+  }
+
+  // 2. Scan job description for known tech skills from ALL_TECH_SKILLS
+  const scannedSkills = [];
+  ALL_TECH_SKILLS.forEach(({ name }) => {
+    const nameLower = name.toLowerCase();
+    const regex = new RegExp(`(^|[^a-z0-9])${nameLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z0-9]|$)`, 'i');
+    if (regex.test(jdLower) && !scannedSkills.includes(nameLower) && !explicitSkills.includes(nameLower)) {
+      scannedSkills.push(nameLower);
+    }
+  });
+
+  const compoundSkills = [
+    'cloud fundamentals', 'data science', 'machine learning', 'deep learning', 'computer vision',
+    'system design', 'restful api', 'rest api', 'microservices', 'big data', 'enterprise cloud',
+    'full stack', 'unit testing', 'problem solving', 'data structures', 'algorithms'
+  ];
+  compoundSkills.forEach(comp => {
+    if (jdLower.includes(comp) && !scannedSkills.includes(comp) && !explicitSkills.includes(comp)) {
+      scannedSkills.push(comp);
+    }
+  });
+
+  const allSkills = [...explicitSkills, ...scannedSkills];
+
+  // 3. Extract clean non-fluff domain tokens
+  const stopWords = new Set([
+    'the', 'and', 'for', 'with', 'that', 'this', 'from', 'have', 'will', 'your', 'about', 'must',
+    'should', 'role', 'team', 'work', 'experience', 'looking', 'skills', 'responsibilities',
+    'qualifications', 'ability', 'preferred', 'required', 'competencies', 'overview', 'summary',
+    'description', 'candidates', 'candidate', 'applicant', 'opportunity', 'apply', 'official',
+    'portal', 'package', 'salary', 'lpa', 'batch', 'eligibility', 'graduates', 'premier', 'stream',
+    'assigned', 'globally', 'questions', 'interview', 'evaluation', 'focus', 'explain', 'difference',
+    'sample', 'recruiter', 'resume', 'tip', 'highlight', 'target', 'company', 'location', 'drive',
+    'campus', 'fresher', 'internship', 'equal', 'opportunity', 'benefit', 'benefits', 'competitive',
+    'perks', 'timing', 'shift', 'full-time', 'part-time', 'permanent', 'contract', 'remote',
+    'hybrid', 'onsite', 'office', 'bangalore', 'hyderabad', 'chennai', 'pune', 'mumbai', 'delhi',
+    'noida', 'gurgaon', 'kolkata', 'india', 'tcs', 'infosys', 'wipro', 'accenture', 'cognizant',
+    'capgemini', 'amazon', 'google', 'microsoft', 'ibm', 'oracle', 'zoho', 'year', 'years',
+    'degree', 'bachelor', 'master', 'tech', 'btech', 'mtech', 'be', 'me', 'passout', 'good',
+    'strong', 'excellent', 'proven', 'demonstrated', 'relevant', 'hands-on', 'track', 'record',
+    'digital', 'prime', 'systems', 'consultancy', 'services', 'tata'
+  ]);
+
+  const rawTokens = jdLower.match(/\b[a-z]{3,}\b/g) || [];
+  const tokenFreq = new Map();
+  rawTokens.forEach(t => {
+    if (!stopWords.has(t) && t.length > 2) {
+      tokenFreq.set(t, (tokenFreq.get(t) || 0) + 1);
+    }
+  });
+
+  const cleanTokens = Array.from(tokenFreq.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(entry => entry[0])
+    .slice(0, 20);
+
+  return { explicitSkills, scannedSkills, allSkills, cleanTokens };
+}
+
 export function auditKeywordMatch(clean, jobDescription, targetRole, uniqueSkills) {
   const lower = clean.toLowerCase();
   const matched_keywords = [];
@@ -747,91 +889,81 @@ export function auditKeywordMatch(clean, jobDescription, targetRole, uniqueSkill
   ];
 
   if (jobDescription && jobDescription.trim().length > 25) {
-    const jdClean = jobDescription.toLowerCase();
-    const rawTokens = jdClean.match(/\b[a-z]{3,}\b/g) || [];
-    const stopWords = new Set(['the', 'and', 'for', 'with', 'that', 'this', 'from', 'have', 'will', 'your', 'about', 'must', 'should', 'role', 'team', 'work', 'experience', 'looking', 'skills', 'responsibilities', 'qualifications', 'ability', 'preferred', 'required']);
+    const jdInfo = extractJdSkillsAndKeywords(jobDescription, targetRole);
 
-    const tokenFreq = new Map();
-    rawTokens.forEach(t => {
-      if (!stopWords.has(t)) {
-        tokenFreq.set(t, (tokenFreq.get(t) || 0) + 1);
-      }
-    });
-
-    const sortedJdTokens = Array.from(tokenFreq.entries())
-      .sort((a, b) => b[1] - a[1])
-      .map(entry => entry[0])
-      .slice(0, 30);
-
-    let weightedMatchSum = 0;
-    let totalWeight = 0;
-
-    sortedJdTokens.forEach(kw => {
-      const weight = tokenFreq.get(kw) || 1;
-      totalWeight += weight;
-
-      if (lower.includes(kw)) {
-        weightedMatchSum += weight;
-        if (!matched_keywords.includes(kw)) matched_keywords.push(kw);
-      } else {
-        let foundSynonym = false;
-        for (const syn of SYNONYM_MAP) {
-          if (syn.jd.includes(kw) || kw.includes(syn.jd)) {
-            for (const pat of syn.resumePatterns) {
-              if (lower.includes(pat) && !partial_matches.some(p => p.jd_term === kw)) {
-                partial_matches.push({ resume_term: pat, jd_term: kw });
-                weightedMatchSum += weight * 0.75;
-                foundSynonym = true;
-                break;
-              }
-            }
-          }
-          if (foundSynonym) break;
+    // 1. If explicit competencies were found in JD (from tailor payload or structured JD)
+    if (jdInfo.explicitSkills && jdInfo.explicitSkills.length > 0) {
+      let explicitMatched = 0;
+      jdInfo.explicitSkills.forEach(skill => {
+        if (matchesSkillOrKeyword(skill, lower, uniqueSkills)) {
+          explicitMatched++;
+          if (!matched_keywords.includes(skill)) matched_keywords.push(skill);
+        } else {
+          if (!missing_keywords.includes(skill)) missing_keywords.push(skill);
         }
+      });
 
-        if (!foundSynonym && missing_keywords.length < 15) {
-          missing_keywords.push(kw);
+      // Also check secondary scanned tech skills if present
+      jdInfo.scannedSkills.slice(0, 8).forEach(skill => {
+        if (matchesSkillOrKeyword(skill, lower, uniqueSkills)) {
+          if (!matched_keywords.includes(skill)) matched_keywords.push(skill);
+        } else if (missing_keywords.length < 6) {
+          if (!missing_keywords.includes(skill)) missing_keywords.push(skill);
         }
-      }
-    });
+      });
 
-    const score = totalWeight > 0 ? Math.min(100, Math.round((weightedMatchSum / totalWeight) * 100)) : 75;
-    return {
-      score,
-      matched_keywords: matched_keywords.slice(0, 15),
-      missing_keywords: missing_keywords.slice(0, 10),
-      partial_matches: partial_matches.slice(0, 5)
-    };
+      const expRatio = explicitMatched / Math.max(1, jdInfo.explicitSkills.length);
+      const score = Math.min(100, Math.max(35, Math.round(expRatio * 100)));
+      return {
+        score,
+        matched_keywords: matched_keywords.slice(0, 15),
+        missing_keywords: missing_keywords.slice(0, 10),
+        partial_matches: partial_matches.slice(0, 5)
+      };
+    }
+
+    // 2. If general scanned tech skills and domain tokens were found
+    if (jdInfo.allSkills && jdInfo.allSkills.length > 0) {
+      let skillsMatched = 0;
+      jdInfo.allSkills.forEach(skill => {
+        if (matchesSkillOrKeyword(skill, lower, uniqueSkills)) {
+          skillsMatched++;
+          if (!matched_keywords.includes(skill)) matched_keywords.push(skill);
+        } else {
+          if (!missing_keywords.includes(skill)) missing_keywords.push(skill);
+        }
+      });
+
+      let tokensMatched = 0;
+      jdInfo.cleanTokens.slice(0, 12).forEach(kw => {
+        if (lower.includes(kw)) {
+          tokensMatched++;
+          if (!matched_keywords.includes(kw)) matched_keywords.push(kw);
+        } else if (missing_keywords.length < 8) {
+          if (!missing_keywords.includes(kw)) missing_keywords.push(kw);
+        }
+      });
+
+      const skillRatio = skillsMatched / Math.max(1, jdInfo.allSkills.length);
+      const tokenRatio = jdInfo.cleanTokens.length > 0 ? (tokensMatched / Math.min(12, jdInfo.cleanTokens.length)) : skillRatio;
+      const blendedRatio = (skillRatio * 0.75) + (tokenRatio * 0.25);
+      const score = Math.min(100, Math.max(35, Math.round(blendedRatio * 100)));
+
+      return {
+        score,
+        matched_keywords: matched_keywords.slice(0, 15),
+        missing_keywords: missing_keywords.slice(0, 10),
+        partial_matches: partial_matches.slice(0, 5)
+      };
+    }
   }
 
   // Fallback: match against target role profile if JD is not provided
-  const matchingProfile = findMatchingRoleProfile(targetRole || 'Software Engineer') || ROLE_PROFILES[0];
-  
-  const SKILL_KEYWORD_ALIASES = {
-    'rest api': ['rest api', 'rest apis', 'restful', 'fastapi', 'flask', 'api integration', 'apis', 'rest endpoints', 'endpoints'],
-    'oop': ['oop', 'oops', 'object-oriented', 'object oriented', 'classes', 'polymorphism', 'inheritance', 'encapsulation'],
-    'system design': ['system design', 'system architecture', 'software architecture', 'modular design', 'database design', 'architecture', 'scalability'],
-    'problem solving': ['problem solving', 'data structures', 'algorithms', 'dsa', 'analytical skills', 'algorithmic', 'optimization'],
-    'git': ['git', 'version control', 'github', 'gitlab'],
-    'github': ['github', 'gitlab', 'git repository', 'public repository', 'bitbucket'],
-    'sql': ['sql', 'mysql', 'postgresql', 'sqlite', 'oracle', 'relational database', 'database query'],
-    'docker': ['docker', 'container', 'containers', 'containerization', 'kubernetes', 'docker compose'],
-    'python': ['python', 'py'],
-    'javascript': ['javascript', 'js', 'es6'],
-    'c++': ['c++', 'cpp']
-  };
-
-  const matchesSkill = (skill) => {
-    if (lower.includes(skill) || uniqueSkills.includes(skill)) return true;
-    const aliases = SKILL_KEYWORD_ALIASES[skill];
-    if (aliases) {
-      return aliases.some(a => lower.includes(a) || uniqueSkills.includes(a));
-    }
-    return false;
-  };
+  const cleanedRole = targetRole ? targetRole.replace(/^[^—–-]+[—–-]\s*/, '').trim() : '';
+  const matchingProfile = findMatchingRoleProfile(cleanedRole) || findMatchingRoleProfile(targetRole || 'Software Engineer') || ROLE_PROFILES[0];
 
   matchingProfile.skills.forEach(s => {
-    if (matchesSkill(s)) {
+    if (matchesSkillOrKeyword(s, lower, uniqueSkills)) {
       matched_keywords.push(s);
     } else {
       missing_keywords.push(s);
@@ -1537,42 +1669,71 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
   // ── PASS 6: JD & TARGET ROLE MATCH % ──
   let jdMatch = null;
   if (jobDescription && jobDescription.trim().length > 30) {
-    const jdClean = jobDescription.toLowerCase();
-    const jdWords = jdClean.match(/\b[a-z]{3,}\b/g) || [];
-    const stopWords = new Set(['the', 'and', 'for', 'with', 'that', 'this', 'from', 'have', 'will', 'your', 'about', 'must', 'should', 'role', 'team', 'work']);
-    const jdKeywords = Array.from(new Set(jdWords.filter(w => !stopWords.has(w) && w.length > 3)));
+    const jdInfo = extractJdSkillsAndKeywords(jobDescription, targetRole);
+    let matchedCount = 0;
+    const missingKeywords = [];
 
-    let matchedJdCount = 0;
-    const missingJdKeywords = [];
-    jdKeywords.slice(0, 30).forEach(kw => {
-      if (lower.includes(kw)) {
-        matchedJdCount++;
-      } else {
-        missingJdKeywords.push(kw);
-      }
-    });
-    const percentage = Math.min(100, Math.round((matchedJdCount / Math.min(jdKeywords.length, 30)) * 100));
-    jdMatch = {
-      percentage,
-      matchedCount: matchedJdCount,
-      totalChecked: Math.min(jdKeywords.length, 30),
-      missingKeywords: missingJdKeywords.slice(0, 8)
-    };
+    if (jdInfo.explicitSkills && jdInfo.explicitSkills.length > 0) {
+      jdInfo.explicitSkills.forEach(skill => {
+        if (matchesSkillOrKeyword(skill, lower, uniqueSkills)) {
+          matchedCount++;
+        } else {
+          missingKeywords.push(skill);
+        }
+      });
+      const totalChecked = jdInfo.explicitSkills.length;
+      const percentage = Math.min(100, Math.round((matchedCount / totalChecked) * 100));
+      jdMatch = {
+        percentage,
+        matchedCount,
+        totalChecked,
+        missingKeywords: missingKeywords.slice(0, 8)
+      };
+    } else {
+      const allToCheck = [...jdInfo.allSkills, ...jdInfo.cleanTokens.slice(0, 15)];
+      allToCheck.forEach(item => {
+        if (matchesSkillOrKeyword(item, lower, uniqueSkills) || lower.includes(item)) {
+          matchedCount++;
+        } else if (missingKeywords.length < 8) {
+          missingKeywords.push(item);
+        }
+      });
+      const totalChecked = Math.max(1, Math.min(allToCheck.length, 25));
+      const percentage = Math.min(100, Math.round((matchedCount / totalChecked) * 100));
+      jdMatch = {
+        percentage,
+        matchedCount,
+        totalChecked,
+        missingKeywords: missingKeywords.slice(0, 8)
+      };
+    }
   }
 
   // ── PASS 7: TARGET ROLE FIT ANALYSIS ──
   let targetRoleFit = null;
   if (targetRole && targetRole.trim().length >= 2) {
-    const matchingProfile = findMatchingRoleProfile(targetRole) || ROLE_PROFILES[0];
+    const jdInfo = extractJdSkillsAndKeywords(jobDescription, targetRole);
+    const cleanedRoleTitle = targetRole.replace(/^[^—–-]+[—–-]\s*/, '').trim() || targetRole;
+
+    let targetSkills = [];
+    let roleTitleDisplay = cleanedRoleTitle;
+
+    if (jdInfo.explicitSkills && jdInfo.explicitSkills.length >= 2) {
+      targetSkills = jdInfo.explicitSkills;
+    } else {
+      const matchingProfile = findMatchingRoleProfile(cleanedRoleTitle) || findMatchingRoleProfile(targetRole) || ROLE_PROFILES[0];
+      targetSkills = matchingProfile.skills;
+      roleTitleDisplay = matchingProfile.title;
+    }
 
     const roleMatched = [];
     const roleMissing = [];
-    matchingProfile.skills.forEach(s => {
-      if (uniqueSkills.includes(s) || lower.includes(s)) roleMatched.push(s);
+    targetSkills.forEach(s => {
+      if (matchesSkillOrKeyword(s, lower, uniqueSkills)) roleMatched.push(s);
       else roleMissing.push(s);
     });
 
-    const fitPercentage = Math.min(100, Math.round((roleMatched.length / matchingProfile.skills.length) * 100));
+    const fitPercentage = Math.min(100, Math.round((roleMatched.length / Math.max(1, targetSkills.length)) * 100));
     let priority = 'mid';
     let priorityLabel = 'Mid Priority (Moderate Fit)';
     let verdict = 'Moderate Alignment';
@@ -1608,7 +1769,7 @@ export function analyseResumeLocally(text, targetRole = '', jobDescription = '')
     };
 
     targetRoleFit = {
-      targetRole: matchingProfile.title,
+      targetRole: roleTitleDisplay,
       fitPercentage,
       priority,
       priorityLabel,

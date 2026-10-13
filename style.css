@@ -7134,99 +7134,31 @@ body.exporting-staff-pdf #batchProgressWrap {
     display: none !important;
   }
 
-  /* Hide Desktop Header Switcher — Replaced by Native Bottom App Nav Bar */
+  /* Keep Primary Portal Navigation in Header across mobile & tablet */
   .portal-nav-switcher {
+    display: flex !important;
+    order: 3 !important;
+    width: 100% !important;
+    margin-top: 0.35rem !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    gap: 3px !important;
+  }
+  .portal-nav-switcher::-webkit-scrollbar {
     display: none !important;
   }
-
-  /* Native Mobile App Bottom Navigation Bar */
-  .mobile-app-bottom-nav {
-    display: flex !important;
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    height: calc(58px + env(safe-area-inset-bottom, 0px)) !important;
-    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-    background: rgba(255, 255, 255, 0.94) !important;
-    backdrop-filter: blur(24px) !important;
-    -webkit-backdrop-filter: blur(24px) !important;
-    border-top: 1px solid rgba(203, 213, 225, 0.85) !important;
-    z-index: 9000 !important;
-    box-shadow: 0 -4px 18px rgba(15, 23, 42, 0.07) !important;
-    justify-content: space-around !important;
-    align-items: center !important;
-  }
-
-  .mobile-nav-item {
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
+  .portal-nav-btn {
+    flex: 1 1 auto !important;
     justify-content: center !important;
-    gap: 3px !important;
-    height: 100% !important;
-    color: #64748b !important;
-    text-decoration: none !important;
-    font-size: 0.72rem !important;
-    font-weight: 600 !important;
-    transition: all 0.15s ease !important;
-    user-select: none !important;
-    -webkit-tap-highlight-color: transparent !important;
+    padding: 0.35rem 0.55rem !important;
+    font-size: 0.75rem !important;
   }
 
-  .mobile-nav-icon-wrap {
-    position: relative !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  .mobile-nav-dot {
-    position: absolute !important;
-    top: -1px !important;
-    right: -3px !important;
-    width: 7px !important;
-    height: 7px !important;
-    background: #10b981 !important;
-    border-radius: 50% !important;
-    box-shadow: 0 0 0 1.5px #ffffff !important;
-  }
-
-  .mobile-live-tag {
-    font-size: 0.58rem !important;
-    background: #dcfce7 !important;
-    color: #15803d !important;
-    border: 1px solid #bbf7d0 !important;
-    padding: 0 4px !important;
-    border-radius: 6px !important;
-    font-weight: 700 !important;
-    margin-left: 2px !important;
-    vertical-align: middle !important;
-  }
-
-  .mobile-nav-item:hover,
-  .mobile-nav-item:active {
-    color: #2563eb !important;
-  }
-
-  .mobile-nav-item.active {
-    color: #2563eb !important;
-  }
-
-  .mobile-nav-item.active .mobile-nav-icon-wrap svg {
-    stroke: #2563eb !important;
-    stroke-width: 2.5 !important;
-    filter: drop-shadow(0 2px 4px rgba(37, 99, 235, 0.25)) !important;
-  }
-
-  .mobile-nav-label {
-    letter-spacing: -0.01em !important;
-  }
-
-  /* Universal Mobile Body Padding for Bottom App Bar */
-  body {
-    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+  /* Completely remove floating bottom navigation bar */
+  .mobile-app-bottom-nav,
+  .mobile-bottom-nav {
+    display: none !important;
   }
 
   /* Mobile Input Auto-Zoom Prevention (16px) & Full Width Alignment */
